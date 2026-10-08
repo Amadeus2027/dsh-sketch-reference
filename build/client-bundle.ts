@@ -43,13 +43,13 @@ function moduleCssPlugin(pluginId: string): Rolldown.Plugin {
       return [
         `const css = ${JSON.stringify(code.toString())};`,
         `const styleId = ${JSON.stringify(styleId)};`,
-        'if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(styleId) + "]") === null) {',
+        'export function mountStyles() { if (typeof document !== "undefined") {',
         '  const tag = document.createElement("style");',
         `  tag.dataset.plugin = ${JSON.stringify(pluginId)};`,
         '  tag.dataset.pluginCss = styleId;',
         '  tag.textContent = css;',
-        '  document.head.appendChild(tag);',
-        '}',
+        '  document.head.appendChild(tag); return () => tag.remove();',
+        '} return () => {}; }',
         `export default ${JSON.stringify(classMap)};`,
       ].join('\n')
     },
