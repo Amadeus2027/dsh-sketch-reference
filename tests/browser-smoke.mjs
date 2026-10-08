@@ -4,10 +4,22 @@ import assert from 'node:assert/strict';
 import {mkdir,readFile} from 'node:fs/promises';
 const url=process.env.DSH_SMOKE_URL;
 if(!url)throw new Error('Set DSH_SMOKE_URL to the authenticated local Web URL. Use a dedicated test profile.');
+const storageFailure=process.env.DSH_SMOKE_STORAGE;
+if(storageFailure&&!['denied','full'].includes(storageFailure))throw new Error('DSH_SMOKE_STORAGE must be denied or full.');
 await mkdir('test-results',{recursive:true});
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH??'/usr/bin/chromium',args:['--no-sandbox']});
 try {
  const context=await browser.newContext({viewport:{width:1600,height:1000},acceptDownloads:true});
+ if(storageFailure)await context.addInitScript(mode=>{
+  // Restrict the fault to the plugin iframe; the native host retains its own storage.
+  if(!location.pathname.startsWith('/sketch-reference-assets/'))return;
+  if(mode==='denied')Object.defineProperty(window,'localStorage',{get(){throw new DOMException('Storage blocked by test','SecurityError');}});
+  else{
+   const storage=window.localStorage;
+   const limited=new Proxy(storage,{get(target,name){if(name==='setItem')return ()=>{throw new DOMException('Storage full in test','QuotaExceededError');};const value=Reflect.get(target,name,target);return typeof value==='function'?value.bind(target):value;}});
+   Object.defineProperty(window,'localStorage',{get:()=>limited});
+  }
+ },storageFailure);
  const page=await context.newPage();page.setDefaultTimeout(15000);const errors=[],remoteFonts=[];let latestDrawing;
  page.on('pageerror',e=>errors.push(e.message));
  page.on('request',r=>{if(/https:\/\/esm.sh\//.test(r.url()))remoteFonts.push(r.url());});
@@ -28,12 +40,14 @@ try {
  await page.mouse.move(box.x+140,box.y+170);await page.mouse.down();await page.mouse.move(box.x+400,box.y+380,{steps:10});await page.mouse.up();
  await page.keyboard.press('t');await page.mouse.click(box.x+180,box.y+220);await page.keyboard.insertText('首页 · 搜索');await page.keyboard.press('Escape');
  await frame.getByRole('status').filter({hasText:'已保存'}).waitFor({timeout:15000});assert(latestDrawing?.scene.elements.length>=2);
+ if(storageFailure)await frame.getByRole('status').filter({hasText:'浏览器恢复存储不可用'}).waitFor();
  console.log('exporting PNG');const downloading=page.waitForEvent('download');await frame.getByRole('button',{name:'导出 PNG',exact:true}).click();const png=await downloading;await png.saveAs('test-results/reference.png');
  const bytes=await readFile('test-results/reference.png');assert(bytes.length>100);assert(bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])));
  await page.locator('input[type=file]').setInputFiles({name:'existing.png',mimeType:'image/png',buffer:bytes});
  console.log('staging image');await frame.getByRole('button',{name:'作为参考发送',exact:true}).click();await frame.getByRole('alert').filter({hasText:'参考图已加入左侧输入框'}).waitFor();
  assert((await input.innerText()).includes('保留已有文字'));await page.getByRole('img',{name:'existing.png',exact:true}).waitFor();await page.getByRole('img',{name:'sketch-reference.png',exact:true}).first().waitFor();
  await frame.getByRole('button',{name:'作为参考发送',exact:true}).click();await frame.getByRole('alert').filter({hasText:'这张参考图已经在输入框中'}).waitFor();
+ if(storageFailure)await frame.getByRole('status').filter({hasText:'浏览器恢复存储不可用'}).waitFor();
  await frame.getByRole('button',{name:'返回聊天 ×'}).click();await page.locator('iframe[title="手绘参考板"]').waitFor({state:'detached'});
  await page.getByRole('button',{name:'打开手绘参考板'}).click();frame=page.frameLocator('iframe[title="手绘参考板"]');assert.equal(await frame.getByLabel('这张图准备用来做什么？').inputValue(),'根据草图制作中文首页');
  const child=await page.locator('iframe[title="手绘参考板"]').elementHandle();assert(child);
@@ -44,4 +58,5 @@ try {
  const anonymous=await browser.newContext();const response=await anonymous.request.post(new URL('/sketch-reference-rpc/v1/drawing/get',url).href,{data:{}});assert.equal(response.status(),401);await anonymous.close();
  assert.deepEqual(errors,[]);assert.deepEqual(remoteFonts,[]);
  console.log('PASS: draw, Chinese PNG, persisted editable scene, close/reopen, native attachments, existing input, duplicate prevention, narrow screen close, anonymous rejection, no CDN requests. No real DS calls.');
+ if(storageFailure)console.log(`PASS: local storage ${storageFailure}; persistent backup warning, server autosave and export remain usable.`);
 }finally{await browser.close();}
