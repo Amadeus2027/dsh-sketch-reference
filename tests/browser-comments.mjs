@@ -20,7 +20,7 @@ try{
   window.__sketchEditor=()=>{
    const node=document.querySelector('main.board');if(!node)throw new Error('Board not mounted');
    let fiber=node[Object.keys(node).find(k=>k.startsWith('__reactFiber$'))];
-   for(;fiber;fiber=fiber.return)for(let hook=fiber.memoizedState;hook;hook=hook.next){const value=hook.memoizedState;if(value?.getSceneElements&&value?.updateScene)return value;}
+   for(;fiber;fiber=fiber.return)for(const candidate of [fiber,fiber.alternate])for(let hook=candidate?.memoizedState;hook;hook=hook.next){const value=hook.memoizedState;if(value?.getSceneElements&&value?.updateScene)return value;}
    throw new Error('Excalidraw API hook not found');
   };
  });

@@ -6,6 +6,7 @@ import {loadSchema,drawingSchema,batchSchema,canonical,contentDigest,digest,type
 import {withComments,anchorTarget,adviceIsStale} from '../core/comments.ts';
 import {CommentList,CommentOverlay,type CommentActions} from './comments.tsx';
 import {normalize} from './scene.ts';
+import {useAgentComments} from './agent-comments.ts';
 import {rpc} from './rpc.ts';
 import {Autosave} from './autosave.ts';
 import {SceneUpdates} from './scene-updates.ts';
@@ -38,11 +39,12 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
  const [recovery]=useState(()=>recoverPending(owner));
  const [pending,setPending]=useState(recovery.pending),[backupUnavailable,setBackupUnavailable]=useState(!recovery.available);
  const [,render]=useState(0),[goal,setGoal]=useState(initial?.goal??''),[message,setMessage]=useState(''),[batch,setBatch]=useState(latestAdvice),[stale,setStale]=useState(()=>adviceIsStale(latestAdvice,initial?.contentDigest,initial?.goal??'')),[busy,setBusy]=useState(false),[preparing,setPreparing]=useState(false);
- const comments=useMemo(()=>batch?withComments(batch):null,[batch]);
+ const analysisComments=useMemo(()=>batch?withComments(batch):null,[batch]);
+ const [source,setSource]=useState<'analysis'|'agent'>('analysis');
  const [editor,setEditor]=useState<ExcalidrawImperativeAPI|null>(null),[selected,setSelected]=useState<string|null>(null),[showComments,setShowComments]=useState(true),[showIgnored,setShowIgnored]=useState(false);
  const [commentSaving,setCommentSaving]=useState(false),[commentError,setCommentError]=useState<{message:string;conflict:boolean}|null>(null);
  const pendingComment=useRef<CommentUpdate|null>(null);
- const [missing,setMissing]=useState(()=>new Set(comments?.comments.filter(c=>!anchorTarget(comments.advice.suggestions[c.suggestionIndex]?.anchor,initial?.scene.elements??[])&&comments.advice.suggestions[c.suggestionIndex]?.anchor).map(c=>c.id)));
+ const [missing,setMissing]=useState(()=>new Set(analysisComments?.comments.filter(c=>!anchorTarget(analysisComments.advice.suggestions[c.suggestionIndex]?.anchor,initial?.scene.elements??[])&&analysisComments.advice.suggestions[c.suggestionIndex]?.anchor).map(c=>c.id)));
  const reportMissing=useCallback((ids:Set<string>)=>setMissing(previous=>previous.size===ids.size&&[...ids].every(id=>previous.has(id))?previous:ids),[]);
  const [routeIndex,setRouteIndex]=useState(0),[copy,setCopy]=useState('');
  const api=useRef<ExcalidrawImperativeAPI|null>(null),mounted=useRef(true),active=useRef<AbortController|null>(null),goalRef=useRef(goal);
@@ -56,6 +58,10 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
  const [queue]=useState(()=>new Autosave(owner,initial,async input=>drawingSchema.parse(await rpc('drawing/save',owner,input,lifecycle.current.signal,true)),()=>{
   if(mounted.current)render(v=>v+1);
  },(draft,revision)=>{try{writePending(owner,draft,revision);}catch{if(mounted.current)setBackupUnavailable(true);}}));
+ const agent=useAgentComments(owner,()=>api.current?normalize(api.current.getSceneElements(),api.current.getAppState() as unknown as Record<string,unknown>):queue.current().scene,()=>goalRef.current);
+ const comments=source==='agent'?agent.batch:analysisComments,displayBatch=source==='agent'?agent.batch:batch,displayStale=source==='agent'?agent.stale:stale;
+ const savingComments=source==='agent'?agent.saving||!!agent.pending:commentSaving||!!pendingComment.current;
+ useEffect(()=>{setSource(agent.batch?'agent':'analysis');setSelected(null);setCopy('');},[agent.batch?.id]);
  const applyScene=useRef<(elements:readonly {id:string}[],state:Record<string,unknown>)=>void>(()=>{}),sceneError=useRef<string|null>(null);
  const [updates]=useState(()=>new SceneUpdates((elements,state)=>applyScene.current(elements,state)));
  useEffect(()=>{
@@ -77,9 +83,9 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   if(queue.state==='clean' && (!pending || canonical({scene:pending.draft.scene,goal:pending.draft.goal})===canonical(queue.current()))){try{clearPending(owner);}catch{setBackupUnavailable(true);}}
  },[queue.state,owner,initial,pending]);
  const updateStale=(scene:Drawing['scene'],currentGoal:string)=>{
-  if(!batch||!mounted.current)return;
-  setStale(true);const generation=++digestGeneration.current;
-  void contentDigest(scene).then(value=>{if(mounted.current&&generation===digestGeneration.current&&currentGoal===goalRef.current)setStale(adviceIsStale(batch,value,currentGoal));});
+  if((!batch&&!agent.batch)||!mounted.current)return;
+  setStale(!!batch);agent.setStale(!!agent.batch);const generation=++digestGeneration.current;
+  void contentDigest(scene).then(value=>{if(mounted.current&&generation===digestGeneration.current&&currentGoal===goalRef.current){setStale(adviceIsStale(batch,value,currentGoal));agent.setStale(adviceIsStale(agent.batch,value,currentGoal));}});
  };
  applyScene.current=(elements,state)=>{
   try{const scene=normalize(elements,state);sceneError.current=null;if(queue.update({scene,goal:goalRef.current}))updateStale(scene,goalRef.current);}
@@ -101,11 +107,12 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   finally{if(mounted.current)setCommentSaving(false);}
  };
  const changeComment=(commentId:string,status:CommentStatus)=>{
+  if(source==='agent'){agent.change(commentId,status);return;}
   if(!comments||pendingComment.current)return;
   const input:CommentUpdate={batchId:comments.id,expectedRevision:comments.commentRevision,mutationId:crypto.randomUUID(),commentId,status};
   pendingComment.current=input;void saveComment(input);
  };
- const refreshComments=()=>void run(async()=>{
+ const refreshAnalysis=()=>void run(async()=>{
   if(commentSaving)return;
   const result=await rpc('advice/get',owner,null,lifecycle.current.signal),next=result===null?null:batchSchema.parse(result);
   if(!mounted.current)return;
@@ -114,6 +121,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   setStale(!!next);
   if(next){const value=await contentDigest(capture());if(mounted.current&&generation===digestGeneration.current&&goalRef.current===currentGoal)setStale(adviceIsStale(next,value,currentGoal));}
  });
+ const refreshComments=()=>source==='agent'?void agent.refresh():refreshAnalysis();
  const selectComment=(id:string,locate:boolean)=>{
   setSelected(id||null);if(!id||!comments||!api.current)return;
   const comment=comments.comments.find(c=>c.id===id),target=anchorTarget(comment?comments.advice.suggestions[comment.suggestionIndex]?.anchor:undefined,api.current.getSceneElements());
@@ -130,11 +138,11 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
    const revision=queue.revision,png=await exportScene(scene),pngBase64=await base64(png);
    abort.signal.throwIfAborted();setPreparing(false);
    const result=batchSchema.parse(await rpc('advice/generate',owner,{revision,pngBase64,route},abort.signal));
-   if(mounted.current){const generation=++digestGeneration.current;setBatch(result);setSelected(withComments(result).comments[0]?.id??null);setShowComments(true);setCopy('');setStale(true);const currentGoal=goalRef.current,value=await contentDigest(capture());if(mounted.current&&generation===digestGeneration.current&&currentGoal===goalRef.current)setStale(adviceIsStale(result,value,currentGoal));}
+   if(mounted.current){const generation=++digestGeneration.current;setBatch(result);setSource('analysis');setSelected(withComments(result).comments[0]?.id??null);setShowComments(true);setCopy('');setStale(true);const currentGoal=goalRef.current,value=await contentDigest(capture());if(mounted.current&&generation===digestGeneration.current&&currentGoal===goalRef.current)setStale(adviceIsStale(result,value,currentGoal));}
   }catch(e){if(abort.signal.aborted)throw new Error('分析已取消，草图保留');throw e;
   }finally{if(mounted.current){setBusy(false);setPreparing(false);}active.current=null;}
  });
- const close=()=>void run(async()=>{if(pendingComment.current)throw new Error('批注状态尚未确认保存，请重试或刷新批注后关闭');try{await settle();}catch{throw new Error('请先重试保存或下载草稿备份，再关闭');}await closeBoard();});
+ const close=()=>void run(async()=>{if(pendingComment.current||agent.pending)throw new Error('批注状态尚未确认保存，请重试或刷新批注后关闭');try{await settle();}catch{throw new Error('请先重试保存或下载草稿备份，再关闭');}await closeBoard();});
  closeAction.current=close;
  const recover=()=>{if(!pending || !api.current)return;const {scene,goal:restored}=pending.draft;setGoal(restored);goalRef.current=restored;
   if(pending.draft.base!==queue.revision){setMessage('恢复副本与服务器版本不同。已载入本地供导出；为防止覆盖，请下载草稿后载入服务器版本。');queue.state='conflict';queue.error='恢复副本版本冲突';}
@@ -143,23 +151,26 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
  const initialData={elements:(initial?.scene.elements??[]) as unknown as ExcalidrawElement[],appState:{...(initial?.scene.appState??{}),viewBackgroundColor:'#ffffff',currentItemFontFamily:1} as Partial<AppState>};
  return <main className="board">
   <header><div><h1>手绘参考板</h1><span className={`save ${queue.state}`} role="status" title={labels[queue.state]}>{labels[queue.state]}</span>{exporting&&<span role="status">正在导出…</span>}</div><button onClick={close}>返回聊天 ×</button></header>
-  <section className="intent"><label className="srOnly" htmlFor="goal">这张图准备用来做什么？</label><input id="goal" maxLength={2000} value={goal} disabled={preparing||!!pending} placeholder="用途：例如按草图制作网页首页" onChange={e=>{const value=e.target.value;void run(async()=>{const scene=api.current?capture():queue.current().scene;setGoal(value);goalRef.current=value;queue.update({scene,goal:value});updateStale(scene,value);});}} />
+  <section className="intent"><label className="srOnly" htmlFor="goal">这张图准备用来做什么？</label><input id="goal" maxLength={2000} value={goal} disabled={preparing||!!pending} placeholder="用途：例如识别物品、解释几何图形或讨论流程" onChange={e=>{const value=e.target.value;void run(async()=>{const scene=api.current?capture():queue.current().scene;setGoal(value);goalRef.current=value;queue.update({scene,goal:value});updateStale(scene,value);});}} />
   </section>
-  {(batch||busy)&&<section className="advice" aria-label="AI 建议与批注">
-   <div className="adviceTitle"><button aria-expanded={adviceOpen} aria-label={adviceOpen?'收起建议与批注':'展开建议与批注'} onClick={()=>setAdviceOpen(v=>!v)}>建议与批注{batch?` · ${batch.advice.suggestions.length}`:''} {adviceOpen?'⌃':'⌄'}</button><span>{busy?'正在分析草图…':batch?.advice.summary}</span>{stale&&!busy&&<small>较早版本</small>}{busy&&<button onClick={()=>{active.current?.abort();setMessage('分析已取消，草图保留');}}>取消</button>}</div>
+  {(batch||agent.batch||busy)&&<section className="advice" aria-label="AI 建议与批注">
+   <div className="adviceTitle"><button aria-expanded={adviceOpen} aria-label={adviceOpen?'收起建议与批注':'展开建议与批注'} onClick={()=>setAdviceOpen(v=>!v)}>建议与批注{displayBatch?` · ${displayBatch.advice.suggestions.length}`:''} {adviceOpen?'⌃':'⌄'}</button><span>{busy?'正在分析草图…':displayBatch?.advice.summary}</span>{displayStale&&!busy&&<small>较早版本</small>}{busy&&<button onClick={()=>{active.current?.abort();setMessage('分析已取消，草图保留');}}>取消</button>}</div>
    <div hidden={!adviceOpen}>
-   {comments&&<><div className="commentTools"><span title={new Date(comments.createdAt).toLocaleString('zh-CN')}>{stale?'草图或用途已修改，批注基于较早版本':'本次分析'}</span><button aria-pressed={showComments} onClick={()=>setShowComments(v=>!v)}>{showComments?'隐藏批注':'显示批注'}</button><button onClick={refreshComments} disabled={commentSaving}>刷新批注</button>{comments.comments.some(c=>c.status==='ignored')&&<button aria-pressed={showIgnored} onClick={()=>setShowIgnored(v=>!v)}>{showIgnored?'隐藏已忽略':'显示已忽略'}</button>}</div>
-    <CommentList batch={comments} selected={selected} stale={stale||!!pending} saving={commentSaving||!!pendingComment.current||busy} showIgnored={showIgnored} actions={actions} missing={missing}/></>}
+   {batch&&agent.batch&&<div className="commentTools" role="group" aria-label="批注来源"><button aria-pressed={source==='analysis'} onClick={()=>{setSource('analysis');setSelected(null);setCopy('');}}>AI 分析建议</button><button aria-pressed={source==='agent'} onClick={()=>{setSource('agent');setSelected(null);setCopy('');}}>Agent 批注</button></div>}
+   {comments&&<><div className="commentTools"><span title={new Date(comments.createdAt).toLocaleString('zh-CN')}>{displayStale?'草图或用途已修改，批注基于较早版本':source==='agent'?'原生聊天 Agent 批注':'本次分析'}</span><button aria-pressed={showComments} onClick={()=>setShowComments(v=>!v)}>{showComments?'隐藏批注':'显示批注'}</button><button onClick={refreshComments} disabled={savingComments}>刷新批注</button>{comments.comments.some(c=>c.status==='ignored')&&<button aria-pressed={showIgnored} onClick={()=>setShowIgnored(v=>!v)}>{showIgnored?'隐藏已忽略':'显示已忽略'}</button>}</div>
+    <CommentList batch={comments} selected={selected} stale={displayStale||!!pending} saving={savingComments||busy} showIgnored={showIgnored} actions={actions} missing={missing}/></>}
    {copy&&<div className="copy"><textarea readOnly aria-label="建议指令" value={copy}/><button onClick={()=>void run(async()=>{await navigator.clipboard.writeText(copy);setMessage('指令已复制');})}>复制</button><button onClick={()=>setCopy('')}>收起</button></div>}
    </div>
   </section>}
+  {agent.error&&<div className="notice" role="alert">Agent 批注：{agent.error}{agent.pending&&<button disabled={agent.saving} onClick={agent.retry}>重试 Agent 批注保存</button>}<button disabled={agent.saving} onClick={()=>void agent.refresh()}>刷新 Agent 批注</button></div>}
+  {agent.disconnected&&<div className="notice" role="status">批注实时同步已断开，绘图和保存仍可使用。<button onClick={()=>void agent.refresh()}>刷新 Agent 批注</button></div>}
   {backupUnavailable&&<div className="notice" role="status">浏览器恢复存储不可用或空间不足，无法保证本地恢复副本；自动保存仍会尝试写入服务器。请及时下载草稿备份。</div>}
   {pending&&<div className="notice">发现未保存的恢复副本。<button onClick={recover}>恢复本地草稿</button><button onClick={()=>{downloadScene(pending.draft.scene);}}>下载恢复副本</button><button onClick={()=>setPending(null)}>暂不恢复</button></div>}
-  {commentError&&<div className="notice" role="alert">批注状态未确认保存：{commentError.message}{!commentError.conflict&&<button disabled={commentSaving} onClick={()=>{if(pendingComment.current)void saveComment(pendingComment.current);}}>重试批注保存</button>}<button disabled={commentSaving} onClick={refreshComments}>刷新批注</button></div>}
+  {commentError&&<div className="notice" role="alert">批注状态未确认保存：{commentError.message}{!commentError.conflict&&<button disabled={commentSaving} onClick={()=>{if(pendingComment.current)void saveComment(pendingComment.current);}}>重试批注保存</button>}<button disabled={commentSaving} onClick={refreshAnalysis}>刷新批注</button></div>}
   {(message||queue.error)&&<div className="notice" role="alert">{message||queue.error}{queue.state==='error'&&<button onClick={()=>void run(async()=>{await settle();})}>重试保存</button>}{queue.state==='conflict'&&<><button onClick={()=>void run(async()=>{downloadScene(capture());})}>下载我的草稿</button><button onClick={onReload}>载入服务器版本</button></>}</div>}
   <div ref={canvas} className="canvas" data-preparing={preparing||!!pending}>
    <Excalidraw theme={appearance.theme} langCode="zh-CN" initialData={initialData} excalidrawAPI={ready} onChange={updated} UIOptions={{canvasActions:{loadScene:false,saveToActiveFile:false,export:false,saveAsImage:false,toggleTheme:false},tools:{image:false}}} />
-   {comments&&<CommentOverlay api={editor} batch={comments} selected={selected} stale={stale} saving={commentSaving||!!pendingComment.current||busy} shown={showComments&&!pending&&!preparing} actions={actions} onMissing={reportMissing}/>}
+   {comments&&<CommentOverlay api={editor} batch={comments} selected={selected} stale={displayStale} saving={savingComments||busy} shown={showComments&&!pending&&!preparing} actions={actions} onMissing={reportMissing}/>}
    {(preparing||!!pending)&&<div className="freeze">{pending?'请先选择是否恢复本地草稿':'正在保存并生成参考图…'}</div>}
   </div>
   <footer><div className="actions">

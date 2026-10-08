@@ -5,7 +5,7 @@ import {mkdir,writeFile,stat,readFile} from 'node:fs/promises';
 import {prepareHost,hostContext,editorFrame,installEditorInspection} from './fixtures/browser-session.mjs';
 const url=process.env.DSH_SMOKE_URL;if(!url)throw new Error('Dedicated local DSH URL required');
 const label=process.env.DSH_PERF_LABEL??'current';if(!/^[a-z0-9-]+$/.test(label))throw new Error('Invalid label');
-const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH??'/usr/bin/chromium',args:['--no-sandbox']});
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH??'/usr/bin/chromium',args:['--no-sandbox','--enable-precise-memory-info']});
 const report={label,date:new Date().toISOString(),viewport:{width:1600,height:1000},sceneElements:250,framesPerGesture:50,realModelCalls:0,saveRequestMs:[],measurements:[]};
 try{
  const context=await browser.newContext({viewport:report.viewport,acceptDownloads:true});await context.addInitScript(installEditorInspection);const page=await context.newPage();page.setDefaultTimeout(20000);
@@ -15,6 +15,7 @@ try{
  await prepareHost(page,url);await hostContext(page,'create',process.cwd()).catch(e=>{if(!e.message.includes('Execution context was destroyed'))throw e;});await page.getByRole('button',{name:'打开手绘参考板'}).waitFor();
  assert(clientVerified,'Browser client must match the installed artifact');report.clientArtifactVerified=true;
  report.editorRequestsBeforeOpen=editorRequests;assert.equal(editorRequests,0);
+ report.rendererHeapBeforeOpen=await page.evaluate(()=>performance.memory?.usedJSHeapSize??null);
  const input=page.locator('[contenteditable=true]');await input.fill('性能测试保留输入');
  let started=performance.now();await page.getByRole('button',{name:'打开手绘参考板'}).click();let frame=await editorFrame(page);
  await frame.waitForFunction(()=>{try{return !!window.__sketchEditor();}catch{return false;}});await frame.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
@@ -51,6 +52,7 @@ try{
  }
  assert.equal(modelCalls,0);await hostContext(page,'theme','dark');await page.waitForTimeout(300);report.darkThemePropagated=await frame.evaluate(()=>window.__sketchEditor().getAppState().theme==='dark');await hostContext(page,'theme','light');
  report.sharedClientResponses=await page.evaluate(()=>performance.getEntriesByType('resource').filter(e=>e.name.includes('dsh-sketch-reference')&&!e.name.includes('/sketch-reference-assets/')).map(e=>({bytes:e.decodedBodySize})));
+ report.rendererHeapAfterReopens=await page.evaluate(()=>performance.memory?.usedJSHeapSize??null);
  report.pluginClientBytes=(await stat(process.env.DSH_PERF_CLIENT??'lib/client.js')).size;
  await mkdir('test-results',{recursive:true});await writeFile(`test-results/performance-${label}.json`,JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
 }catch(error){const page=browser.contexts()[0]?.pages()[0];const frame=page?.frames().find(f=>f.url().includes('/sketch-reference-assets/'));if(frame)console.log('Performance failure:',await frame.evaluate(()=>({alerts:[...document.querySelectorAll('[role=alert]')].map(n=>n.textContent.slice(0,300)),elements:window.__sketchEditor?.().getSceneElements().length})).catch(()=>null));throw error;}finally{await browser.close();}
