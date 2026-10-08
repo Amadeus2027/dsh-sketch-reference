@@ -13,9 +13,10 @@ try {
  page.on('request',r=>{if(/https:\/\/esm.sh\//.test(r.url()))remoteFonts.push(r.url());});
  page.on('response',async r=>{if(r.url().includes('/drawing/save')&&r.status()===200)latestDrawing=(await r.json()).value;});
  await page.goto(url);
- for(const name of ['Continue','Configure later']){const b=page.getByRole('button',{name,exact:true});if(await b.isVisible().catch(()=>false))await b.click();}
- await page.waitForTimeout(1500);
- for(const name of ['Continue','Configure later']){const b=page.getByRole('button',{name,exact:true});if(await b.isVisible().catch(()=>false))await b.click();}
+ for(let round=0;round<5;round++){
+  await page.waitForTimeout(500);
+  for(const name of ['Continue','Configure later']){const b=page.getByRole('button',{name,exact:true});if(await b.isVisible().catch(()=>false)){await b.click();await page.waitForTimeout(500);}}
+ }
  const choose=page.getByRole('button',{name:'Choose workspace',exact:true});
  if(await choose.isVisible()){
   await choose.click();const existing=page.getByRole('menuitem',{name:'dsh-sketch-reference',exact:true});if(await existing.isVisible()){await existing.click();}else{await page.getByRole('button',{name:'Edit path',exact:true}).click();const path=page.getByRole('textbox',{name:'Edit path',exact:true});await path.fill(process.cwd());await path.press('Enter');await page.getByRole('button',{name:'Open',exact:true}).click();}
