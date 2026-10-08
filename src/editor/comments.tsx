@@ -1,7 +1,7 @@
 import {useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {getCommonBounds,sceneCoordsToViewportCoords} from '@excalidraw/excalidraw';
 import type {ExcalidrawImperativeAPI} from '@excalidraw/excalidraw/types';
-import {anchorTarget,type CommentBatch} from '../core/comments.ts';
+import {anchorTarget,type CommentView} from '../core/comments.ts';
 import type {CommentStatus} from '../core/contracts.ts';
 
 export const commentNumbers=['①','②','③'];
@@ -11,13 +11,13 @@ export interface CommentActions {
  use:(index:number)=>void;
  prompt:(index:number)=>void;
 }
-interface Props {batch:CommentBatch;selected:string|null;stale:boolean;saving:boolean;showIgnored:boolean;actions:CommentActions;missing:Set<string>}
-function Detail({batch,id,stale,saving,actions}:{batch:CommentBatch;id:string;stale:boolean;saving:boolean;actions:CommentActions}) {
+interface Props {batch:CommentView;selected:string|null;stale:boolean;saving:boolean;showIgnored:boolean;actions:CommentActions;missing:Set<string>}
+function Detail({batch,id,stale,saving,actions}:{batch:CommentView;id:string;stale:boolean;saving:boolean;actions:CommentActions}) {
  const comment=batch.comments.find(c=>c.id===id)!;
  const suggestion=batch.advice.suggestions[comment.suggestionIndex]!;
  return <div className="commentDetail"><p>{suggestion.reason}</p><div className="commentActions">
-  <button disabled={stale||saving||comment.status==='ignored'} onClick={()=>actions.use(comment.suggestionIndex)}>使用建议</button>
-  <button onClick={()=>actions.prompt(comment.suggestionIndex)}>查看指令</button>
+  {suggestion.actionPrompt&&<><button disabled={stale||saving||comment.status==='ignored'} onClick={()=>actions.use(comment.suggestionIndex)}>使用建议</button>
+  <button onClick={()=>actions.prompt(comment.suggestionIndex)}>查看指令</button></>}
   <button disabled={saving} onClick={()=>actions.change(id,comment.status==='open'?'resolved':'open')}>{comment.status==='open'?'标记已解决':'重新打开'}</button>
   {comment.status!=='ignored'&&<button disabled={saving} onClick={()=>actions.change(id,'ignored')}>忽略批注</button>}
  </div></div>;
@@ -35,7 +35,7 @@ export function CommentList({batch,selected,stale,saving,showIgnored,actions,mis
 
 interface Marker {id:string;index:number;x:number;y:number;status:CommentStatus}
 /** Official element bounds + viewport conversion. The layer never adds scene elements. */
-export function CommentOverlay({api,batch,selected,stale,saving,shown,actions,onMissing}:{api:ExcalidrawImperativeAPI|null;batch:CommentBatch;selected:string|null;stale:boolean;saving:boolean;shown:boolean;actions:CommentActions;onMissing:(ids:Set<string>)=>void}) {
+export function CommentOverlay({api,batch,selected,stale,saving,shown,actions,onMissing}:{api:ExcalidrawImperativeAPI|null;batch:CommentView;selected:string|null;stale:boolean;saving:boolean;shown:boolean;actions:CommentActions;onMissing:(ids:Set<string>)=>void}) {
  const root=useRef<HTMLDivElement>(null);
  const box=useRef(''),invalidate=useRef<(()=>void)|null>(null);
  const refreshOffsets=()=>{
@@ -54,7 +54,7 @@ export function CommentOverlay({api,batch,selected,stale,saving,shown,actions,on
    frame=0;if(closed||!root.current)return;
    if(refreshOffsets()){schedule();return;}
    const rect=root.current.getBoundingClientRect(),elements=api.getSceneElements(),map=new Map(elements.map(e=>[e.id,e])),state=api.getAppState();
-   const markers:Marker[]=[],missing=new Set<string>();
+   const markers:Marker[]=[],missing=new Set<string>(),stacked=new Map<string,number>();
    for(const comment of batch.comments){
     const anchor=batch.advice.suggestions[comment.suggestionIndex]?.anchor;
     if(!anchor)continue;
@@ -63,7 +63,8 @@ export function CommentOverlay({api,batch,selected,stale,saving,shown,actions,on
     if(comment.status==='ignored')continue;
     const [,top,right]=getCommonBounds([element],map);
     const position=sceneCoordsToViewportCoords({sceneX:right,sceneY:top},state);
-    markers.push({id:comment.id,index:comment.suggestionIndex,x:position.x-rect.left,y:position.y-rect.top,status:comment.status});
+    const ordinal=stacked.get(element.id)??0;stacked.set(element.id,ordinal+1);
+    markers.push({id:comment.id,index:comment.suggestionIndex,x:position.x-rect.left-ordinal*30,y:position.y-rect.top,status:comment.status});
    }
    setLayout(previous=>previous.width===rect.width&&previous.height===rect.height&&previous.markers.length===markers.length&&markers.every((m,i)=>{const old=previous.markers[i];return old?.id===m.id&&old.x===m.x&&old.y===m.y&&old.status===m.status&&old.index===m.index;})?previous:{markers,width:rect.width,height:rect.height});onMissing(missing);
   };
@@ -81,7 +82,7 @@ export function CommentOverlay({api,batch,selected,stale,saving,shown,actions,on
   {layout.markers.filter(visible).map(m=><button key={m.id} className={`commentMarker ${m.status} ${selected===m.id?'active':''}`} style={{left:m.x,top:m.y}} data-comment-id={m.id} aria-label={`批注${commentNumbers[m.index]}`} aria-expanded={selected===m.id} title={stale?'基于较早草图':batch.advice.suggestions[m.index]?.title} onPointerDown={e=>e.stopPropagation()} onClick={()=>actions.select(selected===m.id?'':m.id,false)}>{commentNumbers[m.index]}</button>)}
   {selectedComment&&selectedComment.status!=='ignored'&&current&&visible(current)&&<aside className="commentPopover" role="dialog" aria-label={`批注详情${commentNumbers[current.index]}`} style={{left:Math.max(8,Math.min(current.x+16,layout.width-292)),top:Math.max(8,Math.min(current.y+16,layout.height-210))}} onPointerDown={e=>e.stopPropagation()}>
    <div><strong>{commentNumbers[current.index]} {batch.advice.suggestions[current.index]!.title}</strong><button aria-label="收起批注" onClick={()=>actions.select('',false)}>×</button></div>
-   {stale&&<small>基于较早草图，请重新分析后使用指令。</small>}
+   {stale&&<small>批注基于较早草图，定位仅供参考。</small>}
    <Detail batch={batch} id={selectedComment.id} stale={stale} saving={saving} actions={actions}/>
   </aside>}
  </div>;

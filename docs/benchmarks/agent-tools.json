@@ -1,0 +1,39 @@
+{
+  "fixture": "scripted model; real installed DSH native Agent/tool execution",
+  "realModel": false,
+  "inputTokens": null,
+  "installedClientMatched": true,
+  "measurements": [
+    {
+      "tool": "sketch_read",
+      "ms": 4.2380730000004405,
+      "outputBytes": 713,
+      "ok": true,
+      "cacheHit": false,
+      "inputTokens": null
+    },
+    {
+      "tool": "sketch_annotate",
+      "ms": 5.639554000001226,
+      "outputBytes": 192,
+      "ok": true,
+      "cacheHit": false,
+      "inputTokens": null
+    },
+    {
+      "tool": "sketch_read",
+      "ms": 4.373715999994602,
+      "outputBytes": 1437,
+      "ok": true,
+      "cacheHit": true,
+      "inputTokens": null
+    }
+  ],
+  "analysisRequests": 1,
+  "errors": [],
+  "sceneElements": 2,
+  "nativeStreamCalls": 7,
+  "nativeAnnotationToolCalls": 1,
+  "nativeReadToolCalls": 2,
+  "referenceImagePresent": true
+}

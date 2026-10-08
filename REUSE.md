@@ -29,3 +29,7 @@
 审阅 dsh-diagram v0.6.1 的 `SceneAutosaveController.dispose()`、会话 `conversation.view` 登记，以及固定版 DSH `ui-theme` 的公开主题事件、CSS 生命周期与原生 Button/Slot hooks。此轮沿用已有许可证和归属，自动保存实现保留本项目的 mutationId/CAS 与本地恢复队列。
 
 另参考 [dsh-mermaid](https://github.com/AKS1st/dsh-mermaid/tree/2708cdf2e2eb1c0cd15448c3d3d680b8fba58d48)（MIT）的按需加载、失败保留基础内容设计；没有复制源码或引入该组件，未采用其固定 DOM 观察与模拟发送做法。具体取舍见 `docs/native-integration.md`。
+
+## 0.3.x Agent 协作参考
+
+审阅上述固定版 DSH `dsh-tools` 的公开 DSL、工具执行会话上下文与注册释放接口，以及 dsh-diagram v0.6.1 `src/host/tools.ts` 的会话限定读取模式。新工具和 SSE 通知为本项目实现，未复制其语义图布局、编译器或独立聊天 UI。现有 MIT 许可与来源声明继续保留。

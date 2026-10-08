@@ -3,9 +3,14 @@ import {readFile,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import {join} from 'node:path';
 const directory=process.env.DSH_PERF_RESULTS??'test-results';
+const baseline=process.env.DSH_PERF_BASELINE??'baseline',optimized=process.env.DSH_PERF_OPTIMIZED??'optimized';
+const versions=(process.env.DSH_PERF_VERSIONS??'0.2.0,0.2.1').split(',');
+const summary=process.env.DSH_PERF_SUMMARY??'summary.md';
+assert([baseline,optimized].every(v=>/^[a-z0-9-]+$/.test(v))&&/^[a-z0-9-]+\.md$/.test(summary));
+assert.equal(versions.length,2);assert(versions.every(v=>/^[0-9.]+$/.test(v)));
 const samples={};
 for(const variant of ['baseline','optimized']){
- samples[variant]=await Promise.all([1,2,3].map(async i=>JSON.parse(await readFile(join(directory,`performance-${variant}-${i}.json`),'utf8'))));
+ samples[variant]=await Promise.all([1,2,3].map(async i=>JSON.parse(await readFile(join(directory,`performance-${variant==='baseline'?baseline:optimized}-${i}.json`),'utf8'))));
  for(const sample of samples[variant]){
   assert(sample.clientArtifactVerified&&sample.persistedFinalEditVerified,'Unverified or failed sample');
   assert.equal(sample.sceneElements,250);assert.equal(sample.framesPerGesture,50);assert.equal(sample.realModelCalls,0);assert.equal(sample.editorRequestsBeforeOpen,0);
@@ -29,6 +34,6 @@ const rows=[
  ['打开前编辑器请求',s=>String(s[0].editorRequestsBeforeOpen)],
  ['深色主题同步',s=>s.every(x=>x.darkThemePropagated)?'通过':'未支持'],
 ];
-const table=['| 指标（耗时为中位数及范围） | 0.2.0 | 0.2.1 |','| --- | --- | --- |',...rows.map(([label,fn])=>`| ${label} | ${fn(samples.baseline)} | ${fn(samples.optimized)} |`)].join('\n');
+const table=[`| 指标（耗时为中位数及范围） | ${versions[0]} | ${versions[1]} |`,'| --- | --- | --- |',...rows.map(([label,fn])=>`| ${label} | ${fn(samples.baseline)} | ${fn(samples.optimized)} |`)].join('\n');
 for(const variant of ['baseline','optimized']){assert(gesture(variant,'pan').every(x=>x.backups===0&&x.saveRPCs===0));assert(gesture(variant,'edit').every(x=>x.saveRPCs===1));}
-await writeFile(join(directory,'summary.md'),table+'\n');console.log(table);
+await writeFile(join(directory,summary),table+'\n');console.log(table);

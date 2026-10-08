@@ -1,12 +1,20 @@
 import {ANALYSIS_LIMITS} from './limits.ts';
 import type {Batch,Drawing,Anchor} from './contracts.ts';
 
+export interface CommentView {
+ id:string;createdAt:string;commentRevision:string;comments:NonNullable<Batch['comments']>;
+ advice:{summary:string;suggestions:readonly {title:string;reason:string;actionPrompt?:string|undefined;anchor?:Anchor|undefined}[]};
+}
+export interface CommentRecord {
+ id:string;owner:Batch['owner'];createdAt:string;commentRevision?:string|undefined;comments?:NonNullable<Batch['comments']>|undefined;commentMutation?:Batch['commentMutation'];
+ advice:{suggestions:readonly unknown[]};
+}
 export type CommentBatch=Batch&{commentRevision:string;comments:NonNullable<Batch['comments']>};
 /** Pure legacy view: stable IDs and CAS token, without rewriting the stored batch on reads. */
-export function withComments(batch:Batch):CommentBatch {
+export function withComments<T extends Pick<CommentRecord,'id'|'createdAt'|'commentRevision'|'comments'|'advice'>>(batch:T):T&{commentRevision:string;comments:NonNullable<Batch['comments']>} {
  return {...batch,commentRevision:batch.commentRevision??batch.id,comments:batch.comments??batch.advice.suggestions.map((_,i)=>({id:batch.id.slice(0,-1)+i.toString(16),suggestionIndex:i,status:'open' as const,createdAt:batch.createdAt}))};
 }
-export function adviceIsStale(batch:Batch|null,contentDigest:string|null|undefined,goal:string):boolean {
+export function adviceIsStale(batch:Pick<Batch,'contentDigest'|'goal'>|null,contentDigest:string|null|undefined,goal:string):boolean {
  return !!batch && (batch.contentDigest!==contentDigest || batch.goal!==goal);
 }
 export function anchorTarget<T extends {id:string;isDeleted?:boolean|undefined}>(anchor:Anchor|undefined,elements:readonly T[]):T|null {

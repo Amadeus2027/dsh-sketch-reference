@@ -1,0 +1,8 @@
+# Isolated test only; disables real model requests with scripted native tool calls.
+- id: llm-deepseek
+  disabled: true
+- id: llm-deepseek-account
+  disabled: true
+- insert:
+    - id: sketch-reference-mock-native-agent
+      name: './fixtures/mock-native-agent.mjs'

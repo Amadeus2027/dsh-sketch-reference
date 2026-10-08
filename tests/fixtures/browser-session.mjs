@@ -37,7 +37,7 @@ export function installEditorInspection(){
  // Install test inspection in every document; callers only use editor frames.
  window.__sketchEditor=()=>{
   const node=document.querySelector('main.board');let fiber=node?.[Object.keys(node).find(k=>k.startsWith('__reactFiber$'))];
-  for(;fiber;fiber=fiber.return)for(let hook=fiber.memoizedState;hook;hook=hook.next){const value=hook.memoizedState;if(value?.getSceneElements&&value?.updateScene)return value;}
+  for(;fiber;fiber=fiber.return)for(const candidate of [fiber,fiber.alternate])for(let hook=candidate?.memoizedState;hook;hook=hook.next){const value=hook.memoizedState;if(value?.getSceneElements&&value?.updateScene)return value;}
   throw new Error('Editor API not ready');
  };
  window.__sketchMetrics={backups:0,longTasks:[],hashes:0,rasterizations:0};
