@@ -1,5 +1,5 @@
 import {z} from 'zod';
-import {ownerKey,saveSchema,type Owner} from '../core/contracts.ts';
+import {canonical,ownerKey,saveSchema,type Owner} from '../core/contracts.ts';
 import type {Draft} from './autosave.ts';
 const pendingSchema=z.object({scene:saveSchema.shape.scene,goal:saveSchema.shape.goal,base:saveSchema.shape.expectedRevision,updated:z.number().int().nonnegative()}).strict();
 type Pending={key:string;draft:z.infer<typeof pendingSchema>};
@@ -9,6 +9,14 @@ let windowId:string;
 function id(){if(windowId)return windowId;try{windowId=sessionStorage.getItem('dsh-sketch:tab')??crypto.randomUUID();sessionStorage.setItem('dsh-sketch:tab',windowId);}catch{windowId=crypto.randomUUID();}return windowId;}
 export function writePending(owner:Owner,draft:Draft,base:string|null){localStorage.setItem(prefix(owner)+id(),JSON.stringify({...draft,base,updated:Date.now()}));}
 export function clearPending(owner:Owner){localStorage.removeItem(prefix(owner)+id());}
+/** Call only after server confirmation. Never consume another tab's newer snapshot. */
+export function consumePending(owner:Owner,pending:Pending){
+ if(!pending.key.startsWith(prefix(owner)))return;
+ const raw=localStorage.getItem(pending.key);if(raw===null)return;
+ let current:unknown;try{current=JSON.parse(raw);}catch{return;}
+ const parsed=pendingSchema.safeParse(current);
+ if(parsed.success&&canonical(parsed.data)===canonical(pending.draft))localStorage.removeItem(pending.key);
+}
 export function recoverPending(owner:Owner):Recovery{
  const found:Pending[]=[];
  try{

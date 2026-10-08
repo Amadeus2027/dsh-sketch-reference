@@ -12,7 +12,7 @@ import {Autosave} from './autosave.ts';
 import {SceneUpdates} from './scene-updates.ts';
 import {useAppearance} from './appearance.ts';
 import {RPC_LIMITS} from '../core/limits.ts';
-import {writePending,clearPending,recoverPending} from './pending.ts';
+import {writePending,clearPending,consumePending,recoverPending} from './pending.ts';
 import {pngExport,download,downloadScene,base64} from './export.ts';
 import {createSceneExport} from './scene-export.ts';
 import {startBridge,stageImage,insertAdvice,closeBoard} from './bridge.ts';
@@ -37,6 +37,8 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
  const closeAction=useRef<()=>void>(()=>{});
  useEffect(()=>{registerClose(()=>closeAction.current());return()=>registerClose(null);},[registerClose]);
  const [recovery]=useState(()=>recoverPending(owner));
+ // A found backup is not consumed until selected and successfully persisted.
+ const recoveredPending=useRef<typeof recovery.pending>(null);
  const [pending,setPending]=useState(recovery.pending),[backupUnavailable,setBackupUnavailable]=useState(!recovery.available);
  const [,render]=useState(0),[goal,setGoal]=useState(initial?.goal??''),[message,setMessage]=useState(''),[batch,setBatch]=useState(latestAdvice),[stale,setStale]=useState(()=>adviceIsStale(latestAdvice,initial?.contentDigest,initial?.goal??'')),[busy,setBusy]=useState(false),[preparing,setPreparing]=useState(false);
  const analysisComments=useMemo(()=>batch?withComments(batch):null,[batch]);
@@ -55,7 +57,13 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
  useEffect(()=>{if(!canvas.current)return;const observer=new ResizeObserver(refreshLayout);observer.observe(canvas.current);return()=>observer.disconnect();},[refreshLayout,editor]);
  const digestGeneration=useRef(0);
  const lifecycle=useRef(new AbortController());goalRef.current=goal;
- const [queue]=useState(()=>new Autosave(owner,initial,async input=>drawingSchema.parse(await rpc('drawing/save',owner,input,lifecycle.current.signal,true)),()=>{
+ const [queue]=useState(()=>new Autosave(owner,initial,async input=>{
+  const selected=recoveredPending.current;
+  const saved=drawingSchema.parse(await rpc('drawing/save',owner,input,lifecycle.current.signal,true));
+  // This also runs if navigation finishes the save after React has unmounted.
+  if(selected&&selected===recoveredPending.current){try{consumePending(owner,selected);recoveredPending.current=null;}catch{if(mounted.current)setBackupUnavailable(true);}}
+  return saved;
+ },()=>{
   if(mounted.current)render(v=>v+1);
  },(draft,revision)=>{try{writePending(owner,draft,revision);}catch{if(mounted.current)setBackupUnavailable(true);}}));
  const agent=useAgentComments(owner,()=>api.current?normalize(api.current.getSceneElements(),api.current.getAppState() as unknown as Record<string,unknown>):queue.current().scene,()=>goalRef.current);
@@ -79,7 +87,10 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
  },[queue,updates]);
  useEffect(()=>{
   const dirty=canonical(queue.current())!==canonical({scene:initial?.scene??{elements:[],appState:{viewBackgroundColor:'#ffffff'},files:{}},goal:initial?.goal??''});
-  if(pending && !dirty && canonical({scene:pending.draft.scene,goal:pending.draft.goal})===canonical(queue.current()))setPending(null);
+  if(pending && !dirty && canonical({scene:pending.draft.scene,goal:pending.draft.goal})===canonical(queue.current())){
+   // The initial server snapshot already confirms this exact recovered content.
+   try{consumePending(owner,pending);recoveredPending.current=null;}catch{setBackupUnavailable(true);}setPending(null);
+  }
   if(queue.state==='clean' && (!pending || canonical({scene:pending.draft.scene,goal:pending.draft.goal})===canonical(queue.current()))){try{clearPending(owner);}catch{setBackupUnavailable(true);}}
  },[queue.state,owner,initial,pending]);
  const updateStale=(scene:Drawing['scene'],currentGoal:string)=>{
@@ -146,6 +157,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
  closeAction.current=close;
  const recover=()=>{if(!pending || !api.current)return;const {scene,goal:restored}=pending.draft;setGoal(restored);goalRef.current=restored;
   if(pending.draft.base!==queue.revision){setMessage('恢复副本与服务器版本不同。已载入本地供导出；为防止覆盖，请下载草稿后载入服务器版本。');queue.state='conflict';queue.error='恢复副本版本冲突';}
+  else{recoveredPending.current=pending;}
   api.current.updateScene({elements:scene.elements as unknown as ExcalidrawElement[]});queue.update({scene,goal:restored});setPending(null);
  };
  const initialData={elements:(initial?.scene.elements??[]) as unknown as ExcalidrawElement[],appState:{...(initial?.scene.appState??{}),viewBackgroundColor:'#ffffff',currentItemFontFamily:1} as Partial<AppState>};

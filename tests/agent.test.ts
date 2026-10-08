@@ -6,7 +6,7 @@ import {SketchAgent,describeDrawing} from '../src/host/agent.ts';
 import {createSketchTools} from '../src/host/tools.ts';
 import {CommentRepository} from '../src/host/comment-repository.ts';
 import {agentBatchSchema,agentReadSchema,agentAnnotateSchema,AGENT_LIMITS,type AgentBatch} from '../src/core/agent.ts';
-import {ownerKey,contentDigest,canonical,SketchError,type Owner,type Drawing} from '../src/core/contracts.ts';
+import {ownerKey,contentDigest,canonical,SketchError,drawingSchema,type Owner,type Drawing} from '../src/core/contracts.ts';
 
 const owner:Owner={sessionId:'session',createdAt:'123',cwd:'/workspace'};
 const session={id:owner.sessionId,createdAt:123,cwd:owner.cwd} as unknown as SessionHeader;
@@ -56,6 +56,22 @@ it('bounds combined annotation metadata and still advances pagination with escap
  const s=await setup(),control='\u0001',drawing={...s.drawing(),goal:control.repeat(2000),scene:{...s.drawing().scene,elements:Array.from({length:2000},(_,i)=>({id:String(i).padEnd(256,control),type:'text' as const,x:0,y:0,width:100,height:20,text:control.repeat(4000)}))}};
  s.setDrawing(drawing);await s.agent.annotate(session,{...s.input(),comments:Array.from({length:3},(_,i)=>({title:control.repeat(60),reason:control.repeat(1000),anchor:{type:'element',elementId:drawing.scene.elements[i]!.id}}))},'large',s.signal);
  const result:Record<string,unknown>=await s.read();expect(Buffer.byteLength(JSON.stringify(result))).toBeLessThanOrEqual(AGENT_LIMITS.summaryBytes);expect(Number(result.nextOffset)).toBeGreaterThan(0);expect(result.annotations).toMatchObject({itemsTruncated:true,count:3});
+});
+it('keeps pagination moving when a surviving annotation competes with the last element',async()=>{
+ const s=await setup(),control='\u0001';
+ const drawing=drawingSchema.parse({...s.drawing(),goal:control.repeat(2000),scene:{...s.drawing().scene,elements:Array.from({length:2},(_,i)=>({id:String(i).padEnd(256,control),type:'text',x:0,y:0,width:10,height:10,text:control.repeat(240)}))}});
+ s.setDrawing(drawing);await s.agent.annotate(session,{...s.input(),comments:[{title:'annotation',reason:'a'.repeat(120),anchor:{type:'element',elementId:drawing.scene.elements[0]!.id}}]},'one-large-annotation',s.signal);
+ const before=canonical(drawing),visited:string[]=[];let offset=0,first:unknown;
+ for(let page=0;page<drawing.scene.elements.length;page++){
+  const result:Record<string,unknown>=await s.agent.read(session,{revision:drawing.revision,offset},s.signal);
+  if(page===0)first=result;
+  expect(Buffer.byteLength(JSON.stringify(result))).toBeLessThanOrEqual(AGENT_LIMITS.summaryBytes);
+  const elements=result.elements as {id:string}[];expect(elements.length).toBeGreaterThan(0);visited.push(...elements.map(e=>e.id));
+  if(!result.truncated){expect(result.nextOffset).toBeNull();break;}
+  expect(Number(result.nextOffset)).toBeGreaterThan(offset);offset=Number(result.nextOffset);
+ }
+ expect(visited).toEqual(drawing.scene.elements.map(e=>e.id));expect(first).toMatchObject({annotations:{itemsTruncated:true,count:1}});
+ expect(await s.read()).toEqual(first);expect(canonical(s.drawing())).toBe(before);
 });
 it('keeps the existing draft codepoint limit for empty and supplementary Unicode purposes',async()=>{
  const s=await setup();
