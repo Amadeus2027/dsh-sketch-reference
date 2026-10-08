@@ -1,17 +1,21 @@
-# 将首版提交推送到你的 GitHub
+# 获取源码与离线传输
 
-当前连接读取仓库成功，但 git push 和 GitHub 写入 API 都返回 403，提示 `Resource not accessible by integration`。这是集成凭据的写权限限制，仓库对象返回的管理员标志不足以证明凭据能写代码。无需把密码或 Token 发给助手。
+首版代码已提交到 GitHub 的 `main` 分支。正常开发直接克隆仓库：
 
-下载提供的 `dsh-sketch-reference-main.bundle`，在自己的电脑使用已登录 GitHub 的 Git 环境运行：
+```sh
+git clone https://github.com/Amadeus2027/dsh-sketch-reference.git
+cd dsh-sketch-reference
+```
+
+离线传输时，可下载提供的 `dsh-sketch-reference-main.bundle`。它包含完整提交历史，使用方式：
 
 ```sh
 git clone -b main /下载路径/dsh-sketch-reference-main.bundle dsh-sketch-reference
 cd dsh-sketch-reference
 git remote set-url origin https://github.com/Amadeus2027/dsh-sketch-reference.git
 git fetch origin
-git push -u origin main
 ```
 
-提交基于你仓库原有的 README 提交，正常情况下是向前追加。若你又提交了其他内容导致推送被拒绝，先 `git pull --rebase origin main`、处理冲突，再推送；保留双方改动。
+继续开发并提交后，在自己的已登录 GitHub 环境执行 `git push -u origin main`。若远端新增提交，先 `git pull --rebase origin main`、处理冲突，再推送；保留双方改动。
 
-源码 ZIP 包也包含全部项目文件，可用于浏览和构建；bundle 另含提交历史。安装只需要 tgz。仓库推送后 GitHub Actions 会构建并保留安装包 artifact。
+源码 ZIP 包包含全部项目文件，可用于浏览和构建；bundle 另含提交历史。安装插件只需要 tgz。GitHub Actions 会在构建成功后保留安装包 artifact，详见仓库 Actions 页面。
