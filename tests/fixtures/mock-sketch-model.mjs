@@ -14,7 +14,7 @@ export function apply(ctx){
   if(!request.system?.startsWith('你是手绘参考板'))throw new Error('Real model calls are disabled in this test profile');
   const text=request.messages[0].content.find(c=>c.type==='text').text;
   const input=JSON.parse(text.slice(text.indexOf('{')));
-  calls.push({goal:input.goal,ms:Date.now()});console.log('MOCK_SKETCH_MODEL_CALL',calls.length,input.goal);
+  const call={goal:input.goal,ms:Date.now(),aborted:false};calls.push(call);request.signal.addEventListener('abort',()=>{call.aborted=true;},{once:true});console.log('MOCK_SKETCH_MODEL_CALL',calls.length,input.goal);
   if(input.goal?.includes('慢请求'))await new Promise((resolve,reject)=>{
    const timer=setTimeout(resolve,60000);
    request.signal.addEventListener('abort',()=>{clearTimeout(timer);reject(request.signal.reason);},{once:true});

@@ -22,6 +22,8 @@ export const RPC_LIMITS = Object.freeze({
   envelopeBytes,
   adviceBodyBytes: 3 * MiB + envelopeBytes,
   ordinaryTimeoutMs: 20_000,
+  // Fetch keepalive has a browser-wide 64 KiB budget; leave envelope headroom.
+  keepaliveBodyBytes: 60 * 1024,
 });
 export function requestBodyLimit(method: string): number {
   if (method === 'advice/generate') return RPC_LIMITS.adviceBodyBytes;

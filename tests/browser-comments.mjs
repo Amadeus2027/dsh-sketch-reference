@@ -17,7 +17,6 @@ try{
  // Inspect the fixed React 18 fixture's hook state for the public Excalidraw API.
  // This is test-only; no API or globals are exposed by the production editor.
  await context.addInitScript(()=>{
-  if(!location.pathname.startsWith('/sketch-reference-assets/'))return;
   window.__sketchEditor=()=>{
    const node=document.querySelector('main.board');if(!node)throw new Error('Board not mounted');
    let fiber=node[Object.keys(node).find(k=>k.startsWith('__reactFiber$'))];
@@ -75,11 +74,11 @@ try{
  await frame.getByLabel('这张图准备用来做什么？').fill('网页首页布局');
  const box=await frame.locator('.excalidraw').boundingBox();assert(box);
  await frame.locator('.excalidraw').click();await page.keyboard.press('r');
- await page.mouse.move(box.x+150,box.y+160);await page.mouse.down();await page.mouse.move(box.x+400,box.y+240,{steps:8});await page.mouse.up();await saved();
+ await page.mouse.move(box.x+260,box.y+160);await page.mouse.down();await page.mouse.move(box.x+510,box.y+240,{steps:8});await page.mouse.up();await page.waitForTimeout(100);await saved();
  const initial=await load();diagnosticBaseline=initial.drawing;assert.equal(initial.latestAdvice,null);assert.equal(analysisCalls,0);
- const pngBefore=page.waitForEvent('download');await frame.getByRole('button',{name:'导出 PNG',exact:true}).click();await pngBefore;
+ const pngBefore=page.waitForEvent('download');await frame.getByRole('button',{name:'更多操作',exact:true}).click();await frame.getByRole('button',{name:'导出 PNG',exact:true}).click();await pngBefore;
  console.log('analyzing with the mock DSH stream');
- await frame.getByRole('button',{name:'AI 分析草图',exact:true}).click();await frame.getByText('模拟布局建议：用于协议与界面测试',{exact:true}).waitFor();
+ await frame.getByRole('button',{name:'AI 分析草图',exact:true}).click();await frame.getByText('模拟布局建议：用于协议与界面测试',{exact:true}).waitFor();await frame.getByRole('button',{name:'展开建议与批注',exact:true}).click();
  await marker().waitFor();let loaded=await load(),batch=loaded.latestAdvice;const targetId=batch.advice.suggestions[0].anchor.elementId;
  assert.equal(batch.analysisRevision,loaded.drawing.revision);assert.equal(batch.comments.length,3);assert.equal(batch.advice.suggestions[1].anchor,undefined);assert.equal(batch.advice.suggestions[2].anchor,undefined);
  assert.equal(analysisCalls,1);assert.equal((await snapshot()).elements.length,initial.drawing.scene.elements.length);
@@ -94,7 +93,7 @@ try{
  loaded=await load();assert.equal(loaded.drawing.revision,initial.drawing.revision);assert.equal(loaded.drawing.contentDigest,initial.drawing.contentDigest);assert.equal(analysisCalls,1);
  console.log('restoring resolved state and exercising CAS conflict');
  await frame.getByRole('button',{name:'返回聊天 ×'}).click();await page.locator('iframe[title="手绘参考板"]').waitFor({state:'detached'});
- await page.getByRole('button',{name:'打开手绘参考板'}).click();frame=page.frameLocator('iframe[title="手绘参考板"]');await frame.getByText('已解决 · 元素批注',{exact:true}).waitFor();
+ await page.getByRole('button',{name:'打开手绘参考板'}).click();frame=page.frameLocator('iframe[title="手绘参考板"]');await frame.getByRole('button',{name:'展开建议与批注',exact:true}).click();await frame.getByText('已解决 · 元素批注',{exact:true}).waitFor();
  await card().getByRole('button',{name:'① 增加导航留白',exact:true}).click();await card().getByRole('button',{name:'重新打开',exact:true}).click();await frame.getByText('元素批注',{exact:true}).waitFor();
  loaded=await load();batch=loaded.latestAdvice;
  const foreign={batchId:batch.id,expectedRevision:batch.commentRevision,mutationId:crypto.randomUUID(),commentId:batch.comments[0].id,status:'resolved'};
@@ -128,7 +127,7 @@ try{
  await page.keyboard.press('Control+z');await marker().waitFor();await saved();
  await page.screenshot({path:'test-results/anchored-comments.png'});
  // Reloading also recomputes stale state, rather than re-enabling old instructions.
- await frame.getByRole('button',{name:'返回聊天 ×'}).click();await page.locator('iframe[title="手绘参考板"]').waitFor({state:'detached'});await page.getByRole('button',{name:'打开手绘参考板'}).click();frame=page.frameLocator('iframe[title="手绘参考板"]');await frame.getByText('较早版本的元素批注',{exact:true}).waitFor();
+ await frame.getByRole('button',{name:'返回聊天 ×'}).click();await page.locator('iframe[title="手绘参考板"]').waitFor({state:'detached'});await page.getByRole('button',{name:'打开手绘参考板'}).click();frame=page.frameLocator('iframe[title="手绘参考板"]');await frame.getByRole('button',{name:'展开建议与批注',exact:true}).click();await frame.getByText('较早版本的元素批注',{exact:true}).waitFor();
  const identity=(await load()).owner;
  assert.equal((await call('advice/get',{...identity,createdAt:'wrong-lifecycle'},null)).error.code,'SESSION_CHANGED');
  const oldBatch=(await load()).latestAdvice.id;
@@ -142,15 +141,16 @@ try{
  loaded=await load();assert.equal(loaded.latestAdvice.id,oldBatch);assert.equal(loaded.drawing.goal,'慢请求超时测试');assert(loaded.drawing.scene.elements.length>0);assert.equal(analysisCalls,4);
  assert.equal(modelEvents.filter(e=>e.type==='response').at(-1).status,504);
  // Failed analysis must leave the native reference workflow usable.
- const exported=page.waitForEvent('download');await frame.getByRole('button',{name:'导出 PNG',exact:true}).click();await exported;
+ const exported=page.waitForEvent('download');await frame.getByRole('button',{name:'更多操作',exact:true}).click();await frame.getByRole('button',{name:'导出 PNG',exact:true}).click();await exported;
  await frame.getByRole('button',{name:'作为参考发送',exact:true}).click();await frame.getByRole('alert').filter({hasText:'参考图已加入左侧输入框'}).waitFor();
  assert((await input.innerText()).includes('保留原有任务。'));await page.getByRole('img',{name:'sketch-reference.png',exact:true}).first().waitFor();
  const streamCalls=(await modelStats()).calls.slice(streamBaseline);assert.equal(streamCalls.length,4);
  assert.deepEqual(streamCalls.map(c=>c.goal),['网页首页布局','格式错误测试','慢请求取消测试','慢请求超时测试']);
+ await frame.getByLabel('这张图准备用来做什么？').fill('慢请求关闭测试');await saved();const closingRequest=page.waitForRequest(r=>r.url().endsWith('/advice/generate'));await frame.getByRole('button',{name:'重新分析草图',exact:true}).click();await closingRequest;await page.waitForTimeout(150);await page.getByRole('button',{name:'打开手绘参考板'}).click();await page.locator('iframe[title="手绘参考板"]').waitFor({state:'detached'});await page.waitForTimeout(150);assert.equal((await modelStats()).calls.at(-1).aborted,true);await page.getByRole('button',{name:'打开手绘参考板'}).click();frame=page.frameLocator('iframe[title="手绘参考板"]');await frame.getByLabel('这张图准备用来做什么？').waitFor();assert.equal((await load()).latestAdvice.id,oldBatch);assert.equal(analysisCalls,5);
  const persisted=await load();
  await writeFile('test-results/comments-session.json',JSON.stringify({owner:persisted.owner,batchId:persisted.latestAdvice.id,commentRevision:persisted.latestAdvice.commentRevision,comments:persisted.latestAdvice.comments,drawingRevision:persisted.drawing.revision,contentDigest:persisted.drawing.contentDigest}));
  await freshSession();
- const other=await load();assert.notEqual(other.owner.sessionId,identity.sessionId);assert.equal(other.latestAdvice,null);assert.equal(await frame.locator('.commentCard').count(),0);assert.equal(analysisCalls,4);
+ const other=await load();assert.notEqual(other.owner.sessionId,identity.sessionId);assert.equal(other.latestAdvice,null);assert.equal(await frame.locator('.commentCard').count(),0);assert.equal(analysisCalls,5);
  assert.equal((await call('advice/get',identity,null)).value.id,oldBatch);
  assert.deepEqual(errors,[]);
  console.log('PASS: mock anchored analysis, global fallback, popup/list highlight, native instruction insertion, persisted resolve/reopen/ignore, comment CAS, hide/show, native drag/undo, pan/zoom/resize tracking, removed anchor, stale reload, lifecycle isolation, invalid JSON/cancel/timeout, export/native reference after failed analysis, exactly one stream per explicit analysis. No real DS effects tested.');

@@ -1,11 +1,11 @@
 .shell{display:flex;height:100%;min-height:0;position:relative;overflow:hidden}
 .chat{flex:1 1 0;min-width:360px;min-height:0;overflow:hidden}
-.panel{flex:1 1 0;min-width:420px;height:100%;min-height:0;background:#f8fafc}
+.panel{flex:1 1 0;min-width:420px;height:100%;min-height:0;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary)}
 .frame{border:0;width:100%;height:100%;display:block}
 .divider{width:6px;flex:none;cursor:col-resize;touch-action:none;background:var(--dsw-alias-border-l3,#ddd)}
-.divider:hover,.divider:focus{background:#4263eb}
-.button{border:0;background:transparent;color:inherit;font:inherit;padding:6px 9px;cursor:pointer;border-radius:8px;font-size:12px}
-.button:hover,.button[aria-pressed=true]{background:#4263eb22;color:#4263eb}
+.divider:hover,.divider:focus{background:var(--dsw-alias-brand-primary)}
+.button{display:inline-flex;gap:5px;align-items:center}
+.button[aria-pressed=true]{background:var(--dsw-alias-button-ghost-active-fill);color:var(--dsw-alias-brand-primary)}
 @media(max-width:1100px){.panel{position:absolute;inset:0;z-index:40;min-width:0}.divider{display:none}.chat{min-width:0}}
 
 .chat[data-phase=hero] :global([data-conversation-scroll]){justify-content:center;overflow-y:auto}

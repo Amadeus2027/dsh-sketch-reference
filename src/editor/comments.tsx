@@ -65,7 +65,7 @@ export function CommentOverlay({api,batch,selected,stale,saving,shown,actions,on
     const position=sceneCoordsToViewportCoords({sceneX:right,sceneY:top},state);
     markers.push({id:comment.id,index:comment.suggestionIndex,x:position.x-rect.left,y:position.y-rect.top,status:comment.status});
    }
-   setLayout({markers,width:rect.width,height:rect.height});onMissing(missing);
+   setLayout(previous=>previous.width===rect.width&&previous.height===rect.height&&previous.markers.length===markers.length&&markers.every((m,i)=>{const old=previous.markers[i];return old?.id===m.id&&old.x===m.x&&old.y===m.y&&old.status===m.status&&old.index===m.index;})?previous:{markers,width:rect.width,height:rect.height});onMissing(missing);
   };
   const schedule=()=>{if(!frame)frame=requestAnimationFrame(measure);};
   invalidate.current=schedule;

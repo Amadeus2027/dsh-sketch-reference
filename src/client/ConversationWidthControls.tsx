@@ -14,7 +14,8 @@ const FALLBACK_WHEEL_LINE_PX = 16
 
 /** Read a valid persisted width preference, or null when absent or corrupt. */
 function readWidthPreference(): number | null {
-  const raw = localStorage.getItem(WIDTH_PREF_KEY)
+  let raw:string|null;
+  try{raw=localStorage.getItem(WIDTH_PREF_KEY);}catch{return null;}
   if (raw === null) return null
   const value = Number(raw)
   return Number.isFinite(value) && value > 0 ? value : null
@@ -163,7 +164,7 @@ export function ConversationWidthControls({ container, phase }: ConversationWidt
   }, [container])
   const onCommit = useCallback((width: number): void => {
     if (container === null) return
-    localStorage.setItem(WIDTH_PREF_KEY, `${resolveContentWidth(container.offsetWidth, width)}`)
+    try{localStorage.setItem(WIDTH_PREF_KEY, `${resolveContentWidth(container.offsetWidth, width)}`);}catch{/* Optional layout preference must never break the composer. */}
   }, [container])
   const onEnd = useCallback((): void => {
     if (container !== null) publishWidths(container)

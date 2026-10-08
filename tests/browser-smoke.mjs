@@ -12,11 +12,10 @@ try {
  const context=await browser.newContext({viewport:{width:1600,height:1000},acceptDownloads:true});
  if(storageFailure)await context.addInitScript(mode=>{
   // Restrict the fault to the plugin iframe; the native host retains its own storage.
-  if(!location.pathname.startsWith('/sketch-reference-assets/'))return;
-  if(mode==='denied')Object.defineProperty(window,'localStorage',{get(){throw new DOMException('Storage blocked by test','SecurityError');}});
+  if(mode==='denied'){const storage=window.localStorage;Object.defineProperty(window,'localStorage',{get(){if(location.pathname.startsWith('/sketch-reference-assets/'))throw new DOMException('Storage blocked by test','SecurityError');return storage;}});}
   else{
    const storage=window.localStorage;
-   const limited=new Proxy(storage,{get(target,name){if(name==='setItem')return ()=>{throw new DOMException('Storage full in test','QuotaExceededError');};const value=Reflect.get(target,name,target);return typeof value==='function'?value.bind(target):value;}});
+   const limited=new Proxy(storage,{get(target,name){if(name==='setItem')return (key,value)=>{if(location.pathname.startsWith('/sketch-reference-assets/'))throw new DOMException('Storage full in test','QuotaExceededError');return target.setItem(key,value);};const value=Reflect.get(target,name,target);return typeof value==='function'?value.bind(target):value;}});
    Object.defineProperty(window,'localStorage',{get:()=>limited});
   }
  },storageFailure);
@@ -37,11 +36,11 @@ try {
  console.log('opening board');await page.getByRole('button',{name:'打开手绘参考板'}).click();let frame=page.frameLocator('iframe[title="手绘参考板"]');
  await frame.getByLabel('这张图准备用来做什么？').fill('根据草图制作中文首页');
  await frame.locator('.excalidraw').click();await page.keyboard.press('r');const box=await frame.locator('.excalidraw').boundingBox();assert(box);
- await page.mouse.move(box.x+140,box.y+170);await page.mouse.down();await page.mouse.move(box.x+400,box.y+380,{steps:10});await page.mouse.up();
- await page.keyboard.press('t');await page.mouse.click(box.x+180,box.y+220);await page.keyboard.insertText('首页 · 搜索');await page.keyboard.press('Escape');
- await frame.getByRole('status').filter({hasText:'已保存'}).waitFor({timeout:15000});assert(latestDrawing?.scene.elements.length>=2);
+ await page.mouse.move(box.x+260,box.y+170);await page.mouse.down();await page.mouse.move(box.x+500,box.y+380,{steps:10});await page.mouse.up();
+ await page.keyboard.press('t');await page.mouse.click(box.x+300,box.y+220);await page.keyboard.insertText('首页 · 搜索');await page.keyboard.press('Escape');
+ await page.waitForTimeout(100);await frame.getByRole('status').filter({hasText:'已保存'}).waitFor({timeout:15000});assert(latestDrawing?.scene.elements.length>=2);
  if(storageFailure)await frame.getByRole('status').filter({hasText:'浏览器恢复存储不可用'}).waitFor();
- console.log('exporting PNG');const downloading=page.waitForEvent('download');await frame.getByRole('button',{name:'导出 PNG',exact:true}).click();const png=await downloading;await png.saveAs('test-results/reference.png');
+ console.log('exporting PNG');const downloading=page.waitForEvent('download');await frame.getByRole('button',{name:'更多操作',exact:true}).click();await frame.getByRole('button',{name:'导出 PNG',exact:true}).click();const png=await downloading;await png.saveAs('test-results/reference.png');
  const bytes=await readFile('test-results/reference.png');assert(bytes.length>100);assert(bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])));
  await page.locator('input[type=file]').setInputFiles({name:'existing.png',mimeType:'image/png',buffer:bytes});
  console.log('staging image');await frame.getByRole('button',{name:'作为参考发送',exact:true}).click();await frame.getByRole('alert').filter({hasText:'参考图已加入左侧输入框'}).waitFor();

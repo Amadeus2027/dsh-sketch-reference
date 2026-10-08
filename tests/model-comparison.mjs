@@ -13,7 +13,7 @@ try{
  const editor=new URL('/sketch-reference-assets/index.html',url);editor.searchParams.set('sessionId',sessionId);await page.goto(editor.href);
  const frame=page;await frame.getByLabel('这张图准备用来做什么？').waitFor();
  await frame.getByRole('status').filter({hasText:'已保存'}).waitFor();
- const download=page.waitForEvent('download');await frame.getByRole('button',{name:'导出 PNG',exact:true}).click();const png=await download;
+ const download=page.waitForEvent('download');await frame.getByRole('button',{name:'更多操作',exact:true}).click();await frame.getByRole('button',{name:'导出 PNG',exact:true}).click();const png=await download;
  const pngBase64=(await readFile(await png.path())).toString('base64');
  const call=async(method,owner,payload)=>{
   const response=await context.request.post(new URL('/sketch-reference-rpc/v1/'+method,url).href,{data:{protocolVersion:1,requestId:crypto.randomUUID(),owner,payload},timeout:190000});

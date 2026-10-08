@@ -1,21 +1,31 @@
-import {useState,useSyncExternalStore} from 'react';
+import {useEffect,useState} from 'react';
+import {Button} from '@deepseek-ai/dsh-client-ui-primitives';
 import type {Context} from '@deepseek-ai/cordis';
 import type {ConversationSlotProps} from '@deepseek-ai/dsh-client-ui-conversation/client';
-import type {PropsRenderSlots,PropsRuntime} from '@deepseek-ai/dsh-client-ui-slots';
+import type {PropsRenderSlots,PropsRuntime,SnapshotSelectorHook} from '@deepseek-ai/dsh-client-ui-slots';
+import type {Appearance} from '../core/appearance.ts';
 import {HEADER} from './header-adapter.tsx';
-import {panelStore} from './panel-store.ts';
 import {SketchFrame} from './SketchFrame.tsx';
 import {ConversationWidthControls} from './ConversationWidthControls.tsx';
 import original from './ConversationRoot.module.css';
 import css from './SketchShell.module.css';
-export function SketchButton(props:PropsRuntime<'conversation.input.right'>) {
- const open=useSyncExternalStore(panelStore.subscribe,()=>panelStore.isOpen(props.sessionId));
- return <button type="button" className={css.button} aria-label="打开手绘参考板" aria-pressed={open} onClick={()=>panelStore.set(props.sessionId,!open)}>✎ 参考板</button>;
+interface PanelProps {
+ useSketchPanel:SnapshotSelectorHook<Readonly<Record<string,boolean>>>;
+ setPanel:(id:string,value:boolean)=>void;requestPanelClose:(id:string)=>void;
+ subscribePanelClose:(listener:(id:string)=>void)=>()=>void;prunePanels:(ids:readonly string[])=>void;
 }
-export function SketchShell({ctx,props}:{ctx:Context;props:Omit<ConversationSlotProps,'renderSlot'|'__renders'>&PropsRenderSlots<'sketch-reference.header'>}) {
- const open=useSyncExternalStore(panelStore.subscribe,()=>!!props.sessionId && panelStore.isOpen(props.sessionId));
- const [ratio,setRatio]=useState(45);
+export function SketchButton(props:PropsRuntime<'conversation.input.right'>&PanelProps) {
+ const open=props.useSketchPanel(s=>!!s[props.sessionId]);
+ return <Button type="button" size="sm" variant="toolbar" className={css.button} aria-label="打开手绘参考板" aria-pressed={open} title={open?'保存并返回聊天':'绘制参考草图'} onClick={()=>open?props.requestPanelClose(props.sessionId):props.setPanel(props.sessionId,true)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m14 4 6 6M4 20l4-1 13-13-3-3L5 16z"/></svg><span>参考板</span></Button>;
+}
+export function SketchShell({ctx,props}:{ctx:Context;props:Omit<ConversationSlotProps,'renderSlot'|'__renders'>&PropsRenderSlots<'sketch-reference.header'>&PanelProps&{useHostAppearance:SnapshotSelectorHook<Appearance>}}) {
+ const open=props.useSketchPanel(s=>!!props.sessionId&&!!s[props.sessionId]);
+ const appearance=props.useHostAppearance(s=>s);
+ const sessions=props.useSessions(s=>({ids:s.ids,phase:s.phase}),(a,b)=>a.ids===b.ids&&a.phase===b.phase);
+ useEffect(()=>{if(sessions.phase==='ready')props.prunePanels(sessions.ids);},[sessions,props.prunePanels]);
+ const [ratio,setRatio]=useState(40);
  const session=props.useSession(s=>s),conversation=props.useConversation(s=>s);
+ const workspace=props.useSessions(s=>props.sessionId===undefined?undefined:s.byId[props.sessionId]?.cwd);
  const summaryBlank=props.useSessions(s=>props.sessionId===undefined?undefined:s.byId[props.sessionId]?.blank);
  // Adapted phase logic from the pinned official ConversationMainPanel (MIT).
  const active=!!session && !!conversation && (conversation.activeTargets.size>0 || (!session.blank&&!session.awaitingFirstTurn) || session.running);
@@ -29,11 +39,11 @@ export function SketchShell({ctx,props}:{ctx:Context;props:Omit<ConversationSlot
    {props.renderSlot(HEADER,{})}
    {props.renderFactorySlot('conversation.content',{variant:'main',phase,hero},{slots:{widthControls:ConversationWidthControls}})}
   </div>
-  {open && <><div className={css.divider} role="separator" aria-label="调整聊天和画板宽度" aria-orientation="vertical" tabIndex={0}
+  {open&&!session?.removed && <><div className={css.divider} role="separator" aria-label="调整聊天和画板宽度" aria-orientation="vertical" aria-valuemin={30} aria-valuemax={60} aria-valuenow={ratio} tabIndex={0}
    onKeyDown={e=>{if(e.key==='ArrowLeft')setRatio(v=>Math.max(30,v-2));if(e.key==='ArrowRight')setRatio(v=>Math.min(60,v+2));}}
    onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);}}
    onPointerMove={e=>{if(e.currentTarget.hasPointerCapture(e.pointerId)){const r=e.currentTarget.parentElement!.getBoundingClientRect();setRatio(Math.max(30,Math.min(60,(e.clientX-r.left)/r.width*100)));}}}
    onPointerUp={e=>{if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);}} />
-   <aside className={css.panel}><SketchFrame key={props.sessionId} ctx={ctx} props={props} onClose={()=>{if(props.sessionId)panelStore.set(props.sessionId,false);}} /></aside></>}
+   <aside className={css.panel}><SketchFrame key={`${props.sessionId}:${workspace??''}`} ctx={ctx} props={props} appearance={appearance} subscribeClose={props.subscribePanelClose} onClose={()=>{if(props.sessionId)props.setPanel(props.sessionId,false);}} /></aside></>}
  </div>;
 }
