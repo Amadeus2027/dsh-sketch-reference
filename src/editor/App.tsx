@@ -22,14 +22,16 @@ export function SketchApp({sessionId}:{sessionId:string}) {
  return <Board key={reload} owner={loaded.owner} initial={loaded.drawing} latestAdvice={loaded.latestAdvice} routes={loaded.routes} onReload={()=>setReload(v=>v+1)} />;
 }
 function Board({owner,initial,latestAdvice,routes,onReload}:{owner:Owner;initial:Drawing|null;latestAdvice:Batch|null;routes:Route[];onReload:()=>void}) {
- const [,render]=useState(0),[goal,setGoal]=useState(initial?.goal??''),[message,setMessage]=useState(''),[batch,setBatch]=useState(latestAdvice),[stale,setStale]=useState(false),[busy,setBusy]=useState(false),[preparing,setPreparing]=useState(false),[pending,setPending]=useState(()=>recoverPending(owner));
+ const [recovery]=useState(()=>recoverPending(owner));
+ const [pending,setPending]=useState(recovery.pending),[backupUnavailable,setBackupUnavailable]=useState(!recovery.available);
+ const [,render]=useState(0),[goal,setGoal]=useState(initial?.goal??''),[message,setMessage]=useState(''),[batch,setBatch]=useState(latestAdvice),[stale,setStale]=useState(false),[busy,setBusy]=useState(false),[preparing,setPreparing]=useState(false);
  const [routeIndex,setRouteIndex]=useState(0),[copy,setCopy]=useState('');
  const api=useRef<ExcalidrawImperativeAPI|null>(null),mounted=useRef(true),active=useRef<AbortController|null>(null),goalRef=useRef(goal);
  const digestGeneration=useRef(0);
  const lifecycle=useRef(new AbortController());goalRef.current=goal;
  const [queue]=useState(()=>new Autosave(owner,initial,async input=>drawingSchema.parse(await rpc('drawing/save',owner,input,lifecycle.current.signal)),()=>{
   if(mounted.current)render(v=>v+1);
- },(draft,revision)=>{try{writePending(owner,draft,revision);}catch{if(mounted.current)setMessage('浏览器恢复空间不足，请下载草稿备份');}}));
+ },(draft,revision)=>{try{writePending(owner,draft,revision);}catch{if(mounted.current)setBackupUnavailable(true);}}));
  useEffect(()=>{
   mounted.current=true;const cleanup=startBridge();
   const hide=()=>{if(document.visibilityState==='hidden')void queue.settle().catch(()=>{});};
@@ -39,7 +41,7 @@ function Board({owner,initial,latestAdvice,routes,onReload}:{owner:Owner;initial
  useEffect(()=>{
   const dirty=canonical(queue.current())!==canonical({scene:initial?.scene??{elements:[],appState:{viewBackgroundColor:'#ffffff'},files:{}},goal:initial?.goal??''});
   if(pending && !dirty && canonical({scene:pending.draft.scene,goal:pending.draft.goal})===canonical(queue.current()))setPending(null);
-  if(queue.state==='clean' && (!pending || canonical({scene:pending.draft.scene,goal:pending.draft.goal})===canonical(queue.current()))){try{clearPending(owner);}catch{/* Host persistence remains authoritative. */}}
+  if(queue.state==='clean' && (!pending || canonical({scene:pending.draft.scene,goal:pending.draft.goal})===canonical(queue.current()))){try{clearPending(owner);}catch{setBackupUnavailable(true);}}
  },[queue.state,owner,initial,pending]);
  const updated=(elements:readonly ExcalidrawElement[],appState:AppState)=>{
   if(pending)return;
@@ -62,7 +64,7 @@ function Board({owner,initial,latestAdvice,routes,onReload}:{owner:Owner;initial
    if(mounted.current){setBatch(result);setStale(result.contentDigest!==await contentDigest(capture()) || result.goal!==goalRef.current);}
   }finally{if(mounted.current){setBusy(false);setPreparing(false);}active.current=null;}
  });
- const close=()=>void run(async()=>{try{await queue.settle();}catch{setMessage('保存失败，恢复副本已保留；可先下载草稿备份');throw new Error('请先重试保存或下载备份，再关闭');}await closeBoard();});
+ const close=()=>void run(async()=>{try{await queue.settle();}catch{throw new Error('请先重试保存或下载草稿备份，再关闭');}await closeBoard();});
  const recover=()=>{if(!pending || !api.current)return;const {scene,goal:restored}=pending.draft;setGoal(restored);goalRef.current=restored;
   if(pending.draft.base!==queue.revision){setMessage('恢复副本与服务器版本不同。已载入本地供导出；为防止覆盖，请下载草稿后载入服务器版本。');queue.state='conflict';queue.error='恢复副本版本冲突';}
   api.current.updateScene({elements:scene.elements as unknown as ExcalidrawElement[]});queue.update({scene,goal:restored});setPending(null);
@@ -78,6 +80,7 @@ function Board({owner,initial,latestAdvice,routes,onReload}:{owner:Owner;initial
    {batch&&<div className="cards">{batch.advice.suggestions.map((s,i)=><article key={s.title+i}><h2>{s.title}</h2><p>{s.reason}</p><button disabled={stale||busy} onClick={()=>void run(async()=>{await queue.settle();setMessage(await insertAdvice(owner,batch.id,i));})}>使用建议</button><button onClick={()=>{setCopy(s.actionPrompt);}}>查看指令</button></article>)}</div>}
    {copy&&<div className="copy"><textarea readOnly aria-label="建议指令" value={copy}/><button onClick={()=>void run(async()=>{await navigator.clipboard.writeText(copy);setMessage('指令已复制');})}>复制</button><button onClick={()=>setCopy('')}>收起</button></div>}
   </section>
+  {backupUnavailable&&<div className="notice" role="status">浏览器恢复存储不可用或空间不足，无法保证本地恢复副本；自动保存仍会尝试写入服务器。请及时下载草稿备份。</div>}
   {pending&&<div className="notice">发现未保存的恢复副本。<button onClick={recover}>恢复本地草稿</button><button onClick={()=>{downloadScene(pending.draft.scene);}}>下载恢复副本</button><button onClick={()=>setPending(null)}>暂不恢复</button></div>}
   {(message||queue.error)&&<div className="notice" role="alert">{message||queue.error}{queue.state==='error'&&<button onClick={()=>void run(async()=>{await queue.settle();})}>重试保存</button>}{queue.state==='conflict'&&<><button onClick={()=>downloadScene(capture())}>下载我的草稿</button><button onClick={onReload}>载入服务器版本</button></>}</div>}
   <div className="canvas" data-preparing={preparing||!!pending}>
