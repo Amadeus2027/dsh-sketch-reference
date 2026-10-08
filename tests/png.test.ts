@@ -4,7 +4,7 @@ import {IMAGE_LIMITS} from '../src/core/limits.ts';
 
 // A real 1x1 PNG. Dimension mutations below test the envelope guard only;
 // the DSH attachment service owns complete image decoding and CRC validation.
-const pixel=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jcE8AAAAASUVORK5CYII=','base64');
+const pixel=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=','base64');
 describe('PNG admission boundary',()=>{
  it('accepts a PNG and preserves its bytes',()=>{
   expect(Buffer.from(validatePng(pixel.toString('base64')))).toEqual(pixel);
