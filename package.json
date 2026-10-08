@@ -23,7 +23,8 @@
     "REUSE.md",
     "THIRD_PARTY_NOTICES.md",
     "third_party_licenses",
-    "docs"
+    "docs",
+    "CONTRIBUTING.md"
   ],
   "license": "MIT",
   "dsh": {

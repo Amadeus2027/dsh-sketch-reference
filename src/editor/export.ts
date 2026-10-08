@@ -1,3 +1,4 @@
+import {IMAGE_LIMITS} from '../core/limits.ts';
 import {exportToBlob,serializeAsJSON} from '@excalidraw/excalidraw';
 import type {NonDeletedExcalidrawElement} from '@excalidraw/excalidraw/element/types';
 import type {AppState} from '@excalidraw/excalidraw/types';
@@ -9,7 +10,7 @@ export async function pngExport(scene:Drawing['scene']):Promise<Blob> {
  const elements=scene.elements as unknown as readonly NonDeletedExcalidrawElement[];
  for(const size of [1600,1280,1024]) {
   const blob=await exportToBlob({elements,appState:{...scene.appState,viewBackgroundColor:'#ffffff',exportBackground:true} as Partial<AppState>,files:{},mimeType:'image/png',exportPadding:32,maxWidthOrHeight:size});
-  if(blob.size<=2097152)return blob;
+  if(blob.size<=IMAGE_LIMITS.maxBytes)return blob;
  }
  throw new Error('图片过大，请精简草图后重试');
 }

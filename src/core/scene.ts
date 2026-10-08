@@ -1,7 +1,8 @@
 // Adapted from dsh-diagram v0.6.1 (MIT). See REUSE.md.
 import { z } from "zod";
+import {SCENE_LIMITS} from "./limits.ts";
 export interface ScenePolicy { maxSceneBytes: number; maxSceneElements: number; maxElementTextChars: number }
-export const scenePolicy: ScenePolicy = { maxSceneBytes: 2097152, maxSceneElements: 2000, maxElementTextChars: 4000 };
+export const scenePolicy: ScenePolicy = SCENE_LIMITS;
 /** JSON data accepted by persisted scene fields. */
 export type JsonValue =
   | null
