@@ -1,0 +1,73 @@
+import {useEffect,useRef,useMemo,useSyncExternalStore} from 'react';
+import type {Context} from '@deepseek-ai/cordis';
+import type {ConversationSlotProps} from '@deepseek-ai/dsh-client-ui-conversation/client';
+import {ASSETS,loadSchema,batchSchema,routeSchema,sameOwner} from '../core/contracts.ts';
+import {bridgeMessage} from '../core/bridge.ts';
+import {rpc} from '../editor/rpc.ts';
+import {draftBridge} from './harness-draft-bridge.ts';
+import css from './SketchShell.module.css';
+export function SketchFrame({ctx,props,onClose}:{ctx:Context;props:Omit<ConversationSlotProps,'renderSlot'|'__renders'>;onClose:()=>void}) {
+ const frame=useRef<HTMLIFrameElement>(null),latest=useRef(props);
+ latest.current=props;
+ const ids=props.useInput(s=>s?.attachmentIds??[]);
+ interface ModelState {current:{provider:string;model:string}|null;status:string}
+ interface ModelDirectories {directoryFor(id:NonNullable<typeof props.sessionId>):{store:{getSnapshot():ModelState;subscribe(callback:()=>void):()=>void}}}
+ const modelSource=useMemo(()=>{
+  const service=ctx.get('modelDirectories') as unknown as ModelDirectories;
+  const store=service.directoryFor(props.sessionId!).store;
+  return {get:()=>store.getSnapshot(),subscribe:(listener:()=>void)=>store.subscribe(listener)};
+ },[ctx,props.sessionId]);
+ const modelState=useSyncExternalStore(modelSource.subscribe,modelSource.get);
+ const selection=modelState.status==='selecting'?null:modelState.current;
+ const live=useRef({selection,ids,onClose});live.current={selection,ids,onClose};
+ const nonce=useMemo(()=>crypto.randomUUID(),[props.sessionId]);
+ useEffect(()=>{
+  const abort=new AbortController();let port:MessagePort|undefined;
+  const staged=new Map<string,string>();let processing=false;
+  const onMessage=(event:MessageEvent)=>{
+   if(event.source!==frame.current?.contentWindow || event.origin!==location.origin)return;
+   const ready=event.data as {type?:string;nonce?:string;sessionId?:string};
+   if(ready.type!=='SKETCH_READY' || ready.nonce!==nonce || ready.sessionId!==props.sessionId)return;
+   port?.close();const channel=new MessageChannel();port=channel.port1;
+   port.onmessage=(event)=>{
+    const parsed=bridgeMessage.safeParse(event.data);if(!parsed.success)return;
+    const message=parsed.data;
+    const reply=(ok:boolean,messageText:string)=>port?.postMessage({type:'RESULT',id:message.id,ok,message:messageText});
+    if(message.type==='CLOSE'){reply(true,'已关闭');live.current.onClose();return;}
+    if(processing){reply(false,'正在处理上一次操作，请稍后重试');return;}
+    processing=true;
+    void(async()=>{
+     if(!props.sessionId || latest.current.sessionId!==props.sessionId || abort.signal.aborted)throw new Error('会话已变化');
+     const loaded=loadSchema.parse(await rpc('drawing/get',message.owner,{sessionId:props.sessionId},abort.signal));
+     if(!sameOwner(loaded.owner,message.owner))throw new Error('会话已变化');
+     const actions=latest.current.inputActions;
+     if(!actions)throw new Error('输入框尚未就绪');
+     if(message.type==='INSERT_ADVICE'){
+      const batch=batchSchema.parse(loaded.latestAdvice);
+      if(batch.id!==message.batchId || batch.contentDigest!==loaded.drawing?.contentDigest || batch.goal!==loaded.drawing?.goal)throw new Error('建议基于较早草图，请重新获取');
+      const suggestion=batch.advice.suggestions[message.index];if(!suggestion)throw new Error('建议不存在');
+      const span=actions.captureInsertion();
+      if(latest.current.sessionId!==props.sessionId || abort.signal.aborted || !actions.insertText(suggestion.actionPrompt,span))throw new Error('输入框已变化，请再次点击');
+      actions.persistDraft();reply(true,'建议已加入输入框；请再加入参考图');return;
+     }
+     const chosen=live.current.selection;
+     const route=routeSchema.safeParse(chosen&&{provider:chosen.provider,model:chosen.model});
+     if(!route.success)throw new Error('请先在左侧选择支持图片的官方 DeepSeek Flash 模型');
+     await rpc('model/check',message.owner,route.data,abort.signal);
+     if(latest.current.sessionId!==props.sessionId || abort.signal.aborted || live.current.selection?.provider!==chosen?.provider || live.current.selection?.model!==chosen?.model)throw new Error('会话或模型已变化');
+     const existing=staged.get(message.digest);
+     if(existing && (live.current.ids??[]).some(id=>id===existing)){reply(true,'这张参考图已经在输入框中');return;}
+     const bridge=draftBridge(ctx);
+     if(!bridge)throw new Error('当前宿主未提供附件注册，请先下载 PNG 手工加入');
+     const id=bridge.stage(props.sessionId,message.bytes,actions,()=>!abort.signal.aborted && latest.current.sessionId===props.sessionId);
+     staged.set(message.digest,id);reply(true,'参考图已加入左侧输入框，请使用原有发送按钮');
+    })().catch(error=>reply(false,error instanceof Error?error.message:'操作失败')).finally(()=>{processing=false;});
+   };
+   port.start();
+   frame.current?.contentWindow?.postMessage({type:'SKETCH_INIT',nonce,sessionId:props.sessionId},location.origin,[channel.port2]);
+  };
+  window.addEventListener('message',onMessage);
+  return()=>{abort.abort();port?.close();window.removeEventListener('message',onMessage);};
+ },[ctx,nonce,props.sessionId]);
+ return <iframe ref={frame} className={css.frame} title="手绘参考板" src={`${ASSETS}/index.html?sessionId=${encodeURIComponent(props.sessionId??'')}&nonce=${nonce}`} />;
+}

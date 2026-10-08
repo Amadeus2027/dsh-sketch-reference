@@ -1,0 +1,5 @@
+- insert:
+    - id: sketch-reference
+      name: dsh-sketch-reference
+      config:
+        adviceDeadlineMs: 90000

@@ -1,0 +1,14 @@
+.shell{display:flex;height:100%;min-height:0;position:relative;overflow:hidden}
+.chat{flex:1 1 0;min-width:360px;min-height:0;overflow:hidden}
+.panel{flex:1 1 0;min-width:420px;height:100%;min-height:0;background:#f8fafc}
+.frame{border:0;width:100%;height:100%;display:block}
+.divider{width:6px;flex:none;cursor:col-resize;touch-action:none;background:var(--dsw-alias-border-l3,#ddd)}
+.divider:hover,.divider:focus{background:#4263eb}
+.button{border:0;background:transparent;color:inherit;font:inherit;padding:6px 9px;cursor:pointer;border-radius:8px;font-size:12px}
+.button:hover,.button[aria-pressed=true]{background:#4263eb22;color:#4263eb}
+@media(max-width:1100px){.panel{position:absolute;inset:0;z-index:40;min-width:0}.divider{display:none}.chat{min-width:0}}
+
+.chat[data-phase=hero] :global([data-conversation-scroll]){justify-content:center;overflow-y:auto}
+.chat[data-phase=settling] :global([data-composer-seat]){visibility:hidden}
+
+.shell[data-sketch-open=true] .chat{flex-grow:0}

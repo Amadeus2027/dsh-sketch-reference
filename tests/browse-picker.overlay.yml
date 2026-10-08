@@ -1,0 +1,9 @@
+# Adapted from DeepSeek Harness dsh-v0.2.1-alpha.1 (MIT).
+# Only for an isolated browser smoke profile.
+- id: directory-picker
+  disabled: true
+- insert:
+    - id: directory-picker-browse
+      name: '@deepseek-ai/dsh-host-directory-picker-browse'
+    - id: ui-directory-picker-browse
+      name: '@deepseek-ai/dsh-client-ui-directory-picker-browse'
