@@ -10,16 +10,28 @@ export const ownerSchema = z.object({sessionId: z.string().min(1).max(200), crea
 export type Owner = z.infer<typeof ownerSchema>;
 export const routeSchema = z.object({provider: z.enum(['deepseek-official','deepseek-account']), model: z.literal('deepseek-flash')}).strict();
 export type Route = z.infer<typeof routeSchema>;
-export const adviceSchema = z.object({summary: text(120).refine(v => !!v.trim()), suggestions: z.array(z.object({kind:z.enum(['clarify','improve','create']),title:text(24).refine(v => !!v.trim()),reason:text(100).refine(v => !!v.trim()),actionPrompt:text(500).refine(v => !!v.trim())}).strict()).min(1).max(3)}).strict();
+export const anchorSchema=z.object({type:z.literal('element'),elementId:z.string().min(1).max(256)}).strict();
+export type Anchor=z.infer<typeof anchorSchema>;
+export const adviceSchema = z.object({summary: text(120).refine(v => !!v.trim()), suggestions: z.array(z.object({kind:z.enum(['clarify','improve','create']),title:text(24).refine(v => !!v.trim()),reason:text(100).refine(v => !!v.trim()),actionPrompt:text(500).refine(v => !!v.trim()),anchor:anchorSchema.optional()}).strict()).min(1).max(3)}).strict();
 export type Advice = z.infer<typeof adviceSchema>;
-export const batchSchema = z.object({id:z.uuid(),owner:ownerSchema,contentDigest:z.string(),goal:text(2000),route:routeSchema,advice:adviceSchema,createdAt:z.string()}).strict();
+export const commentStatusSchema=z.enum(['open','resolved','ignored']);
+export type CommentStatus=z.infer<typeof commentStatusSchema>;
+export const commentSchema=z.object({id:z.uuid(),suggestionIndex:z.number().int().min(0).max(2),status:commentStatusSchema,createdAt:z.string()}).strict();
+export const commentUpdateSchema=z.object({batchId:z.uuid(),expectedRevision:z.uuid(),mutationId:z.uuid(),commentId:z.uuid(),status:commentStatusSchema}).strict();
+export type CommentUpdate=z.infer<typeof commentUpdateSchema>;
+export const analysisModeSchema=z.enum(['image','structure','hybrid']);
+export type AnalysisMode=z.infer<typeof analysisModeSchema>;
+export const batchSchema = z.object({id:z.uuid(),owner:ownerSchema,contentDigest:z.string(),goal:text(2000),route:routeSchema,advice:adviceSchema,createdAt:z.string(),analysisRevision:z.uuid().optional(),inputMode:analysisModeSchema.optional(),commentRevision:z.uuid().optional(),comments:z.array(commentSchema).min(1).max(3).optional(),commentMutation:commentUpdateSchema.optional()}).strict().superRefine((batch,ctx)=>{
+ if(!!batch.comments!==!!batch.commentRevision || (batch.commentMutation&&!batch.comments))ctx.addIssue({code:'custom',message:'Incomplete comment metadata'});
+ if(batch.comments && (batch.comments.length!==batch.advice.suggestions.length || new Set(batch.comments.map(c=>c.id)).size!==batch.comments.length || new Set(batch.comments.map(c=>c.suggestionIndex)).size!==batch.comments.length || batch.comments.some(c=>c.suggestionIndex>=batch.advice.suggestions.length)))ctx.addIssue({code:'custom',message:'Comments must match suggestions'});
+});
 export type Batch = z.infer<typeof batchSchema>;
 export const drawingSchema = z.object({formatVersion:z.literal(1),owner:ownerSchema,revision:z.uuid(),mutationId:z.uuid(),sceneDigest:z.string(),contentDigest:z.string(),scene:sceneSchema,goal:text(2000),updatedAt:z.string()}).strict();
 export type Drawing = z.infer<typeof drawingSchema>;
 export const envelopeSchema = z.object({protocolVersion:z.literal(1),requestId:z.uuid(),owner:ownerSchema.nullable(),payload:z.unknown()}).strict();
 export const saveSchema = z.object({expectedRevision:z.uuid().nullable(),mutationId:z.uuid(),scene:sceneSchema,goal:text(2000)}).strict();
 export type Save = z.infer<typeof saveSchema>;
-export const generateSchema = z.object({revision:z.uuid(),pngBase64:z.string().max(IMAGE_LIMITS.maxBase64Chars),route:routeSchema}).strict();
+export const generateSchema = z.object({revision:z.uuid(),pngBase64:z.string().max(IMAGE_LIMITS.maxBase64Chars),route:routeSchema,inputMode:analysisModeSchema.default('hybrid')}).strict();
 export const modelSchema = routeSchema;
 export const loadSchema = z.object({owner:ownerSchema,drawing:drawingSchema.nullable(),latestAdvice:batchSchema.nullable(),routes:z.array(routeSchema)}).strict();
 export const resultSchema = z.discriminatedUnion('ok',[
@@ -45,5 +57,5 @@ export async function digest(value:unknown):Promise<string> {
 }
 export async function contentDigest(scene: Drawing['scene']):Promise<string> {
  const ignored=new Set(['version','versionNonce','updated','seed','isDeleted']);
- return digest({elements:scene.elements.filter(e=>!e.isDeleted).map(e=>Object.fromEntries(Object.entries(e).filter(([k])=>!ignored.has(k)))),appState:scene.appState});
+ return digest({elements:scene.elements.filter(e=>!e.isDeleted).map(e=>Object.fromEntries(Object.entries(e).filter(([k])=>!ignored.has(k)).map(([k,v])=>[k,k==='boundElements'&&Array.isArray(v)&&!v.length?null:v]))),appState:scene.appState});
 }

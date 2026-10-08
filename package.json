@@ -1,6 +1,6 @@
 {
   "name": "dsh-sketch-reference",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "DeepSeek Harness 手绘参考板：可编辑草图、视觉建议与原生参考输入",
   "type": "module",
   "main": "lib/index.js",
@@ -50,7 +50,9 @@
     "test": "vitest run",
     "bundle": "tsc -p tsconfig.build.json && tsdown --config tsdown.config.ts && vite build && node build/copy-excalidraw-fonts.mjs && node build/generate-third-party-notices.mjs",
     "dev:editor": "vite --host 127.0.0.1",
-    "test:browser": "node tests/browser-smoke.mjs"
+    "test:browser": "node tests/browser-smoke.mjs",
+    "test:browser:comments": "node tests/browser-comments.mjs",
+    "test:model-comparison": "node tests/model-comparison.mjs"
   },
   "engines": {
     "node": "^22.19.0 || >=24.0.0"

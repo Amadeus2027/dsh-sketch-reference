@@ -1,0 +1,8 @@
+# Isolated automated test only. The module path is relative to this overlay file.
+# This fixture prevents live model requests, and must never be enabled in a user profile.
+- id: sketch-reference
+  config:
+    adviceDeadlineMs: 10000
+- insert:
+    - id: sketch-reference-mock-model
+      name: './fixtures/mock-sketch-model.mjs'
