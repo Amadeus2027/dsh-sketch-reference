@@ -1,5 +1,6 @@
 import {afterEach,expect,it,vi} from 'vitest';
 import {clearPending,recoverPending,writePending} from '../src/editor/pending.ts';
+import * as pendingStorage from '../src/editor/pending.ts';
 import {ownerKey,type Owner} from '../src/core/contracts.ts';
 
 const owner:Owner={sessionId:'test',createdAt:'2026-10-08',cwd:'/workspace'};
@@ -73,4 +74,40 @@ it('propagates failed writes so the UI cannot claim a backup exists',()=>{
  vi.spyOn(storage,'setItem').mockImplementation(()=>{throw new DOMException('Full','QuotaExceededError');});
  expect(()=>writePending(owner,{scene,goal:'unsaved'},null)).toThrow('Full');
  expect(storage.data.size).toBe(0);
+});
+
+it('consumes the selected closed-tab backup after saving recovered and newer work',()=>{
+ const storage=memoryStorage();vi.stubGlobal('localStorage',storage);
+ storage.setItem(key(owner,'closed-tab'),JSON.stringify(backup('恢复内容')));
+ const selected=recoverPending(owner).pending!;
+ writePending(owner,{scene,goal:selected.draft.goal},null);
+ pendingStorage.consumePending(owner,selected);clearPending(owner);
+ writePending(owner,{scene,goal:'后来已保存的新内容'},crypto.randomUUID());clearPending(owner);
+ expect(recoverPending(owner).pending).toBeNull();
+});
+
+it('does not consume a source backup changed since the recovery selection',()=>{
+ const storage=memoryStorage();vi.stubGlobal('localStorage',storage);
+ storage.setItem(key(),JSON.stringify(backup('选中时的内容')));const selected=recoverPending(owner).pending!;
+ const newer=backup('另一个窗口的新内容',2);storage.setItem(key(),JSON.stringify(newer));
+ pendingStorage.consumePending(owner,selected);
+ expect(recoverPending(owner).pending?.draft).toEqual(newer);
+});
+
+it('consumes only the selected snapshot and refuses another owner or damaged replacement',()=>{
+ const storage=memoryStorage();vi.stubGlobal('localStorage',storage);
+ const selectedKey=key(owner,'selected'),otherKey=key(owner,'other');
+ storage.setItem(selectedKey,JSON.stringify(backup('选中',2)));storage.setItem(otherKey,JSON.stringify(backup('其他标签页',1)));
+ const selected=recoverPending(owner).pending!;
+ pendingStorage.consumePending({...owner,cwd:'/other'},selected);expect(storage.getItem(selectedKey)).not.toBeNull();
+ storage.setItem(selectedKey,'{broken');pendingStorage.consumePending(owner,selected);expect(storage.getItem(selectedKey)).toBe('{broken');
+ storage.setItem(selectedKey,JSON.stringify(selected.draft));pendingStorage.consumePending(owner,selected);
+ expect(storage.getItem(selectedKey)).toBeNull();expect(storage.getItem(otherKey)).not.toBeNull();
+});
+
+it('propagates failed recovery cleanup without deleting the backup',()=>{
+ const storage=memoryStorage();vi.stubGlobal('localStorage',storage);
+ storage.setItem(key(),JSON.stringify(backup()));const selected=recoverPending(owner).pending!;
+ vi.spyOn(storage,'removeItem').mockImplementation(()=>{throw new DOMException('Denied','SecurityError');});
+ expect(()=>pendingStorage.consumePending(owner,selected)).toThrow('Denied');expect(storage.getItem(key())).not.toBeNull();
 });

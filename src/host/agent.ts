@@ -35,12 +35,14 @@ export class SketchAgent {
    if(args.mode==='summary'&&args.offset===0){this.cache.set(key,{revision:drawing.revision,summary:data});if(this.cache.size>100)this.cache.delete(this.cache.keys().next().value!);}
   }
   const batch=this.comments.get(owner);
-  const result={...data,elements:[...(data.elements as Record<string,JsonValue>[])],annotations:batch?{batchId:batch.id,commentRevision:batch.commentRevision,count:batch.comments.length,stale:batch.contentDigest!==drawing.contentDigest||batch.goal!==drawing.goal,itemsTruncated:false,
+  const result={...data,truncated:data.truncated??false,nextOffset:data.nextOffset??null,elements:[...(data.elements as Record<string,JsonValue>[])],annotations:batch?{batchId:batch.id,commentRevision:batch.commentRevision,count:batch.comments.length,stale:batch.contentDigest!==drawing.contentDigest||batch.goal!==drawing.goal,itemsTruncated:false,
    items:batch.comments.filter(c=>c.status!=='ignored').map(c=>{const v=batch.advice.suggestions[c.suggestionIndex]!;return {id:c.id,status:c.status,title:v.title,reason:clip(v.reason,120),reasonTruncated:Array.from(v.reason).length>120,...(v.anchor?{elementId:v.anchor.elementId}:{})};})}:null};
   const limit=args.mode==='summary'?AGENT_LIMITS.summaryBytes:AGENT_LIMITS.detailBytes;
   while(result.annotations&&Buffer.byteLength(JSON.stringify(result.annotations))>2048&&result.annotations.items.length){result.annotations.items.pop();result.annotations.itemsTruncated=true;}
-  while(Buffer.byteLength(JSON.stringify(result))>limit&&result.elements.length){result.elements.pop();Object.assign(result,{truncated:true,nextOffset:args.elementIds?null:args.offset+result.elements.length});}
+  // Keep one element before trimming optional annotations so a page cannot stall.
+  while(Buffer.byteLength(JSON.stringify(result))>limit&&result.elements.length>1){result.elements.pop();Object.assign(result,{truncated:true,nextOffset:args.elementIds?null:args.offset+result.elements.length});}
   while(Buffer.byteLength(JSON.stringify(result))>limit&&result.annotations?.items.length){result.annotations.items.pop();result.annotations.itemsTruncated=true;}
+  if(Buffer.byteLength(JSON.stringify(result))>limit || (result.truncated&&!result.elements.length))throw new SketchError('OUTPUT_LIMIT','草图结构超过读取上限，请缩短用途或元素文字后重试',413);
   await this.host.check(owner,drawing.revision,signal);return result;
  });}
  annotate(session:SessionHeader,input:unknown,callId:string,signal:AbortSignal){
