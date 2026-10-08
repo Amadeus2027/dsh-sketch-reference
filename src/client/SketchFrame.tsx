@@ -46,6 +46,7 @@ export function SketchFrame({ctx,props,onClose}:{ctx:Context;props:Omit<Conversa
       const batch=batchSchema.parse(loaded.latestAdvice);
       if(batch.id!==message.batchId || batch.contentDigest!==loaded.drawing?.contentDigest || batch.goal!==loaded.drawing?.goal)throw new Error('建议基于较早草图，请重新获取');
       const suggestion=batch.advice.suggestions[message.index];if(!suggestion)throw new Error('建议不存在');
+      if(batch.comments?.some(c=>c.suggestionIndex===message.index&&c.status==='ignored'))throw new Error('批注已被忽略，请刷新批注');
       const span=actions.captureInsertion();
       if(latest.current.sessionId!==props.sessionId || abort.signal.aborted || !actions.insertText(suggestion.actionPrompt,span))throw new Error('输入框已变化，请再次点击');
       actions.persistDraft();reply(true,'建议已加入输入框；请再加入参考图');return;

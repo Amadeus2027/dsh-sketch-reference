@@ -16,6 +16,7 @@ export const ADVICE_TIMEOUT = Object.freeze({
   maxMs: 180_000,
   responseGraceMs: 5_000,
 });
+export const ANALYSIS_LIMITS = Object.freeze({maxElements:200,maxElementTextChars:160,maxStructureBytes:48*1024});
 const envelopeBytes = 16_384;
 export const RPC_LIMITS = Object.freeze({
   envelopeBytes,

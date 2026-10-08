@@ -3,13 +3,14 @@ import { randomUUID } from 'node:crypto';
 import { Context,Service } from '@deepseek-ai/cordis';
 import z from '@deepseek-ai/schemastery';
 import { z as schema } from 'zod';
-import { defineDomain,domainTable,type KvTable } from '@deepseek-ai/dsh-storage-domain';
+import { defineDomain,domainTable } from '@deepseek-ai/dsh-storage-domain';
 import { SessionId,type SessionHeader } from '@deepseek-ai/dsh-session';
 import type {} from '@deepseek-ai/dsh-session-persistence';
 import type {} from '@deepseek-ai/dsh-host-webserver';
 import type {} from '@deepseek-ai/dsh-client-connection';
-import { ASSETS,RPC,MAX_PNG,SketchError,drawingSchema,batchSchema,saveSchema,generateSchema,routeSchema,ownerKey,sameOwner,type Owner,type Drawing,type Batch,type Route,envelopeSchema } from '../core/contracts.ts';
+import { ASSETS,RPC,MAX_PNG,SketchError,drawingSchema,batchSchema,saveSchema,generateSchema,routeSchema,commentUpdateSchema,ownerKey,sameOwner,type Owner,type Drawing,type Batch,type Route,envelopeSchema } from '../core/contracts.ts';
 import { Repository } from './repository.ts';
+import {CommentRepository} from './comment-repository.ts';
 import { handler } from './http.ts';
 import { checkRoute,generateAdvice } from './advice.ts';
 import { createEditorAssetsHandler } from './static.ts';
@@ -21,7 +22,7 @@ export class SketchService extends Service {
  static inject=['storageDomain','sessionPersistence','sessions','webServer','connection','llm','attachments'];
  static Config=Config;
  private repository!:Repository;
- private advice!:KvTable<string,Batch>;
+ private advice!:CommentRepository;
  private sessions!:Sessions;
  private lifetime=new AbortController();
  private busy=new Set<string>();
@@ -33,9 +34,9 @@ export class SketchService extends Service {
   this.sessions=this.ctx.get('sessions') as Sessions;
   const domain=await this.ctx.storageDomain.open(domainSpec);
   this.repository=new Repository(domain.table('drawings'));
-  this.advice=domain.table('advice');
+  this.advice=new CommentRepository(domain.table('advice'));
   this.ctx.effect(()=>async()=>{
-   this.lifetime.abort();await Promise.allSettled([...this.tasks]);await this.repository.drain();await domain.close();
+   this.lifetime.abort();await Promise.allSettled([...this.tasks]);await this.repository.drain();await this.advice.drain();await domain.close();
   });
   this.ctx.effect(()=>this.ctx.webServer.register({kind:'prefix',path:ASSETS,handler:(req,res)=>{const rejection=this.ctx.connection.requestRejection(req);if(rejection){res.writeHead(rejection);res.end('unauthorized');return;}return createEditorAssetsHandler(this.root)(req,res);}}));
   this.ctx.effect(()=>this.ctx.webServer.register({kind:'prefix',path:RPC,handler:(req,res)=>{const rejection=this.ctx.connection.requestRejection(req);if(rejection){res.writeHead(rejection);res.end('unauthorized');return;}return handler((method,body,signal)=>{
@@ -67,19 +68,21 @@ export class SketchService extends Service {
    const payload=schema.object({sessionId:schema.string().min(1).max(200)}).strict().parse(body.payload);
    const owner=await this.resolve(payload.sessionId,signal);
    if(body.owner && !sameOwner(owner,body.owner))throw new SketchError('SESSION_CHANGED','会话已变化',409);
-   return {owner,drawing:this.repository.get(owner),latestAdvice:this.advice.get(ownerKey(owner))??null,routes:await this.routes()};
+   return {owner,drawing:this.repository.get(owner),latestAdvice:this.advice.get(owner),routes:await this.routes()};
   }
   if(!body.owner)throw new SketchError('OWNER_REQUIRED','缺少会话信息');
   const owner=body.owner;
   const check=async()=>{signal.throwIfAborted();if(!sameOwner(owner,await this.resolve(owner.sessionId,signal)))throw new SketchError('SESSION_CHANGED','会话已变化',409);};
   await check();
   if(method==='drawing/save') return this.repository.save(owner,saveSchema.parse(body.payload),check);
+  if(method==='advice/get')return this.advice.get(owner);
+  if(method==='advice/update')return this.advice.update(owner,commentUpdateSchema.parse(body.payload),check);
   if(method==='model/check'){await checkRoute(this.ctx,routeSchema.parse(body.payload),signal);return {imageCapable:true};}
   if(method==='advice/generate'){
    const input=generateSchema.parse(body.payload), key=ownerKey(owner);
    const drawing=this.repository.get(owner);
    if(!drawing || drawing.revision!==input.revision)throw new SketchError('REVISION_CONFLICT','草图已变化，请重新获取建议',409);
-   if(!drawing.scene.elements.length)throw new SketchError('EMPTY_SCENE','先画一点内容');
+   if(!drawing.scene.elements.some(e=>!e.isDeleted))throw new SketchError('EMPTY_SCENE','先画一点内容');
    const png=validatePng(input.pngBase64);
    if(this.busy.has(key))throw new SketchError('MODEL_BUSY','当前草图已有分析任务',409);
    if(this.busy.size>=2)throw new SketchError('MODEL_BUSY','分析任务较多，请稍后重试',429);
@@ -89,10 +92,19 @@ export class SketchService extends Service {
    if(this.times.size>500) for(const [k,v] of this.times){if(v.every(t=>Date.now()-t>60000))this.times.delete(k);}
    const combined=AbortSignal.any([signal,AbortSignal.timeout(this.config.adviceDeadlineMs)]);
    try {
-    const advice=await generateAdvice(this.ctx,input.route,png,drawing.goal,combined);
+    const advice=await generateAdvice(this.ctx,input.route,png,drawing.goal,combined,drawing.scene,input.inputMode);
     await check();combined.throwIfAborted();
-    const batch:Batch={id:randomUUID(),owner,contentDigest:drawing.contentDigest,goal:drawing.goal,route:input.route,advice,createdAt:new Date().toISOString()};
-    await this.advice.put(key,batch);return batch;
+    const current=async()=>{
+     await check();combined.throwIfAborted();
+     if(this.repository.get(owner)?.revision!==drawing.revision)throw new SketchError('REVISION_CONFLICT','分析期间草图已修改，请重新分析',409);
+    };
+    const batch:Batch={id:randomUUID(),owner,analysisRevision:drawing.revision,inputMode:input.inputMode,contentDigest:drawing.contentDigest,goal:drawing.goal,route:input.route,advice,createdAt:new Date().toISOString()};
+    return await this.advice.put(batch,current);
+   }catch(error){
+    // Chromium can transparently retry POST responses with 408. Upstream model
+    // timeouts use 504 so one explicit analysis cannot trigger a second stream.
+    if(combined.aborted)throw new SketchError(signal.aborted?'MODEL_CANCELLED':'MODEL_TIMEOUT',signal.aborted?'分析已取消，草图保留':'DS 分析超时，草图保留，请稍后重试',signal.aborted?408:504);
+    throw error;
    }finally{this.busy.delete(key);}
   }
   throw new SketchError('NOT_FOUND','接口不存在',404);
