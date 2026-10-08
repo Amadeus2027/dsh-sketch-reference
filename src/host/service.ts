@@ -1,3 +1,4 @@
+import {ADVICE_TIMEOUT,IMAGE_LIMITS} from '../core/limits.ts';
 import { randomUUID } from 'node:crypto';
 import { Context,Service } from '@deepseek-ai/cordis';
 import z from '@deepseek-ai/schemastery';
@@ -13,7 +14,7 @@ import { handler } from './http.ts';
 import { checkRoute,generateAdvice } from './advice.ts';
 import { createEditorAssetsHandler } from './static.ts';
 export interface Config { adviceDeadlineMs:number }
-export const Config:z<Config> = z.object({adviceDeadlineMs:z.number().min(10000).max(180000).default(90000)});
+export const Config:z<Config> = z.object({adviceDeadlineMs:z.number().min(ADVICE_TIMEOUT.minMs).max(ADVICE_TIMEOUT.maxMs).default(ADVICE_TIMEOUT.defaultMs)});
 interface Sessions {get(id:SessionId):{header:SessionHeader}|undefined}
 const domainSpec=defineDomain({name:'sketch_reference',version:0,tables:{drawings:domainTable<string,Drawing>(drawingSchema),advice:domainTable<string,Batch>(batchSchema)}});
 export class SketchService extends Service {
@@ -103,6 +104,6 @@ export function validatePng(base64:string):Uint8Array {
  if(png.length>MAX_PNG)throw new SketchError('PNG_LIMIT','图片超过 2MiB，请简化草图',413);
  if(png.length<33 || !png.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])) || png.toString('ascii',12,16)!=='IHDR')throw new SketchError('INVALID_PNG','图片格式无效');
  const width=png.readUInt32BE(16),height=png.readUInt32BE(20);
- if(!width || !height || width>2048 || height>2048)throw new SketchError('PNG_LIMIT','图片尺寸无效');
+ if(!width || !height || width>IMAGE_LIMITS.maxDimension || height>IMAGE_LIMITS.maxDimension)throw new SketchError('PNG_LIMIT','图片尺寸无效');
  return png;
 }

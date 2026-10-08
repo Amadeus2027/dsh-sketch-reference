@@ -60,4 +60,6 @@ pnpm pack
 
 开发过程使用 AI 辅助，比赛报告应按官方要求披露。不能把复用的画板能力或未经测量的效率提升写成原创成果。
 
+贡献流程见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
 MIT；第三方软件和字体遵循各自许可证。

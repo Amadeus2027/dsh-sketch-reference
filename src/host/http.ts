@@ -1,3 +1,4 @@
+import {requestBodyLimit} from '../core/limits.ts';
 import {ZodError} from 'zod';
 import type {IncomingMessage,ServerResponse} from 'node:http';
 import {RPC,SketchError,envelopeSchema} from '../core/contracts.ts';
@@ -19,7 +20,7 @@ export function handler(operation:(method:string,body:ReturnType<typeof envelope
    if(req.headers['content-type']?.split(';')[0]!=='application/json')throw new SketchError('MEDIA_TYPE','仅支持 JSON',415);
    const method=new URL(req.url??'/',`http://${req.headers.host}`).pathname.slice(RPC.length+1);
    if(!/^[a-z/-]+$/.test(method))throw new SketchError('NOT_FOUND','接口不存在',404);
-   const cap=method==='advice/generate'?3*1024*1024+16384:method==='drawing/save'?2*1024*1024+16384:16384;
+   const cap=requestBodyLimit(method);
    if(Number(req.headers['content-length'])>cap)throw new SketchError('BODY_LIMIT','请求过大',413);
    const chunks:Buffer[]=[];let size=0;
    for await(const chunk of req){const b=Buffer.from(chunk);size+=b.length;if(size>cap)throw new SketchError('BODY_LIMIT','请求过大',413);chunks.push(b);}

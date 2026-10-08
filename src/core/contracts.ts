@@ -1,8 +1,9 @@
 import { z } from 'zod';
+import {IMAGE_LIMITS} from './limits.ts';
 import { createSceneSchema, scenePolicy } from './scene.ts';
 export const ASSETS = '/sketch-reference-assets';
 export const RPC = '/sketch-reference-rpc/v1';
-export const MAX_PNG = 2 * 1024 * 1024;
+export const MAX_PNG = IMAGE_LIMITS.maxBytes;
 export const sceneSchema = createSceneSchema(scenePolicy);
 const text = (max: number) => z.string().refine(v => Array.from(v).length <= max && !v.includes('\0'));
 export const ownerSchema = z.object({sessionId: z.string().min(1).max(200), createdAt: z.string().min(1).max(100), cwd: z.string().max(4096)}).strict();
@@ -18,7 +19,7 @@ export type Drawing = z.infer<typeof drawingSchema>;
 export const envelopeSchema = z.object({protocolVersion:z.literal(1),requestId:z.uuid(),owner:ownerSchema.nullable(),payload:z.unknown()}).strict();
 export const saveSchema = z.object({expectedRevision:z.uuid().nullable(),mutationId:z.uuid(),scene:sceneSchema,goal:text(2000)}).strict();
 export type Save = z.infer<typeof saveSchema>;
-export const generateSchema = z.object({revision:z.uuid(),pngBase64:z.string().max(2800000),route:routeSchema}).strict();
+export const generateSchema = z.object({revision:z.uuid(),pngBase64:z.string().max(IMAGE_LIMITS.maxBase64Chars),route:routeSchema}).strict();
 export const modelSchema = routeSchema;
 export const loadSchema = z.object({owner:ownerSchema,drawing:drawingSchema.nullable(),latestAdvice:batchSchema.nullable(),routes:z.array(routeSchema)}).strict();
 export const resultSchema = z.discriminatedUnion('ok',[
