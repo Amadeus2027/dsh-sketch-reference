@@ -23,7 +23,7 @@ try{
  await frame.getByRole('button',{name:'修改提议 ⌄',exact:true}).click();assert.equal(await frame.getByRole('button',{name:'确认应用修改',exact:true}).count(),0);
  await frame.getByRole('button',{name:'预览修改',exact:true}).click();await frame.getByRole('img',{name:'修改后的草图预览（尚未应用）'}).waitFor();assert.equal((await load()).drawing.revision,first.baseRevision);
  await frame.getByLabel('这张图准备用来做什么？').fill('用户已修改用途');await frame.getByRole('status').filter({hasText:'已保存'}).waitFor();const changed=await load();
- await frame.getByRole('button',{name:'确认应用修改',exact:true}).click();await frame.getByRole('alert').filter({hasText:'草图已变化，请重新提议'}).waitFor();assert.equal((await load()).drawing.revision,changed.drawing.revision);
+ await frame.getByText('需重新提议',{exact:true}).waitFor();assert(await frame.getByRole('button',{name:'确认应用修改',exact:true}).isDisabled());assert.equal((await load()).drawing.revision,changed.drawing.revision);
  const second=await propose();await frame.getByRole('button',{name:'修改提议 ⌄',exact:true}).click();await frame.getByRole('button',{name:'预览修改',exact:true}).click();await frame.getByRole('img',{name:'修改后的草图预览（尚未应用）'}).waitFor();
  const beforeCalls=(await stats()).calls.length;
  await frame.getByRole('button',{name:'确认应用修改',exact:true}).click();await frame.getByRole('alert').filter({hasText:'修改已应用并保存'}).waitFor();

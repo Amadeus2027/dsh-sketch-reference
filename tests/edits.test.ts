@@ -96,3 +96,8 @@ it('only adopts externally acknowledged saves into a settled queue, then support
  const saved=await s.edits.apply(owner,p.id,scene,s.check);queue.acceptExternal(saved,p.baseRevision);expect(queue.revision).toBe(saved.revision);expect(queue.state).toBe('clean');
  queue.update({scene:p.before,goal:p.goal});expect(()=>queue.acceptExternal(saved,saved.revision)).toThrow();await queue.settle();expect(s.drawings.get(owner)?.scene).toEqual(p.before);queue.dispose();
 });
+
+it('rejects text requiring private normalization before proposal admission, retaining legacy record compatibility',async()=>{
+ const s=await setup();for(const text of ['a\tb','a\r\nb']){const args=s.input([{op:'create',type:'text',x:0,y:0,width:100,height:30,text}]);expect(proposeEditSchema.safeParse(args).success).toBe(true);await expect(s.edits.propose(owner,args,'text',s.check)).rejects.toMatchObject({code:'UNSUPPORTED_EDIT'});}
+ expect(s.edits.get(owner)).toBeNull();expect(s.drawings.get(owner)).toEqual(s.drawing);
+});

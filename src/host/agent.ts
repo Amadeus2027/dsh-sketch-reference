@@ -6,6 +6,8 @@ import {AGENT_LIMITS,agentReadSchema,agentAnnotateSchema,focusSchema,type Sketch
 import type {CommentRepository} from './comment-repository.ts';
 import type {JsonValue} from '../core/scene.ts';
 import type {EditRepository} from './edit-repository.ts';
+import type {VisualRepository} from './visual-repository.ts';
+import {visualReadSchema} from '../core/visual.ts';
 import {editRestrictions,type EditRestriction} from '../core/edits.ts';
 
 export interface SketchAgentHost {
@@ -13,14 +15,14 @@ export interface SketchAgentHost {
  check(owner:Owner,revision:string|null,signal:AbortSignal):Promise<void>;
  changed(owner:Owner):void;
 }
-export interface ToolMeasurement {tool:'sketch_read'|'sketch_annotate'|'sketch_propose_edit';ms:number;outputBytes:number;ok:boolean;cacheHit:boolean;inputTokens:null}
+export interface ToolMeasurement {tool:'sketch_read'|'sketch_annotate'|'sketch_propose_edit'|'sketch_read_image';ms:number;outputBytes:number;ok:boolean;cacheHit:boolean;inputTokens:null}
 /** No model request, rendering or browser RPC is needed for an Agent read. */
 export class SketchAgent {
  private cache=new Map<string,{revision:string;summary:Record<string,JsonValue>}>();
  private focuses=new Map<string,SketchFocus>();
  private tail:Promise<unknown>=Promise.resolve();
  readonly measurements:ToolMeasurement[]=[];
- constructor(private host:SketchAgentHost,readonly comments:CommentRepository<AgentBatch>,readonly edits?:EditRepository){}
+ constructor(private host:SketchAgentHost,readonly comments:CommentRepository<AgentBatch>,readonly edits?:EditRepository,readonly visual?:VisualRepository){}
  private async measured<T>(tool:ToolMeasurement['tool'],work:(hit:()=>void)=>Promise<T>):Promise<T>{
   const start=performance.now();let cacheHit=false,ok=false,outputBytes=0;
   try{const value=await work(()=>{cacheHit=true;});ok=true;outputBytes=Buffer.byteLength(JSON.stringify(value));return value;}
@@ -43,7 +45,8 @@ export class SketchAgent {
   }
   const batch=this.comments.get(owner);
   const proposal=this.edits?.get(owner);
-  const result={...data,scope:args.scope,sceneTotalElements:drawing.scene.elements.filter(e=>!e.isDeleted).length,focus:focus?{revision:focus.revision,count:focus.elementIds.length,stale:focus.revision!==drawing.revision}:null,...(this.edits?{proposal:proposal?{id:proposal.id,status:proposal.status,baseRevision:proposal.baseRevision,stale:proposal.baseRevision!==drawing.revision,operationCount:proposal.operations.length}:null}:{}),truncated:data.truncated??false,nextOffset:data.nextOffset??null,elements:[...(data.elements as Record<string,JsonValue>[])],annotations:batch?{batchId:batch.id,commentRevision:batch.commentRevision,count:batch.comments.length,stale:batch.contentDigest!==drawing.contentDigest||batch.goal!==drawing.goal,itemsTruncated:false,
+  const visuals=this.visual?.status(owner,drawing,focus??null);
+  const result={...data,...(visuals?{image:{...(data.image as Record<string,JsonValue>),prepared:!!visuals.all&&!visuals.all.stale,focusPrepared:!!visuals.focus&&!visuals.focus.stale,instruction:'如需视觉细节，按需调用 sketch_read_image（需要当前 revision）；未准备或过期时请用户更新视觉参考，也可使用原生聊天 PNG。不要在每轮聊天重复读取图片。'}}:{}),scope:args.scope,sceneTotalElements:drawing.scene.elements.filter(e=>!e.isDeleted).length,focus:focus?{revision:focus.revision,count:focus.elementIds.length,stale:focus.revision!==drawing.revision}:null,...(this.edits?{proposal:proposal?{id:proposal.id,status:proposal.status,baseRevision:proposal.baseRevision,stale:proposal.baseRevision!==drawing.revision,operationCount:proposal.operations.length}:null}:{}),truncated:data.truncated??false,nextOffset:data.nextOffset??null,elements:[...(data.elements as Record<string,JsonValue>[])],annotations:batch?{batchId:batch.id,commentRevision:batch.commentRevision,count:batch.comments.length,stale:batch.contentDigest!==drawing.contentDigest||batch.goal!==drawing.goal,itemsTruncated:false,
    items:batch.comments.filter(c=>c.status!=='ignored').map(c=>{const v=batch.advice.suggestions[c.suggestionIndex]!;return {id:c.id,status:c.status,title:v.title,reason:clip(v.reason,120),reasonTruncated:Array.from(v.reason).length>120,...(v.anchor?{elementId:v.anchor.elementId}:{})};})}:null};
   const limit=args.mode==='summary'?AGENT_LIMITS.summaryBytes:AGENT_LIMITS.detailBytes;
   while(result.annotations&&Buffer.byteLength(JSON.stringify(result.annotations))>2048&&result.annotations.items.length){result.annotations.items.pop();result.annotations.itemsTruncated=true;}
@@ -52,6 +55,13 @@ export class SketchAgent {
   while(Buffer.byteLength(JSON.stringify(result))>limit&&result.annotations?.items.length){result.annotations.items.pop();result.annotations.itemsTruncated=true;}
   if(Buffer.byteLength(JSON.stringify(result))>limit || (result.truncated&&!result.elements.length))throw new SketchError('OUTPUT_LIMIT','草图结构超过读取上限，请缩短用途或元素文字后重试',413);
   await this.host.check(owner,drawing.revision,signal);return result;
+ });}
+ getFocus(owner:Owner):SketchFocus|null{const value=this.focuses.get(ownerKey(owner));return value?structuredClone(value):null;}
+ readImage(session:SessionHeader,input:unknown,signal:AbortSignal){return this.measured('sketch_read_image',async()=>{
+  if(!this.visual)throw new SketchError('VISUAL_UNAVAILABLE','视觉参考暂不可用，请使用原生附件',503);
+  const args=visualReadSchema.parse(input),{owner,drawing}=await this.host.snapshot(session,signal);
+  if(!drawing||drawing.revision!==args.revision)throw new SketchError('REVISION_CONFLICT','草图已变化，请重新读取摘要',409);
+  return this.visual.read(owner,drawing,args.scope,this.getFocus(owner),signal,()=>this.host.check(owner,drawing.revision,signal));
  });}
  setFocus(owner:Owner,input:unknown,drawing:Drawing|null){
   const args=focusSchema.parse(input),key=ownerKey(owner);

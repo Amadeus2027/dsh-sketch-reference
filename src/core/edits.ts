@@ -40,7 +40,7 @@ export function validateOperations(scene:Drawing['scene'],operations:EditOperati
  const restrictions=editRestrictions(scene);
  let additions=0;
  for(const op of operations){
-  if(op.op==='create'){additions++;continue;}
+  if(op.op==='create'){if(op.type==='text'&&/[\r\t]/.test(op.text??''))throw new SketchError('UNSUPPORTED_EDIT','新增文字请使用普通换行和空格，当前不接受回车或制表符',422);additions++;continue;}
   const e=live.get(op.elementId);
   if(!e)throw new SketchError('ELEMENT_NOT_FOUND','目标不存在或已删除，请重新读取草图',409);
   if(restrictions.has(e.id))throw new SketchError('UNSUPPORTED_EDIT','首版不修改锁定、绑定或分组元素，请手动调整',409);

@@ -6,6 +6,8 @@
 
 后续 0.3.1 候选包新增受限修改和基础选区协作，见 [阶段增量记录](agent-edits.md)。本页中“后续版本/P1/P2 未开放”等描述保留为初版历史结论，当前能力以新记录和 README 为准。
 
+0.3.2 新增用户主动准备的全图/重点原生图片工具，关闭画板后按需可读；本页中“不提供关闭后的 PNG”等描述是 0.3.0 历史边界，当前能力及限制见 [0.3.2 实现说明](submission-v0.3.2.md) 和 [Windows 验收](windows-acceptance-v0.3.2.md)。
+
 ## 当前实现
 
 - `sketch_read` 通过固定版 DSH 官方 `defineTool()` / `ctx.tools.register()` 接入。会话身份取自 `exec.agent.session.header`，请求不接受模型传入的 sessionId。默认读取宿主已保存快照的紧凑摘要；支持 revision 校验、按真实元素 ID 获取细节和分页。关闭画板不影响结构读取，未保存编辑不属于读取结果。

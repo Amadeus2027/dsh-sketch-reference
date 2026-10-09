@@ -20,6 +20,8 @@ import {createSketchTools} from './tools.ts';
 import {AgentEvents} from './agent-events.ts';
 import {proposalSchema,proposalActionSchema,applyEditSchema,type EditProposal} from '../core/edits.ts';
 import {EditRepository} from './edit-repository.ts';
+import {VisualRepository} from './visual-repository.ts';
+import {visualRecordSchema,visualPrepareSchema,type VisualRecord} from '../core/visual.ts';
 import type {} from '@deepseek-ai/dsh-tools';
 export interface Config { adviceDeadlineMs:number }
 export const Config:z<Config> = z.object({adviceDeadlineMs:z.number().min(ADVICE_TIMEOUT.minMs).max(ADVICE_TIMEOUT.maxMs).default(ADVICE_TIMEOUT.defaultMs)});
@@ -28,6 +30,7 @@ const domainSpec=defineDomain({name:'sketch_reference',version:0,tables:{drawing
 // Separate additive domain: old authoritative drafts and advice keep their exact format.
 const agentDomainSpec=defineDomain({name:'sketch_agent',version:0,tables:{annotations:domainTable<string,AgentBatch>(agentBatchSchema)}});
 const editDomainSpec=defineDomain({name:'sketch_edits',version:0,tables:{proposals:domainTable<string,EditProposal>(proposalSchema)}});
+const visualDomainSpec=defineDomain({name:'sketch_visual',version:0,tables:{references:domainTable<string,VisualRecord>(visualRecordSchema)}});
 export class SketchService extends Service {
  static inject=['storageDomain','sessionPersistence','sessions','webServer','connection','llm','attachments'];
  static Config=Config;
@@ -40,6 +43,7 @@ export class SketchService extends Service {
  private tasks=new Set<Promise<unknown>>();
  private agent:SketchAgent|undefined;
  private edits:EditRepository|undefined;
+ private visual:VisualRepository|undefined;
  private events=new AgentEvents();
  private track=<T>(task:Promise<T>):Promise<T>=>{this.tasks.add(task);void task.finally(()=>this.tasks.delete(task)).catch(()=>{});return task;};
  constructor(ctx:Context,private config:Config,private root:string){super(ctx,'sketchReference');}
@@ -78,19 +82,27 @@ export class SketchService extends Service {
     const domain=await toolCtx.storageDomain.open(agentDomainSpec);
     const editDomain=await toolCtx.storageDomain.open(editDomainSpec).catch(error=>{toolCtx.logger.warn('修改提议存储暂不可用，读取与批注保留：%s',error instanceof Error?error.message:'unknown');return undefined;});
     const edits=editDomain?new EditRepository(editDomain.table('proposals'),this.repository):undefined;
+    const visualDomain=await toolCtx.storageDomain.open(visualDomainSpec).catch(()=>undefined);
+    const visual=visualDomain?new VisualRepository(visualDomain.table('references'),toolCtx.attachments):undefined;
     const agent=new SketchAgent({
      snapshot:async(session,signal)=>{
       const owner={sessionId:String(session.id),createdAt:String(session.createdAt),cwd:session.cwd??''};
       await this.checkAgent(owner,null,signal);return {owner,drawing:this.repository.get(owner)};
      },check:(owner,revision,signal)=>this.checkAgent(owner,revision,signal),changed:owner=>this.events.changed(owner),
-    },new CommentRepository(domain.table('annotations')),edits);
+    },new CommentRepository(domain.table('annotations')),edits,visual);
     let closing:Promise<void>|undefined;
-    disposeAgent=()=>closing??= (async()=>{abort.abort();if(this.agent===agent){this.agent=undefined;this.edits=undefined;}this.events.close();await agent.drain();await edits?.drain();agent.clear();await editDomain?.close();await domain.close();})();
+    disposeAgent=()=>closing??= (async()=>{abort.abort();if(this.agent===agent){this.agent=undefined;this.edits=undefined;this.visual=undefined;}this.events.close();await agent.drain();await edits?.drain();await visual?.drain();agent.clear();await visualDomain?.close();await editDomain?.close();await domain.close();})();
     toolCtx.effect(()=>disposeAgent!);
     this.lifetime.signal.throwIfAborted();
-    for(const tool of createSketchTools(agent,AbortSignal.any([abort.signal,this.lifetime.signal]),this.track))unregister.push(toolCtx.tools.register(tool));
+    for(const tool of createSketchTools(agent,AbortSignal.any([abort.signal,this.lifetime.signal]),this.track,async(exec,signal)=>{
+     const routed=exec.agent?.session.requestHeader()?.config,provider=routed?.provider??exec.agent?.options.provider,model=routed?.model??exec.agent?.options.model;
+     if(!provider||!model)throw new SketchError('VISION_UNAVAILABLE','当前模型路线不可确定，请在 DSH 配置支持图片的模型',422);
+     const info=await toolCtx.llm.resolveModelInfo(provider,model,signal);
+     if(!info.inputModalities?.includes('image'))throw new SketchError('VISION_UNAVAILABLE','当前模型不支持图片；结构读取与绘图仍可用',422);
+    }))unregister.push(toolCtx.tools.register(tool));
     this.agent=agent;
     this.edits=edits;
+    this.visual=visual;
    }catch(error){abort.abort();for(const dispose of unregister.reverse())dispose();await disposeAgent?.();toolCtx.logger.warn('Agent 协作初始化失败，基础画板保留：%s',error instanceof Error?error.message:'unknown');}
   });
  }
@@ -129,6 +141,17 @@ export class SketchService extends Service {
   const check=async()=>{signal.throwIfAborted();if(!sameOwner(owner,await this.resolve(owner.sessionId,signal)))throw new SketchError('SESSION_CHANGED','会话已变化',409);};
   await check();
   if(method==='agent/get')return {available:!!this.agent,batch:this.agent?.comments.get(owner)??null};
+  if(method==='visual/get'){const drawing=this.repository.get(owner),focus=this.agent?.getFocus(owner)??null;return this.visual?.status(owner,drawing,focus)??{available:false,all:null,focus:null,selection:focus?{...focus,stale:focus.revision!==drawing?.revision}:null};}
+  if(method==='visual/prepare'){
+   const visual=this.visual,agent=this.agent;
+   if(!visual||!agent)throw new SketchError('VISUAL_UNAVAILABLE','视觉参考暂不可用，仍可使用原生附件',503);
+   const input=visualPrepareSchema.parse(body.payload),drawing=this.repository.get(owner);
+   if(!drawing||drawing.revision!==input.revision)throw new SketchError('REVISION_CONFLICT','草图已变化，请重新准备视觉参考',409);
+   const focus=agent.getFocus(owner),png=validatePng(input.pngBase64);
+   if(!drawing.scene.elements.some(e=>!e.isDeleted))throw new SketchError('EMPTY_SCENE','先画一点内容');
+   const current=async()=>{await this.checkAgent(owner,drawing.revision,signal);if(this.visual!==visual||this.agent!==agent)throw new SketchError('VISUAL_UNAVAILABLE','视觉参考服务已变化，请重试',503);if(input.scope==='focus'&&JSON.stringify(agent.getFocus(owner))!==JSON.stringify(focus))throw new SketchError('FOCUS_STALE','选区重点已变化，请重新准备',409);};
+   await visual.prepare(owner,drawing,input.scope,focus,png,current);await current();return visual.status(owner,drawing,agent.getFocus(owner));
+  }
   if(method==='agent/focus'){
    if(!this.agent)throw new SketchError('AGENT_UNAVAILABLE','Agent 工具暂不可用',503);
    await check();return this.agent.setFocus(owner,body.payload,this.repository.get(owner));

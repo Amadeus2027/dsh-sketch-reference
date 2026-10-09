@@ -32,4 +32,6 @@
 
 修改提议或选区协作变更补跑 `pnpm run test:browser:edits` / `pnpm run test:browser:focus`，检查确认前不写入、旧版本拒绝、原生撤销、丢失响应重试、恢复快照下载及真实原生框选。跨表 receipt 必须有恢复路径，不能声明未实现的事务或跨刷新撤销历史。
 
+视觉参考或图片工具变更补跑 `pnpm run test:browser:visual`，检查原生 image block、版本/选区隔离、缺图/过期拒绝、缓存与丢失确认重试；实际退出重启后检查持久化及关闭画板读取。Windows 与真实模型验收使用 [0.3.2 清单](docs/windows-acceptance-v0.3.2.md)，脚本模型不得作为真实语义或 Token 节省证据。
+
 声称性能收益时使用 `pnpm run test:performance` 与相同场景/视口/采样条件，并保留原始数据与安装包客户端核对。隔离测试覆盖层应复制到安装 profile 内，避免从源码路径解析到其他版本；不得提交登录地址或个人会话。参见 `docs/native-integration.md`。

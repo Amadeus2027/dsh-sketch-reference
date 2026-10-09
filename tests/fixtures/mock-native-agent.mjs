@@ -2,14 +2,16 @@
 // Never load in a real profile. No credentials or model/network requests.
 import {randomUUID} from 'node:crypto';
 import {LlmAdapter} from '@deepseek-ai/dsh-llm';
-export const inject=['llm','tools','sketchReference','webServer','connection'];
+export const inject=['llm','tools','sketchReference','webServer','connection','attachments'];
 export function apply(ctx){
- const calls=[];const previous=ctx.llm.stream;
+ const calls=[];let imageSaves=0;const previous=ctx.llm.stream,saveImage=ctx.attachments.saveImage;
+ ctx.attachments.saveImage=async function(input){imageSaves++;return saveImage.call(this,input);};
+ ctx.effect(()=>()=>{ctx.attachments.saveImage=saveImage;});
  ctx.effect(()=>ctx.webServer.register({kind:'exact',path:'/sketch-reference-test-agent-stats',handler:(req,res)=>{
   const rejection=ctx.connection.requestRejection(req);if(rejection){res.writeHead(rejection);res.end();return;}
   if(req.method==='POST'){ctx.get('sketchReference').events.close();res.writeHead(204);res.end();return;}
   res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});
-  res.end(JSON.stringify({calls,registered:['sketch_read','sketch_annotate'].map(name=>!!ctx.tools.get(name)),eventClients:ctx.get('sketchReference').events.size}));
+  res.end(JSON.stringify({calls,imageSaves,registered:['sketch_read','sketch_annotate'].map(name=>!!ctx.tools.get(name)),eventClients:ctx.get('sketchReference').events.size}));
  }}));
  ctx.llm.stream=async function*(request){
   if(request.system?.startsWith('你是手绘参考板')){yield* previous.call(this,request);return;}
@@ -18,16 +20,22 @@ export function apply(ctx){
   if(index<0)throw new Error('Real model calls disabled by native Agent test fixture');
   const task=request.messages[index].content.filter(c=>c.type==='text').map(c=>c.text).join('');
   const results=request.messages.slice(index+1).filter(m=>m.role==='tool').flatMap(m=>m.content.filter(c=>c.type==='text').map(c=>{try{return JSON.parse(c.text);}catch{return null;}})).filter(Boolean);
-  const call={sessionId:request.sessionId,task,hasImage:request.messages[index].content.some(c=>c.type==='image'),step:results.length,aborted:false,tools:request.tools?.map(t=>t.name)??[]};calls.push(call);
+  const toolImages=request.messages.slice(index+1).filter(m=>m.role==='tool').flatMap(m=>m.content.filter(c=>c.type==='image').map(c=>c.attachment));
+  const call={sessionId:request.sessionId,task,toolImages,hasImage:request.messages[index].content.some(c=>c.type==='image'),step:results.length,aborted:false,tools:request.tools?.map(t=>t.name)??[]};calls.push(call);
   request.signal?.throwIfAborted();request.signal?.addEventListener('abort',()=>{call.aborted=true;},{once:true});
   if(task.includes('FAIL'))throw new Error('Synthetic native model failure');
   if(task.includes('CANCEL'))await new Promise((resolve,reject)=>{const timer=setTimeout(resolve,60000);request.signal.addEventListener('abort',()=>{clearTimeout(timer);reject(request.signal.reason);},{once:true});});
+  if(task.includes('READ_VISUAL')&&request.messages.slice(index+1).some(m=>m.role==='tool'&&m.isError)){yield* text('SKETCH_VISUAL_REFUSED：图片读取失败，未修改草图。');return;}
   const annotated=results.find(r=>r.batchId&&r.message?.includes('批注已保存'));
   if(annotated){yield* text('SKETCH_AGENT_DONE：模拟原生回答与批注已完成。');return;}
   const proposed=results.find(r=>r.proposalId);
   if(proposed){yield* text('SKETCH_EDIT_DONE：修改提议已保存，等待用户确认。');return;}
   const read=results.findLast(r=>typeof r.hasDrawing==='boolean');
   if(!read){yield* tool('sketch_read',{});return;}
+  if(task.includes('READ_VISUAL')){
+   const image=results.find(r=>r.image?.attachmentId);if(!image){yield* tool('sketch_read_image',{revision:read.revision,scope:task.includes('FOCUS_VISUAL')?'focus':'all'});return;}
+   if(!toolImages.length)throw new Error('Native tool image block missing');yield* text(`SKETCH_VISUAL_DONE：${image.scope} 原生图片可见，未修改草图。`);return;
+  }
   if(task.includes('FOCUS_STATE')){yield* text(`SKETCH_FOCUS_STATE：${read.focus?.stale?'stale':read.focus?'current':'none'}`);return;}
   if(!read.hasDrawing){yield* text('SKETCH_NO_DRAWING：当前没有已保存草图。');return;}
   if(task.includes('READ_FOCUS')){

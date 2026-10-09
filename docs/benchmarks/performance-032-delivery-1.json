@@ -1,0 +1,67 @@
+{
+  "label": "032-delivery-1",
+  "date": "2026-10-09T04:39:52.062Z",
+  "viewport": {
+    "width": 1600,
+    "height": 1000
+  },
+  "sceneElements": 250,
+  "framesPerGesture": 50,
+  "realModelCalls": 0,
+  "saveRequestMs": [
+    35.969772999999805,
+    34.22790799999893
+  ],
+  "measurements": [
+    {
+      "gesture": "pan",
+      "elapsedMs": 979.5,
+      "frameGapP95Ms": 16.90000000037253,
+      "backups": 0,
+      "hashes": 0,
+      "longTasks": [],
+      "saveRPCs": 0
+    },
+    {
+      "gesture": "edit",
+      "elapsedMs": 977.8999999985099,
+      "frameGapP95Ms": 21.09999999962747,
+      "backups": 9,
+      "hashes": 0,
+      "longTasks": [],
+      "saveRPCs": 1
+    }
+  ],
+  "clientArtifactVerified": true,
+  "editorRequestsBeforeOpen": 0,
+  "rendererHeapBeforeOpen": 46440592,
+  "firstOpenMs": 359.84183699999994,
+  "editorRequestsAfterOpen": 12,
+  "canvas": {
+    "width": 786,
+    "height": 863,
+    "viewportHeight": 1000
+  },
+  "persistedFinalEditVerified": true,
+  "pngExportMs": [
+    68.21174799999972,
+    56.577360999999655,
+    56.105688999999984
+  ],
+  "pngRasterizations": 1,
+  "reopenMs": [
+    304.63836100000117,
+    237.27002299999913,
+    235.28992300000027,
+    230.0889160000006,
+    242.63165499999923
+  ],
+  "darkThemePropagated": true,
+  "sharedClientResponses": [
+    {
+      "bytes": 1085699
+    }
+  ],
+  "rendererHeapAfterReopens": 84479221,
+  "pluginClientBytes": 138080
+}
