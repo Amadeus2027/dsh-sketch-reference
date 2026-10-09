@@ -2,7 +2,7 @@ import {useCallback,useEffect,useLayoutEffect,useMemo,useRef,useState} from 'rea
 import {Excalidraw,CaptureUpdateAction} from '@excalidraw/excalidraw';
 import type {ExcalidrawImperativeAPI,AppState} from '@excalidraw/excalidraw/types';
 import type {ExcalidrawElement} from '@excalidraw/excalidraw/element/types';
-import {loadSchema,drawingSchema,batchSchema,canonical,contentDigest,digest,type Owner,type Drawing,type Batch,type Route,type CommentStatus,type CommentUpdate} from '../core/contracts.ts';
+import {loadSchema,drawingSchema,batchSchema,analysisModeSchema,canonical,contentDigest,digest,type Owner,type Drawing,type Batch,type Route,type CommentStatus,type CommentUpdate,type AnalysisMode} from '../core/contracts.ts';
 import {withComments,anchorTarget,adviceIsStale} from '../core/comments.ts';
 import {CommentList,CommentOverlay,type CommentActions} from './comments.tsx';
 import {normalize} from './scene.ts';
@@ -54,6 +54,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
  const [missing,setMissing]=useState(()=>new Set(analysisComments?.comments.filter(c=>!anchorTarget(analysisComments.advice.suggestions[c.suggestionIndex]?.anchor,initial?.scene.elements??[])&&analysisComments.advice.suggestions[c.suggestionIndex]?.anchor).map(c=>c.id)));
  const reportMissing=useCallback((ids:Set<string>)=>setMissing(previous=>previous.size===ids.size&&[...ids].every(id=>previous.has(id))?previous:ids),[]);
  const [routeIndex,setRouteIndex]=useState(0),[copy,setCopy]=useState('');
+ const [inputMode,setInputMode]=useState<AnalysisMode>('hybrid');
  const api=useRef<ExcalidrawImperativeAPI|null>(null),mounted=useRef(true),active=useRef<AbortController|null>(null),goalRef=useRef(goal);
  const ready=useCallback((instance:ExcalidrawImperativeAPI)=>{api.current=instance;setEditor(instance);},[]);
  const canvas=useRef<HTMLDivElement>(null),layoutBox=useRef('');
@@ -73,7 +74,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
  },(draft,revision)=>{try{writePending(owner,draft,revision);}catch{if(mounted.current)setBackupUnavailable(true);}}));
  const visual=useVisualReference(owner);
  const edits=useEditProposal(owner),[editUncertain,setEditUncertain]=useState(false);
- const agent=useAgentComments(owner,()=>api.current?normalize(api.current.getSceneElements(),api.current.getAppState() as unknown as Record<string,unknown>):queue.current().scene,()=>goalRef.current,()=>void edits.refresh());
+ const agent=useAgentComments(owner,()=>api.current?normalize(api.current.getSceneElements(),api.current.getAppState() as unknown as Record<string,unknown>,queue.current().scene):queue.current().scene,()=>goalRef.current,()=>void edits.refresh());
  const comments=source==='agent'?agent.batch:analysisComments,displayBatch=source==='agent'?agent.batch:batch,displayStale=source==='agent'?agent.stale:stale;
  const savingComments=source==='agent'?agent.saving||!!agent.pending:commentSaving||!!pendingComment.current;
  useEffect(()=>{setSource(agent.batch?'agent':'analysis');setSelected(null);setCopy('');},[agent.batch?.id]);
@@ -106,7 +107,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   void contentDigest(scene).then(value=>{if(mounted.current&&generation===digestGeneration.current&&currentGoal===goalRef.current){setStale(adviceIsStale(batch,value,currentGoal));agent.setStale(adviceIsStale(agent.batch,value,currentGoal));}});
  };
  applyScene.current=(elements,state)=>{
-  try{const scene=normalize(elements,state);sceneError.current=null;if(queue.update({scene,goal:goalRef.current}))updateStale(scene,goalRef.current);}
+  try{const scene=normalize(elements,state,queue.current().scene);sceneError.current=null;if(queue.update({scene,goal:goalRef.current}))updateStale(scene,goalRef.current);}
   catch(error){sceneError.current=error instanceof Error?error.message:'草图超出限制';if(mounted.current)setMessage(sceneError.current);}
  };
  const updated=(elements:readonly ExcalidrawElement[],appState:AppState)=>{if(!pending)updates.accept(elements,appState as unknown as Record<string,unknown>);};
@@ -120,7 +121,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   setPreparing(true);
   try{await settle();if(!mounted.current)throw new Error('画板已关闭');
    if(queue.revision!==proposal.baseRevision||canonical(queue.current().scene)!==canonical(proposal.before)||goalRef.current!==proposal.goal)throw new Error('草图已变化，请让 Agent 重新读取并提议');
-   const elements=buildEditElements(api.current.getSceneElementsIncludingDeleted(),proposal),scene=normalize(elements,api.current.getAppState() as unknown as Record<string,unknown>);
+   const elements=buildEditElements(api.current.getSceneElementsIncludingDeleted(),proposal),scene=normalize(elements,api.current.getAppState() as unknown as Record<string,unknown>,queue.current().scene);
    validateEditScene(proposal,scene);return {elements,scene,image:await pngExport(scene)};
   }finally{if(mounted.current)setPreparing(false);}
  };
@@ -147,7 +148,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
    await settle();if(!mounted.current)return;if(!queue.revision)throw new Error('请先绘制并保存草图');
    const result=focusResultSchema.parse(await rpc('agent/focus',owner,{revision:queue.revision,elementIds:ids},lifecycle.current.signal));
    await visual.refresh();
-   if(mounted.current)setMessage(`${result.message}${result.count?` 共 ${result.count} 个元素。可回到原生聊天询问此重点。`:''}`);
+   if(mounted.current)setMessage(`${result.message}${result.count?` 共 ${result.count} 个元素。Agent 的结构和图像读取仅限此重点；需要全图时请先清除重点。`:''}`);
   }finally{if(mounted.current)setPreparing(false);}
  });
  const prepareVisual=(scope:'all'|'focus')=>void run(async()=>{
@@ -192,15 +193,15 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
  };
  const actions:CommentActions={select:selectComment,change:changeComment,use:index=>void run(async()=>{if(!batch)return;await settle();setMessage(await insertAdvice(owner,batch.id,index));}),prompt:index=>{setCopy(batch?.advice.suggestions[index]?.actionPrompt??'');setAdviceOpen(true);}};
  const analyze=()=>void run(async()=>{
-  if(busy)return;if(pendingComment.current)throw new Error('请先重试保存或刷新批注');const route=routes[routeIndex];if(!route)throw new Error('请先在 Harness 中登录 DS 或配置支持图片的官方 DS 路线');
+  if(busy)return;if(pendingComment.current)throw new Error('请先重试保存或刷新批注');const route=routes[routeIndex];if(!route)throw new Error('请先在 Harness 中登录 DS 或配置官方 DS 路线');
   const abort=new AbortController();active.current=abort;setBusy(true);setPreparing(true);
   try {
    const scene=capture();if(!scene.elements.length)throw new Error('先画一点内容');
    queue.update({scene,goal:goalRef.current});await settle();
    if(!queue.revision)throw new Error('草图尚未保存');
-   const revision=queue.revision,png=await exportScene(scene),pngBase64=await base64(png);
+   const revision=queue.revision,pngBase64=inputMode==='structure'?'':await base64(await exportScene(scene));
    abort.signal.throwIfAborted();setPreparing(false);
-   const result=batchSchema.parse(await rpc('advice/generate',owner,{revision,pngBase64,route},abort.signal));
+   const result=batchSchema.parse(await rpc('advice/generate',owner,{revision,pngBase64,route,inputMode},abort.signal));
    if(mounted.current){const generation=++digestGeneration.current;setBatch(result);setSource('analysis');setSelected(withComments(result).comments[0]?.id??null);setShowComments(true);setCopy('');setStale(true);const currentGoal=goalRef.current,value=await contentDigest(capture());if(mounted.current&&generation===digestGeneration.current&&currentGoal===goalRef.current)setStale(adviceIsStale(result,value,currentGoal));}
   }catch(e){if(abort.signal.aborted)throw new Error('分析已取消，草图保留');throw e;
   }finally{if(mounted.current){setBusy(false);setPreparing(false);}active.current=null;}
@@ -248,8 +249,9 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
     {visual.state?.available&&<><button disabled={!editor||!!pending||preparing} onClick={()=>prepareVisual('all')}>更新视觉参考</button><button disabled={!editor||!!pending||preparing||!visual.state.selection||visual.state.selection.stale} onClick={()=>prepareVisual('focus')}>更新重点视觉参考</button></>}
     <button disabled={!editor||!!pending||preparing||exporting} onClick={()=>{setMoreOpen(false);void run(async()=>{setExporting(true);try{download(await exportScene(capture()),'sketch-reference.png');}finally{if(mounted.current)setExporting(false);}});}}>导出 PNG</button>
     <button onClick={()=>{setMoreOpen(false);void run(async()=>{downloadScene(capture());});}}>草稿备份</button>
+    <label className="route">分析内容 <select aria-label="分析内容" disabled={busy||preparing} value={inputMode} onChange={e=>setInputMode(analysisModeSchema.parse(e.target.value))}><option value="hybrid">图片与结构（推荐）</option><option value="image">仅图片</option><option value="structure">仅结构（不发送图片）</option></select></label>
     <label className="route">建议模型 <select aria-label="建议模型" disabled={busy} value={routeIndex} onChange={e=>setRouteIndex(Number(e.target.value))}>{!routes.length&&<option>尚未配置官方 DS</option>}{routes.map((r,i)=><option key={r.provider} value={i}>{r.provider==='deepseek-account'?'DS 账户':'DS API'} · Flash</option>)}</select></label>
-    <small>AI 分析可选，会产生模型用量。参考图先加入聊天输入框，由你发送；批注不进入导出图。</small>
+    <small>AI 分析可选，会产生模型用量。纯结构适用于文字、形状和连线，不识别自由笔迹内容。参考图先加入聊天输入框，由你发送；批注不进入导出图。</small>
    </div>}</div>
   </div></footer>
  </main>;

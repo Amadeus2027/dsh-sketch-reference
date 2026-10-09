@@ -1,4 +1,4 @@
-import {it,expect} from 'vitest';
+import {it,expect,vi} from 'vitest';
 import {randomUUID} from 'node:crypto';
 import type {KvTable} from '@deepseek-ai/dsh-storage-domain';
 import type {SessionHeader} from '@deepseek-ai/dsh-session';
@@ -7,17 +7,18 @@ import {createSketchTools} from '../src/host/tools.ts';
 import {CommentRepository} from '../src/host/comment-repository.ts';
 import {agentBatchSchema,agentReadSchema,agentAnnotateSchema,AGENT_LIMITS,type AgentBatch} from '../src/core/agent.ts';
 import {ownerKey,contentDigest,canonical,SketchError,drawingSchema,type Owner,type Drawing} from '../src/core/contracts.ts';
+import type {VisualRepository} from '../src/host/visual-repository.ts';
 
 const owner:Owner={sessionId:'session',createdAt:'123',cwd:'/workspace'};
 const session={id:owner.sessionId,createdAt:123,cwd:owner.cwd} as unknown as SessionHeader;
-async function setup(){
+async function setup(visual?:VisualRepository){
  const scene:Drawing['scene']={elements:[{id:'rect',type:'rectangle',x:20,y:40,width:100,height:80,customData:{secret:'NO_LEAK'}},{id:'text',type:'text',x:20,y:40,width:90,height:25,text:'三角形内角和',containerId:'rect'},{id:'free',type:'freedraw',x:300,y:30,width:50,height:50,points:[[0,0],[50,50]]},{id:'deleted',type:'ellipse',x:0,y:0,width:80,height:80,isDeleted:true}],appState:{viewBackgroundColor:'#fff'},files:{}};
  let drawing:Drawing|null={formatVersion:1,owner,revision:randomUUID(),mutationId:randomUUID(),sceneDigest:'scene',contentDigest:await contentDigest(scene),scene,goal:'解释几何关系',updatedAt:new Date().toISOString()};
  let liveOwner=owner,notifications=0,writes=0;
  const rows=new Map<string,AgentBatch>();
  const table={get:(k:string)=>rows.get(k),put:async(k:string,v:AgentBatch)=>{rows.set(k,structuredClone(v));writes++;},update:async(k:string,f:(v:AgentBatch)=>AgentBatch)=>{const v=f(rows.get(k)!);rows.set(k,structuredClone(v));writes++;return v;},get size(){return rows.size;}} as unknown as KvTable<string,AgentBatch>;
  const check=async(o:Owner,revision:string|null,signal:AbortSignal)=>{signal.throwIfAborted();if(ownerKey(o)!==ownerKey(liveOwner))throw new SketchError('SESSION_CHANGED','changed');if(revision&&revision!==drawing?.revision)throw new SketchError('REVISION_CONFLICT','changed');};
- const agent=new SketchAgent({snapshot:async(s,signal)=>{const o={sessionId:String(s.id),createdAt:String(s.createdAt),cwd:s.cwd??''};await check(o,null,signal);return {owner:o,drawing};},check,changed:()=>{notifications++;}},new CommentRepository(table));
+ const agent=new SketchAgent({snapshot:async(s,signal)=>{const o={sessionId:String(s.id),createdAt:String(s.createdAt),cwd:s.cwd??''};await check(o,null,signal);return {owner:o,drawing};},check,changed:()=>{notifications++;}},new CommentRepository(table),undefined,visual);
  const input=()=>({revision:drawing!.revision,expectedBatchId:agent.comments.get(owner)?.id??null,summary:'几何解释',comments:[{title:'内角和',reason:'欧氏平面三角形的内角和为 180°。',anchor:{type:'element',elementId:'rect'}}]});
  const signal=new AbortController().signal;
  return {agent,rows,input,signal,read:()=>agent.read(session,{},signal),drawing:()=>drawing!,setDrawing:(v:Drawing|null)=>{drawing=v;},setOwner:(o:Owner)=>{liveOwner=o;},stats:()=>({notifications,writes})};
@@ -126,14 +127,16 @@ it('reads explicitly set native selection and its bound labels without changing 
  expect(result).toMatchObject({scope:'focus',totalElements:2,sceneTotalElements:3,focus:{count:2,stale:false},elements:[{id:'rect'},{id:'text',text:'三角形内角和'}]});
  expect(result).toMatchObject({elements:[{editRestriction:'bound'},{editRestriction:'bound'}]});
  expect(JSON.stringify(result)).not.toContain('NO_LEAK');expect(JSON.stringify(result)).not.toContain('"id":"free"');
- expect(await s.read()).toMatchObject({scope:'all',totalElements:3,focus:{count:2}});expect(s.agent.measurements.at(-1)?.cacheHit).toBe(true);expect(canonical(s.drawing())).toBe(before);expect(s.stats().writes).toBe(0);
+ expect(await s.read()).toMatchObject({scope:'focus',totalElements:2,focus:{count:2}});expect(canonical(s.drawing())).toBe(before);expect(s.stats().writes).toBe(0);
+ s.agent.setFocus(owner,{revision:s.drawing().revision,elementIds:[]},s.drawing());
+ expect(await s.read()).toMatchObject({scope:'all',totalElements:3});expect(s.agent.measurements.at(-1)?.cacheHit).toBe(true);
 });
 it('rejects stale, deleted, excessive and wrong-owner focus; clearing/restart cannot silently bind a different element',async()=>{
  const s=await setup(),revision=s.drawing().revision;
  for(const input of [{revision,elementIds:['deleted']},{revision,elementIds:['rect','rect']},{revision,elementIds:Array(51).fill('rect')},{revision:crypto.randomUUID(),elementIds:['rect']}])expect(()=>s.agent.setFocus(owner,input,s.drawing())).toThrow();
  expect(()=>s.agent.setFocus({...owner,cwd:'/else'},{revision,elementIds:['rect']},s.drawing())).toThrow();
  s.agent.setFocus(owner,{revision,elementIds:['free']},s.drawing());s.setDrawing({...s.drawing(),revision:crypto.randomUUID()});
- expect(await s.read()).toMatchObject({focus:{stale:true}});await expect(s.agent.read(session,{scope:'focus',revision:s.drawing().revision},s.signal)).rejects.toMatchObject({code:'FOCUS_STALE'});
+ await expect(s.read()).rejects.toMatchObject({code:'FOCUS_STALE'});await expect(s.agent.read(session,{scope:'focus',revision:s.drawing().revision},s.signal)).rejects.toMatchObject({code:'FOCUS_STALE'});
  s.agent.setFocus(owner,{revision:s.drawing().revision,elementIds:[]},s.drawing());expect(await s.read()).toMatchObject({focus:null});
  s.agent.setFocus(owner,{revision:s.drawing().revision,elementIds:['rect']},s.drawing());s.agent.clear();expect(await s.read()).toMatchObject({focus:null});
  expect(agentReadSchema.safeParse({scope:'focus'}).success).toBe(false);expect(agentReadSchema.safeParse({scope:'focus',revision,mode:'elements',elementIds:['rect']}).success).toBe(false);
@@ -143,4 +146,27 @@ it('paginates focused data within exact byte limits without polluting the full-s
  s.agent.setFocus(owner,{revision:drawing.revision,elementIds:drawing.scene.elements.map(e=>e.id)},drawing);const visited:string[]=[];let offset=0;
  for(let page=0;page<50;page++){const result=await s.agent.read(session,{scope:'focus',revision:drawing.revision,offset},s.signal) as Record<string,unknown>;expect(Buffer.byteLength(JSON.stringify(result))).toBeLessThanOrEqual(AGENT_LIMITS.summaryBytes);const elements=result.elements as {id:string}[];expect(elements.length).toBeGreaterThan(0);visited.push(...elements.map(e=>e.id));if(!result.truncated)break;expect(Number(result.nextOffset)).toBeGreaterThan(offset);offset=Number(result.nextOffset);}
  expect(visited).toEqual(drawing.scene.elements.map(e=>e.id));expect(s.stats().writes).toBe(0);
+});
+it('does not leak outside elements or annotation text through all/default/ID reads while focus is set',async()=>{
+ const s=await setup(),revision=s.drawing().revision;
+ await s.agent.annotate(session,{...s.input(),comments:[s.input().comments[0],{title:'OUTSIDE_COMMENT',reason:'OUTSIDE_REASON',anchor:{type:'element',elementId:'free'}}]},'before-focus',s.signal);
+ s.agent.setFocus(owner,{revision,elementIds:['rect']},s.drawing());
+ for(const input of [{},{scope:'all'},{scope:'all',mode:'elements',revision}]){
+  const result=await s.agent.read(session,input,s.signal);
+  expect(result).toMatchObject({scope:'focus',totalElements:2});
+  expect(JSON.stringify(result)).not.toMatch(/OUTSIDE_|"id":"free"/);
+ }
+ await expect(s.agent.read(session,{scope:'all',mode:'elements',revision,elementIds:['free']},s.signal)).rejects.toMatchObject({code:'ELEMENT_NOT_FOUND'});
+ await expect(s.agent.annotate(session,{...s.input(),comments:[{title:'outside',reason:'outside',anchor:{type:'element',elementId:'free'}}]},'outside-focus',s.signal)).rejects.toMatchObject({code:'FOCUS_SCOPE'});
+ expect(s.stats().writes).toBe(1);
+});
+it('never substitutes a full image when an active focus image is missing or stale',async()=>{
+ const read=vi.fn(async(..._args:Parameters<VisualRepository['read']>)=>{throw new SketchError('VISUAL_MISSING','focus image missing');});
+ const s=await setup({read} as unknown as VisualRepository),revision=s.drawing().revision;
+ s.agent.setFocus(owner,{revision,elementIds:['rect']},s.drawing());
+ await expect(s.agent.readImage(session,{revision,scope:'all'},s.signal)).rejects.toMatchObject({code:'VISUAL_MISSING'});
+ expect(read.mock.calls[0]?.[2]).toBe('focus');
+ s.agent.setFocus(owner,{revision,elementIds:[]},s.drawing());
+ await expect(s.agent.readImage(session,{revision,scope:'all'},s.signal)).rejects.toThrow();
+ expect(read.mock.calls[1]?.[2]).toBe('all');
 });

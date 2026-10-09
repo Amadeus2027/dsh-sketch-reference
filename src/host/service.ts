@@ -124,7 +124,7 @@ export class SketchService extends Service {
   const routes:Route[]=[];
   for(const provider of ['deepseek-account','deepseek-official'] as const){
    if(!providers.includes(provider))continue;
-   try{const models=await this.ctx.llm.listModels(provider);if(models.some(m=>m.id==='deepseek-flash' && m.inputModalities?.includes('image')))routes.push({provider,model:'deepseek-flash'});}
+   try{const models=await this.ctx.llm.listModels(provider);if(models.some(m=>m.id==='deepseek-flash'))routes.push({provider,model:'deepseek-flash'});}
    catch(error){this.ctx.logger.warn('手绘参考板：官方 DS 路线暂不可用：%s',provider);}
   }
   return routes;
@@ -176,7 +176,7 @@ export class SketchService extends Service {
    const drawing=this.repository.get(owner);
    if(!drawing || drawing.revision!==input.revision)throw new SketchError('REVISION_CONFLICT','草图已变化，请重新获取建议',409);
    if(!drawing.scene.elements.some(e=>!e.isDeleted))throw new SketchError('EMPTY_SCENE','先画一点内容');
-   const png=validatePng(input.pngBase64);
+   const png=input.inputMode==='structure'?new Uint8Array():validatePng(input.pngBase64);
    if(this.busy.has(key))throw new SketchError('MODEL_BUSY','当前草图已有分析任务',409);
    if(this.busy.size>=2)throw new SketchError('MODEL_BUSY','分析任务较多，请稍后重试',429);
    const recent=(this.times.get(key)??[]).filter(t=>Date.now()-t<60000);

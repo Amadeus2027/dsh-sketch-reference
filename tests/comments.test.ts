@@ -18,6 +18,24 @@ function store(){
 function change(value:Batch,status:CommentUpdate['status']='resolved'):CommentUpdate{const current=withComments(value);return {batchId:current.id,commentId:current.comments[0]!.id,expectedRevision:current.commentRevision,mutationId:crypto.randomUUID(),status};}
 
 describe('model anchors and bounded scene input',()=>{
+ it('preserves signed Excalidraw path points so a closed triangle is not reduced to three ambiguous bounding boxes',()=>{
+  const triangle={...scene,elements:[{id:'left',type:'line' as const,x:100,y:0,width:100,height:100,points:[[0,0],[-100,100]] as [number,number][]},{id:'right',type:'line' as const,x:100,y:0,width:100,height:100,points:[[0,0],[100,100]] as [number,number][]},{id:'base',type:'line' as const,x:0,y:100,width:200,height:0,points:[[0,0],[200,0]] as [number,number][]}]};
+  const result=describeScene(triangle);
+  expect(result.elements[0]?.points?.[1]).toEqual([-100,100]);
+  const endpoints=result.elements.flatMap(e=>e.scenePoints!.map(([x,y])=>`${x},${y}`));
+  expect([...new Set(endpoints)].sort()).toEqual(['0,100','100,0','200,100']);
+  for(const endpoint of new Set(endpoints))expect(endpoints.filter(p=>p===endpoint)).toHaveLength(2);
+ });
+ it('does not fabricate absolute points by rotating around the line origin',()=>{
+  const result=describeScene({...scene,elements:[{id:'rotated',type:'line',x:100,y:200,width:100,height:0,angle:Math.PI/2,points:[[0,0],[100,0]]}]});
+  expect(result.elements[0]).not.toHaveProperty('scenePoints');expect(result.elements[0]?.scenePointsUnavailable).toBe('rotated');expect(result.elements[0]?.points).toEqual([[0,0],[100,0]]);
+ });
+ it('bounds path point payloads and marks truncation without sending freehand strokes or private metadata',()=>{
+  const points=Array.from({length:1000},(_,i)=>[i,-i] as [number,number]);
+  const result=describeScene({...scene,elements:[{id:'path',type:'arrow',x:0,y:0,width:999,height:999,points,customData:{private:'NO_LEAK'}},{id:'stroke',type:'freedraw',x:0,y:0,width:999,height:999,points}]});
+  expect(result.elements[0]?.points).toHaveLength(32);expect(result.elements[0]?.pointsTruncated).toBe(true);
+  expect(result.elements[1]).not.toHaveProperty('points');expect(JSON.stringify(result)).not.toContain('NO_LEAK');
+ });
  it('retains an ID supplied for this analysis',()=>{expect(parseAdvice(JSON.stringify(advice),describeScene(scene).elements)).toEqual(advice);});
  it.each([{type:'element',elementId:'invented'},{type:'element',elementId:'deleted'},{type:'region',x:1e12,y:0},null,{type:'element',elementId:'navigation',execute:'code'}])('downgrades an invalid anchor to a global suggestion: %j',anchor=>{
   const parsed=parseAdvice(JSON.stringify({...advice,suggestions:[{...advice.suggestions[0],anchor}]}),describeScene({...scene,elements:[...scene.elements,{...scene.elements[0]!,id:'deleted',isDeleted:true}]}).elements);

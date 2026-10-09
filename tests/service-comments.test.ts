@@ -17,11 +17,18 @@ async function setup(mode:'normal'|'changed'|'unavailable'|'waiting'='normal'){
  }}}};
  // Exercise the actual RPC admission path with isolated host dependencies.
  const method=(SketchService.prototype as unknown as {operation:(method:string,body:unknown,signal:AbortSignal)=>Promise<unknown>}).operation;
- const call=(signal=new AbortController().signal)=>method.call(carrier,'advice/generate',{protocolVersion:1,requestId:randomUUID(),owner,payload:{revision:drawing.revision,pngBase64:png,route:{provider:'deepseek-account',model:'deepseek-flash'}}},signal);
+ const call=(signal=new AbortController().signal,inputMode='hybrid',pngBase64=png)=>method.call(carrier,'advice/generate',{protocolVersion:1,requestId:randomUUID(),owner,payload:{revision:drawing.revision,pngBase64,route:{provider:'deepseek-account',model:'deepseek-flash'},inputMode}},signal);
  return {drawing,carrier,call,read:()=>({current,stored,calls})};
 }
 it('binds the result to the saved analysis revision and defaults to hybrid input',async()=>{
  const s=await setup();await expect(s.call()).resolves.toMatchObject({analysisRevision:s.drawing.revision,contentDigest:s.drawing.contentDigest,inputMode:'hybrid'});expect(s.read().calls).toBe(1);
+});
+it('accepts structure analysis without a PNG while rejecting an empty PNG in image mode',async()=>{
+ const s=await setup();s.carrier.ctx.llm.resolveModelInfo=async()=>({inputModalities:['text']});
+ s.carrier.ctx.attachments.saveImage=async()=>{throw new Error('structure mode must not register images');};
+ await expect(s.call(undefined,'structure','')).resolves.toMatchObject({inputMode:'structure'});
+ await expect(s.call(undefined,'image','')).rejects.toMatchObject({code:'INVALID_PNG'});
+ expect(s.read().calls).toBe(1);
 });
 it('rejects a result when the saved scene changes during generation',async()=>{
  const s=await setup('changed');await expect(s.call()).rejects.toMatchObject({code:'REVISION_CONFLICT'});expect(s.read().stored).toBeNull();expect(s.read().current.scene).toEqual(scene);expect(s.carrier.busy.size).toBe(0);

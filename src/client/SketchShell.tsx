@@ -1,4 +1,4 @@
-import {useEffect,useState} from 'react';
+import {useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {Button} from '@deepseek-ai/dsh-client-ui-primitives';
 import type {Context} from '@deepseek-ai/cordis';
 import type {ConversationSlotProps} from '@deepseek-ai/dsh-client-ui-conversation/client';
@@ -9,6 +9,7 @@ import {SketchFrame} from './SketchFrame.tsx';
 import {ConversationWidthControls} from './ConversationWidthControls.tsx';
 import original from './ConversationRoot.module.css';
 import css from './SketchShell.module.css';
+import {clipHostViewport} from './host-viewport.ts';
 interface PanelProps {
  useSketchPanel:SnapshotSelectorHook<Readonly<Record<string,boolean>>>;
  setPanel:(id:string,value:boolean)=>void;requestPanelClose:(id:string)=>void;
@@ -20,6 +21,8 @@ export function SketchButton(props:PropsRuntime<'conversation.input.right'>&Pane
 }
 export function SketchShell({ctx,props}:{ctx:Context;props:Omit<ConversationSlotProps,'renderSlot'|'__renders'>&PropsRenderSlots<'sketch-reference.header'>&PanelProps&{useHostAppearance:SnapshotSelectorHook<Appearance>}}) {
  const open=props.useSketchPanel(s=>!!props.sessionId&&!!s[props.sessionId]);
+ const shell=useRef<HTMLDivElement>(null);
+ useLayoutEffect(()=>{if(open&&shell.current)return clipHostViewport(shell.current);},[open]);
  const appearance=props.useHostAppearance(s=>s);
  const sessions=props.useSessions(s=>({ids:s.ids,phase:s.phase}),(a,b)=>a.ids===b.ids&&a.phase===b.phase);
  useEffect(()=>{if(sessions.phase==='ready')props.prunePanels(sessions.ids);},[sessions,props.prunePanels]);
@@ -34,7 +37,7 @@ export function SketchShell({ctx,props}:{ctx:Context;props:Omit<ConversationSlot
  const settling=props.sessionId!==undefined && ((blank && session?.openState==='loading' && summaryBlank!==true) || pending);
  const hero=props.sessionId===undefined || (blank && (session?.openState==='open' || summaryBlank===true));
  const phase=settling?'settling':hero?'hero':'active';
- return <div className={css.shell} data-sketch-open={open}>
+ return <div ref={shell} className={css.shell} data-sketch-open={open}>
   <div className={`${original.root} ${css.chat}`} data-phase={phase} style={open?{flexBasis:`${ratio}%`}:undefined}>
    {props.renderSlot(HEADER,{})}
    {props.renderFactorySlot('conversation.content',{variant:'main',phase,hero},{slots:{widthControls:ConversationWidthControls}})}
