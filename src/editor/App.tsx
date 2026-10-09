@@ -10,6 +10,7 @@ import {useAgentComments} from './agent-comments.ts';
 import {useEditProposal,EditPanel,type EditPreview} from './edit-proposals.tsx';
 import {buildEditElements} from './edit-scene.ts';
 import {validateEditScene,type EditProposal} from '../core/edits.ts';
+import {focusResultSchema} from '../core/agent.ts';
 import {rpc} from './rpc.ts';
 import {Autosave} from './autosave.ts';
 import {SceneUpdates} from './scene-updates.ts';
@@ -137,6 +138,15 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
    setEditUncertain(false);updateStale(saved.scene,saved.goal);setMessage('修改已应用并保存，可用画板原生撤销。');
   }finally{if(mounted.current)setPreparing(false);}
  };
+ const focusSelection=(clear=false)=>void run(async()=>{
+  if(!api.current||preparing)throw new Error('画板尚未就绪');setMoreOpen(false);setPreparing(true);
+  try{const ids=clear?[]:Object.entries(api.current.getAppState().selectedElementIds).filter(([,chosen])=>chosen).map(([id])=>id);
+   if(!clear&&!ids.length)throw new Error('请先使用画板原生选择或框选工具选中图形');
+   await settle();if(!mounted.current)return;if(!queue.revision)throw new Error('请先绘制并保存草图');
+   const result=focusResultSchema.parse(await rpc('agent/focus',owner,{revision:queue.revision,elementIds:ids},lifecycle.current.signal));
+   if(mounted.current)setMessage(`${result.message}${result.count?` 共 ${result.count} 个元素。可回到原生聊天询问此重点。`:''}`);
+  }finally{if(mounted.current)setPreparing(false);}
+ });
  const run=async(task:()=>Promise<void>)=>{setMessage('');try{await task();}catch(e){if(mounted.current)setMessage(e instanceof Error?e.message:'操作失败');}};
  const saveComment=async(input:CommentUpdate)=>{
   setCommentSaving(true);setCommentError(null);
@@ -219,6 +229,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
    <button disabled={!editor||!!pending||busy||preparing||queue.state==='conflict'||commentSaving} onClick={analyze}>{batch?'重新分析草图':'AI 分析草图'}</button>
    <button className="primary" disabled={!editor||!!pending||preparing} title="加入原生输入框，由你确认发送" onClick={()=>void run(async()=>{setPreparing(true);try{const scene=capture();queue.update({scene,goal:goalRef.current});await settle();const png=await exportScene(scene);const result=await stageImage(owner,png,await digest(scene));setMessage(stale&&batch?'参考图已更新；输入框中若有旧建议，请重新获取后替换。'+result:result);}finally{if(mounted.current)setPreparing(false);}})}>作为参考发送</button>
    <div className="more"><button aria-expanded={moreOpen} aria-label="更多操作" onClick={()=>setMoreOpen(v=>!v)}>···</button>{moreOpen&&<div className="moreMenu" role="group" aria-label="导出与模型选项">
+    {agent.available&&<><button disabled={!editor||!!pending||preparing} onClick={()=>focusSelection()}>选区作为重点</button><button disabled={!editor||!!pending||preparing} onClick={()=>focusSelection(true)}>清除选区重点</button></>}
     <button disabled={!editor||!!pending||preparing||exporting} onClick={()=>{setMoreOpen(false);void run(async()=>{setExporting(true);try{download(await exportScene(capture()),'sketch-reference.png');}finally{if(mounted.current)setExporting(false);}});}}>导出 PNG</button>
     <button onClick={()=>{setMoreOpen(false);void run(async()=>{downloadScene(capture());});}}>草稿备份</button>
     <label className="route">建议模型 <select aria-label="建议模型" disabled={busy} value={routeIndex} onChange={e=>setRouteIndex(Number(e.target.value))}>{!routes.length&&<option>尚未配置官方 DS</option>}{routes.map((r,i)=><option key={r.provider} value={i}>{r.provider==='deepseek-account'?'DS 账户':'DS API'} · Flash</option>)}</select></label>

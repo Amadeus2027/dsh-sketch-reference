@@ -56,7 +56,8 @@
     "test:browser:native": "node tests/browser-native.mjs",
     "test:performance": "node tests/browser-performance.mjs",
     "test:browser:agent": "node tests/browser-agent.mjs",
-    "test:browser:edits": "node tests/browser-edits.mjs"
+    "test:browser:edits": "node tests/browser-edits.mjs",
+    "test:browser:focus": "node tests/browser-focus.mjs"
   },
   "engines": {
     "node": "^22.19.0 || >=24.0.0"

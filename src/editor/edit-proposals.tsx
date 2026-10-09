@@ -6,20 +6,21 @@ import type {ExcalidrawElement} from '@excalidraw/excalidraw/element/types';
 import {rpc} from './rpc.ts';
 import {downloadScene} from './export.ts';
 
-const stateSchema=z.object({available:z.boolean(),proposal:proposalSchema.nullable()}).strict();
+const stateSchema=z.object({available:z.boolean(),unchanged:z.boolean(),proposal:proposalSchema.nullable()}).strict();
 const shapeNames={rectangle:'矩形',ellipse:'椭圆',diamond:'菱形',text:'文字',arrow:'箭头'};
 export function useEditProposal(owner:Owner){
  const [proposal,setProposal]=useState<EditProposal|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
  const abort=useRef(new AbortController()),mounted=useRef(true),epoch=useRef(0),flight=useRef<Promise<void>|null>(null),again=useRef(false);
+ const known=useRef<EditProposal|null>(null);
  const refresh=useCallback(()=>{
   if(flight.current){again.current=true;return flight.current;}
   const task=(async()=>{do{again.current=false;const token=epoch.current;let next:z.infer<typeof stateSchema>;
-   try{next=stateSchema.parse(await rpc('proposal/get',owner,null,abort.current.signal));}catch(e){if(mounted.current&&token!==epoch.current){again.current=true;continue;}throw e;}
-   if(!mounted.current)return;if(token!==epoch.current){again.current=true;continue;}if(next.available){setProposal(next.proposal);setError('');}
+   try{next=stateSchema.parse(await rpc('proposal/get',owner,known.current?{knownId:known.current.id,knownStatus:known.current.status}:null,abort.current.signal));}catch(e){if(mounted.current&&token!==epoch.current){again.current=true;continue;}throw e;}
+   if(!mounted.current)return;if(token!==epoch.current){again.current=true;continue;}if(next.available){if(!next.unchanged){known.current=next.proposal;setProposal(next.proposal);}setError('');}
   }while(again.current&&mounted.current);})().catch(e=>{if(mounted.current)setError(e instanceof Error?e.message:'修改提议读取失败');}).finally(()=>{flight.current=null;});flight.current=task;return task;
  },[owner]);
  useEffect(()=>{mounted.current=true;void refresh();return()=>{mounted.current=false;abort.current.abort();};},[refresh]);
- const dismiss=async()=>{if(!proposal||busy)return;epoch.current++;setBusy(true);try{const next=proposalSchema.parse(await rpc('proposal/dismiss',owner,{proposalId:proposal.id},abort.current.signal));if(mounted.current){epoch.current++;setProposal(next);setError('');}}catch(e){if(mounted.current)setError(e instanceof Error?e.message:'忽略失败');}finally{if(mounted.current)setBusy(false);}};
+ const dismiss=async()=>{if(!proposal||busy)return;epoch.current++;setBusy(true);try{const next=proposalSchema.parse(await rpc('proposal/dismiss',owner,{proposalId:proposal.id},abort.current.signal));if(mounted.current){epoch.current++;known.current=next;setProposal(next);setError('');}}catch(e){if(mounted.current)setError(e instanceof Error?e.message:'忽略失败');}finally{if(mounted.current)setBusy(false);}};
  return {proposal,error,busy,refresh,dismiss,invalidate:()=>{epoch.current++;}};
 }
 export interface EditPreview {scene:Drawing['scene'];elements:readonly ExcalidrawElement[];image:Blob}

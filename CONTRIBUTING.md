@@ -30,4 +30,6 @@
 
 原生 Agent 工具或批注同步改动补跑 `pnpm run test:browser:agent`，覆盖失败刷新、响应丢失重试、读取/写入交错和通知断线。模型夹具仅用于隔离 profile，不能代替真实模型验收。
 
+修改提议或选区协作变更补跑 `pnpm run test:browser:edits` / `pnpm run test:browser:focus`，检查确认前不写入、旧版本拒绝、原生撤销、丢失响应重试、恢复快照下载及真实原生框选。跨表 receipt 必须有恢复路径，不能声明未实现的事务或跨刷新撤销历史。
+
 声称性能收益时使用 `pnpm run test:performance` 与相同场景/视口/采样条件，并保留原始数据与安装包客户端核对。隔离测试覆盖层应复制到安装 profile 内，避免从源码路径解析到其他版本；不得提交登录地址或个人会话。参见 `docs/native-integration.md`。

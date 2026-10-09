@@ -129,7 +129,11 @@ export class SketchService extends Service {
   const check=async()=>{signal.throwIfAborted();if(!sameOwner(owner,await this.resolve(owner.sessionId,signal)))throw new SketchError('SESSION_CHANGED','会话已变化',409);};
   await check();
   if(method==='agent/get')return {available:!!this.agent,batch:this.agent?.comments.get(owner)??null};
-  if(method==='proposal/get')return {available:!!this.edits,proposal:this.edits?.get(owner)??null};
+  if(method==='agent/focus'){
+   if(!this.agent)throw new SketchError('AGENT_UNAVAILABLE','Agent 工具暂不可用',503);
+   await check();return this.agent.setFocus(owner,body.payload,this.repository.get(owner));
+  }
+  if(method==='proposal/get')return this.edits?.read(owner,body.payload)??{available:false,unchanged:false,proposal:null};
   if(method==='proposal/dismiss'||method==='proposal/apply'){
    if(!this.edits)throw new SketchError('AGENT_UNAVAILABLE','修改提议暂不可用，基础画板保留',503);
    const result=method==='proposal/dismiss'?await this.edits.dismiss(owner,proposalActionSchema.parse(body.payload).proposalId,check):await (async()=>{const input=applyEditSchema.parse(body.payload);return this.edits!.apply(owner,input.proposalId,input.scene,check);})();

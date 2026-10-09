@@ -32,6 +32,11 @@ it('proposals persist without changing drawings and enforce session/revision/CAS
  await expect(s.edits.propose(owner,{...s.input(),revision:randomUUID()},'stale',s.check)).rejects.toMatchObject({code:'REVISION_CONFLICT'});
  expect(new EditRepository(s.store.table,s.drawings).get(owner)?.id).toBe(p.id);expect(s.edits.get({...owner,cwd:'/else'})).toBeNull();expect(s.edits.get({...owner,createdAt:'2'})).toBeNull();
 });
+it('returns a tiny unchanged response rather than retransmitting the recovery snapshot on notifications',async()=>{
+ const s=await setup(),p=await s.proposal();expect(s.edits.read(owner,null).proposal?.id).toBe(p.id);
+ const response=s.edits.read(owner,{knownId:p.id,knownStatus:p.status});expect(response).toEqual({available:true,unchanged:true,proposal:null});expect(Buffer.byteLength(JSON.stringify(response))).toBeLessThan(100);
+ await s.edits.dismiss(owner,p.id,s.check);expect(s.edits.read(owner,{knownId:p.id,knownStatus:'pending'})).toMatchObject({unchanged:false,proposal:{status:'dismissed'}});
+});
 it('exposes only a proposal tool, binds its owner to the official Agent execution context, and supplies no apply tool',async()=>{
  const s=await setup(),agent=new SketchAgent({snapshot:async(_session,signal)=>{signal.throwIfAborted();return {owner,drawing:s.drawings.get(owner)};},check:async(_owner,_revision,signal)=>signal.throwIfAborted(),changed:()=>{}},new CommentRepository(memory<AgentBatch>().table),s.edits);
  const tools=createSketchTools(agent,new AbortController().signal,p=>p);expect(tools.map(t=>t.name)).toEqual(['sketch_read','sketch_annotate','sketch_propose_edit']);
@@ -47,6 +52,8 @@ it('validates actual deltas and refuses unrelated content, forged creates and ar
  expect(proposeEditSchema.safeParse({...s.input(),scene}).success).toBe(false);expect(proposeEditSchema.safeParse({...s.input(),operations:[{op:'move',elementId:'r',x:1,y:2,execute:'code'}]}).success).toBe(false);
  const c=await s.edits.propose(owner,s.input([{op:'create',type:'rectangle',x:0,y:0,width:40,height:30}]),'create',s.check);
  const created={...c.before,elements:[...c.before.elements,{id:createdElementId(c.id,0),type:'rectangle' as const,x:0,y:0,width:40,height:30}]};expect(()=>validateEditScene(c,created)).not.toThrow();
+ created.elements.at(-1)!.frameId='unproposed-frame';expect(()=>validateEditScene(c,created)).toThrow();delete created.elements.at(-1)!.frameId;
+ created.elements.at(-1)!.roundness={type:3};expect(()=>validateEditScene(c,created)).toThrow();delete created.elements.at(-1)!.roundness;
  created.elements.at(-1)!.customData={code:'never'};expect(()=>validateEditScene(c,created)).toThrow();
 });
 it('applies through drawing CAS and safely retries a lost acknowledgement without a second drawing write',async()=>{
@@ -55,6 +62,12 @@ it('applies through drawing CAS and safely retries a lost acknowledgement withou
  expect((await s.edits.apply(owner,p.id,scene,s.check)).revision).toBe(saved.revision);
  await s.drawings.save(owner,{expectedRevision:saved.revision,mutationId:randomUUID(),scene:p.before,goal:p.goal},s.check);
  await expect(s.edits.apply(owner,p.id,scene,s.check)).rejects.toMatchObject({code:'PROPOSAL_CHANGED'});expect(s.drawings.get(owner)?.scene).toEqual(p.before);
+});
+it('deduplicates no-op confirmations and simultaneous confirmations of the same proposal',async()=>{
+ const s=await setup(),noop=await s.edits.propose(owner,s.input([{op:'move',elementId:'r',x:10,y:20}]),'noop',s.check);
+ const first=await s.edits.apply(owner,noop.id,noop.before,s.check);expect(first.revision).toBe(s.drawing.revision);expect((await s.edits.apply(owner,noop.id,noop.before,s.check)).revision).toBe(first.revision);
+ const p=await s.edits.propose(owner,s.input(),'next',s.check),scene=structuredClone(p.before);Object.assign(scene.elements[0]!,{x:60,y:80});
+ const results=await Promise.all([s.edits.apply(owner,p.id,scene,s.check),s.edits.apply(owner,p.id,scene,s.check)]);expect(results[0]!.revision).toBe(results[1]!.revision);
 });
 it('recovers a drawing commit when subsequent proposal metadata persistence fails',async()=>{
  const s=await setup(),p=await s.proposal(),scene=structuredClone(p.before);Object.assign(scene.elements[0]!,{x:60,y:80});

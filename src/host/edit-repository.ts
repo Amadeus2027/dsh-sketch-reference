@@ -1,7 +1,7 @@
 import {randomUUID} from 'node:crypto';
 import type {KvTable} from '@deepseek-ai/dsh-storage-domain';
 import {digest,ownerKey,sameOwner,SketchError,type Owner,type Drawing} from '../core/contracts.ts';
-import {EDIT_LIMITS,proposeEditSchema,validateOperations,validateEditScene,type EditProposal} from '../core/edits.ts';
+import {EDIT_LIMITS,proposeEditSchema,proposalReadSchema,validateOperations,validateEditScene,type EditProposal} from '../core/edits.ts';
 import type {Repository} from './repository.ts';
 
 /** One bounded proposal per owner. Proposal writes never modify drawings. */
@@ -15,6 +15,11 @@ export class EditRepository {
   return value.status==='pending'&&current?.mutationId===value.id?{...value,status:'applied' as const,resultRevision:current.revision,applicationDigest:current.sceneDigest}:value;
  }
  private write<T>(run:()=>Promise<T>):Promise<T>{const task=this.tail.then(run);this.tail=task.catch(()=>{});return task;}
+ read(owner:Owner,input:unknown){
+  const known=input===null?null:proposalReadSchema.parse(input),proposal=this.get(owner);
+  const unchanged=!!proposal&&known?.knownId===proposal.id&&known.knownStatus===proposal.status;
+  return {available:true,unchanged,proposal:unchanged?null:proposal};
+ }
  propose(owner:Owner,input:unknown,callId:string,check:()=>Promise<void>){return this.write(async()=>{
   const args=proposeEditSchema.parse(input);await check();
   const callKey=await digest([ownerKey(owner),callId]),inputDigest=await digest(args),previous=this.get(owner);
@@ -37,7 +42,7 @@ export class EditRepository {
  apply(owner:Owner,id:string,scene:Drawing['scene'],check:()=>Promise<void>){return this.write(async()=>{
   await check();const value=this.require(owner,id);validateEditScene(value,scene);
   const current=this.drawings.get(owner),applicationDigest=await digest(scene);
-  if(current?.mutationId===value.id){
+  if(current&&(current.mutationId===value.id||(value.status==='applied'&&current.revision===value.resultRevision&&current.sceneDigest===value.applicationDigest))){
    if(current.sceneDigest!==applicationDigest||current.goal!==value.goal)throw new SketchError('MUTATION_REUSED','重复应用内容不一致');
    const next={...value,status:'applied' as const,resultRevision:current.revision,applicationDigest};await this.table.put(ownerKey(owner),next);return current;
   }

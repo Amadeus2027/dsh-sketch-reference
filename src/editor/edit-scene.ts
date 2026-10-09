@@ -1,4 +1,4 @@
-import {convertToExcalidrawElements,newElementWith} from '@excalidraw/excalidraw';
+import {convertToExcalidrawElements,newElementWith,restoreElements} from '@excalidraw/excalidraw';
 import type {ExcalidrawElement} from '@excalidraw/excalidraw/element/types';
 import {createdElementId,validateOperations,type EditProposal} from '../core/edits.ts';
 
@@ -14,5 +14,8 @@ export function buildEditElements(elements:readonly ExcalidrawElement[],proposal
   }
   result=result.map(e=>e.id!==op.elementId?e:newElementWith(e,op.op==='move'?{x:op.x,y:op.y}:op.op==='resize'?{width:op.width,height:op.height}:{isDeleted:true}));
  });
- return result;
+ // Singleton constructors may share an index. Let the public restorer assign
+ // valid scene ordering before persistence; retain original geometry/bindings.
+ const indices=new Map(restoreElements(result,null,{repairBindings:false,refreshDimensions:false}).map(e=>[e.id,e.index]));
+ return result.map(e=>indices.has(e.id)&&indices.get(e.id)!==e.index?newElementWith(e,{index:indices.get(e.id)!}):e);
 }

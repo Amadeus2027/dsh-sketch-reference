@@ -26,8 +26,14 @@ export function apply(ctx){
   if(annotated){yield* text('SKETCH_AGENT_DONE：模拟原生回答与批注已完成。');return;}
   const proposed=results.find(r=>r.proposalId);
   if(proposed){yield* text('SKETCH_EDIT_DONE：修改提议已保存，等待用户确认。');return;}
-  const read=results.findLast(r=>r.hasDrawing);
+  const read=results.findLast(r=>typeof r.hasDrawing==='boolean');
   if(!read){yield* tool('sketch_read',{});return;}
+  if(task.includes('FOCUS_STATE')){yield* text(`SKETCH_FOCUS_STATE：${read.focus?.stale?'stale':read.focus?'current':'none'}`);return;}
+  if(!read.hasDrawing){yield* text('SKETCH_NO_DRAWING：当前没有已保存草图。');return;}
+  if(task.includes('READ_FOCUS')){
+   if(read.scope!=='focus'){yield* tool('sketch_read',{scope:'focus',mode:'elements',revision:read.revision});return;}
+   yield* text(`SKETCH_FOCUS_DONE：已读取 ${read.totalElements} 个重点元素，未创建批注或修改。`);return;
+  }
   if(task.includes('PROPOSE')){
    if(read.elements.length&&!('x' in read.elements[0])){yield* tool('sketch_read',{mode:'elements',revision:read.revision});return;}
    const target=read.elements.find(e=>e.type==='rectangle');

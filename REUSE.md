@@ -33,3 +33,5 @@
 ## 0.3.x Agent 协作参考
 
 审阅上述固定版 DSH `dsh-tools` 的公开 DSL、工具执行会话上下文与注册释放接口，以及 dsh-diagram v0.6.1 `src/host/tools.ts` 的会话限定读取模式。新工具和 SSE 通知为本项目实现，未复制其语义图布局、编译器或独立聊天 UI。现有 MIT 许可与来源声明继续保留。
+
+0.3.1 的图形提议通过 Excalidraw 0.18.1 已公开的 `convertToExcalidrawElements`、`newElementWith`、`restoreElements`、`updateScene` 与历史捕获 API 应用；没有复制其内部几何、绑定或渲染代码。原生选择/框选直接读取公开 appState 的 selectedElementIds。操作契约、结果校验、提议存储及界面为本项目增量实现，第三方许可清单保持原样。
