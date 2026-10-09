@@ -5,9 +5,13 @@ import {ownerSchema,anchorSchema,commentSchema,commentUpdateSchema,drawingSchema
 export const AGENT_LIMITS=Object.freeze({summaryBytes:8*1024,detailBytes:16*1024,maxElements:50,maxTextChars:240,maxComments:3,maxEventClients:32,maxMetrics:100});
 export const AGENT_EVENTS='/sketch-reference-events/v1';
 const text=(max:number)=>z.string().refine(v=>!!v.trim()&&!v.includes('\0')&&Array.from(v).length<=max);
-export const agentReadSchema=z.object({mode:z.enum(['summary','elements']).default('summary'),revision:z.uuid().optional(),elementIds:z.array(z.string().min(1).max(256)).min(1).max(AGENT_LIMITS.maxElements).optional(),offset:z.number().int().min(0).max(2000).default(0)}).strict().superRefine((v,ctx)=>{
+export const agentReadSchema=z.object({mode:z.enum(['summary','elements']).default('summary'),scope:z.enum(['all','focus']).default('all'),revision:z.uuid().optional(),elementIds:z.array(z.string().min(1).max(256)).min(1).max(AGENT_LIMITS.maxElements).optional(),offset:z.number().int().min(0).max(2000).default(0)}).strict().superRefine((v,ctx)=>{
  if(v.elementIds&&(!v.revision||v.mode!=='elements'))ctx.addIssue({code:'custom',message:'按 ID 读取需要 elements 模式和读取摘要时的 revision'});
+ if(v.scope==='focus'&&(!v.revision||v.elementIds))ctx.addIssue({code:'custom',message:'重点读取需要摘要 revision，不能同时使用 elementIds'});
 });
+export const focusSchema=z.object({revision:z.uuid(),elementIds:z.array(z.string().min(1).max(256)).max(AGENT_LIMITS.maxElements)}).strict().refine(v=>new Set(v.elementIds).size===v.elementIds.length,'重点元素不能重复');
+export type SketchFocus=z.infer<typeof focusSchema>;
+export const focusResultSchema=z.object({count:z.number().int().min(0).max(AGENT_LIMITS.maxElements),revision:z.uuid(),persisted:z.literal(false),message:z.string().max(200)}).strict();
 export const agentSuggestionSchema=z.object({title:text(60),reason:text(1000),anchor:anchorSchema.optional()}).strict();
 export const agentAnnotateSchema=z.object({revision:z.uuid(),expectedBatchId:z.uuid().nullable(),summary:text(240),comments:z.array(agentSuggestionSchema).min(1).max(AGENT_LIMITS.maxComments)}).strict();
 export type AgentRead=z.infer<typeof agentReadSchema>;

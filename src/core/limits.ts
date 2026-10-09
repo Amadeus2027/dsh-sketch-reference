@@ -27,6 +27,6 @@ export const RPC_LIMITS = Object.freeze({
 });
 export function requestBodyLimit(method: string): number {
   if (method === 'advice/generate') return RPC_LIMITS.adviceBodyBytes;
-  if (method === 'drawing/save') return SCENE_LIMITS.maxSceneBytes + RPC_LIMITS.envelopeBytes;
+  if (method === 'drawing/save' || method === 'proposal/apply') return SCENE_LIMITS.maxSceneBytes + RPC_LIMITS.envelopeBytes;
   return RPC_LIMITS.envelopeBytes;
 }

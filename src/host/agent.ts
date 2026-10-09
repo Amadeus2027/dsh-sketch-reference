@@ -1,23 +1,26 @@
 import {randomUUID} from 'node:crypto';
 import {performance} from 'node:perf_hooks';
 import type {SessionHeader} from '@deepseek-ai/dsh-session';
-import {SketchError,digest,canonical,ownerKey,type Drawing,type Owner} from '../core/contracts.ts';
-import {AGENT_LIMITS,agentReadSchema,agentAnnotateSchema,type AgentBatch,type AgentRead} from '../core/agent.ts';
+import {SketchError,digest,canonical,ownerKey,sameOwner,type Drawing,type Owner} from '../core/contracts.ts';
+import {AGENT_LIMITS,agentReadSchema,agentAnnotateSchema,focusSchema,type SketchFocus,type AgentBatch,type AgentRead} from '../core/agent.ts';
 import type {CommentRepository} from './comment-repository.ts';
 import type {JsonValue} from '../core/scene.ts';
+import type {EditRepository} from './edit-repository.ts';
+import {editRestrictions,type EditRestriction} from '../core/edits.ts';
 
 export interface SketchAgentHost {
  snapshot(session:SessionHeader,signal:AbortSignal):Promise<{owner:Owner;drawing:Drawing|null}>;
  check(owner:Owner,revision:string|null,signal:AbortSignal):Promise<void>;
  changed(owner:Owner):void;
 }
-export interface ToolMeasurement {tool:'sketch_read'|'sketch_annotate';ms:number;outputBytes:number;ok:boolean;cacheHit:boolean;inputTokens:null}
+export interface ToolMeasurement {tool:'sketch_read'|'sketch_annotate'|'sketch_propose_edit';ms:number;outputBytes:number;ok:boolean;cacheHit:boolean;inputTokens:null}
 /** No model request, rendering or browser RPC is needed for an Agent read. */
 export class SketchAgent {
  private cache=new Map<string,{revision:string;summary:Record<string,JsonValue>}>();
+ private focuses=new Map<string,SketchFocus>();
  private tail:Promise<unknown>=Promise.resolve();
  readonly measurements:ToolMeasurement[]=[];
- constructor(private host:SketchAgentHost,readonly comments:CommentRepository<AgentBatch>){}
+ constructor(private host:SketchAgentHost,readonly comments:CommentRepository<AgentBatch>,readonly edits?:EditRepository){}
  private async measured<T>(tool:ToolMeasurement['tool'],work:(hit:()=>void)=>Promise<T>):Promise<T>{
   const start=performance.now();let cacheHit=false,ok=false,outputBytes=0;
   try{const value=await work(()=>{cacheHit=true;});ok=true;outputBytes=Buffer.byteLength(JSON.stringify(value));return value;}
@@ -27,15 +30,20 @@ export class SketchAgent {
   const args=agentReadSchema.parse(input),{owner,drawing}=await this.host.snapshot(session,signal);
   if(!drawing)return {revision:null,hasDrawing:false,message:'当前会话还没有已保存的草图。打开手绘参考板绘图并等待保存。'};
   if(args.revision&&args.revision!==drawing.revision)throw new SketchError('REVISION_CONFLICT','草图已变化，请重新读取摘要',409);
+  const focus=this.focuses.get(ownerKey(owner));
+  if(args.scope==='focus'&&(!focus||focus.revision!==drawing.revision))throw new SketchError('FOCUS_STALE','重点未设置或草图已变化，请用户重新设置选区重点',409);
+  const focusIds=new Set(focus?.elementIds);
+  const scoped=args.scope==='focus'?{...drawing,scene:{...drawing.scene,elements:drawing.scene.elements.filter(e=>focusIds.has(e.id))}}:drawing;
   let data:Record<string,JsonValue>;
   const key=ownerKey(owner),cached=this.cache.get(key);
-  if(args.mode==='summary'&&args.offset===0&&cached?.revision===drawing.revision){data=cached.summary;hit();}
+  if(args.scope==='all'&&args.mode==='summary'&&args.offset===0&&cached?.revision===drawing.revision){data=cached.summary;hit();}
   else{
-   data=describeDrawing(drawing,args);
-   if(args.mode==='summary'&&args.offset===0){this.cache.set(key,{revision:drawing.revision,summary:data});if(this.cache.size>100)this.cache.delete(this.cache.keys().next().value!);}
+   data=describeDrawing(scoped,args,args.mode==='elements'?editRestrictions(drawing.scene):undefined);
+   if(args.scope==='all'&&args.mode==='summary'&&args.offset===0){this.cache.set(key,{revision:drawing.revision,summary:data});if(this.cache.size>100)this.cache.delete(this.cache.keys().next().value!);}
   }
   const batch=this.comments.get(owner);
-  const result={...data,truncated:data.truncated??false,nextOffset:data.nextOffset??null,elements:[...(data.elements as Record<string,JsonValue>[])],annotations:batch?{batchId:batch.id,commentRevision:batch.commentRevision,count:batch.comments.length,stale:batch.contentDigest!==drawing.contentDigest||batch.goal!==drawing.goal,itemsTruncated:false,
+  const proposal=this.edits?.get(owner);
+  const result={...data,scope:args.scope,sceneTotalElements:drawing.scene.elements.filter(e=>!e.isDeleted).length,focus:focus?{revision:focus.revision,count:focus.elementIds.length,stale:focus.revision!==drawing.revision}:null,...(this.edits?{proposal:proposal?{id:proposal.id,status:proposal.status,baseRevision:proposal.baseRevision,stale:proposal.baseRevision!==drawing.revision,operationCount:proposal.operations.length}:null}:{}),truncated:data.truncated??false,nextOffset:data.nextOffset??null,elements:[...(data.elements as Record<string,JsonValue>[])],annotations:batch?{batchId:batch.id,commentRevision:batch.commentRevision,count:batch.comments.length,stale:batch.contentDigest!==drawing.contentDigest||batch.goal!==drawing.goal,itemsTruncated:false,
    items:batch.comments.filter(c=>c.status!=='ignored').map(c=>{const v=batch.advice.suggestions[c.suggestionIndex]!;return {id:c.id,status:c.status,title:v.title,reason:clip(v.reason,120),reasonTruncated:Array.from(v.reason).length>120,...(v.anchor?{elementId:v.anchor.elementId}:{})};})}:null};
   const limit=args.mode==='summary'?AGENT_LIMITS.summaryBytes:AGENT_LIMITS.detailBytes;
   while(result.annotations&&Buffer.byteLength(JSON.stringify(result.annotations))>2048&&result.annotations.items.length){result.annotations.items.pop();result.annotations.itemsTruncated=true;}
@@ -44,6 +52,26 @@ export class SketchAgent {
   while(Buffer.byteLength(JSON.stringify(result))>limit&&result.annotations?.items.length){result.annotations.items.pop();result.annotations.itemsTruncated=true;}
   if(Buffer.byteLength(JSON.stringify(result))>limit || (result.truncated&&!result.elements.length))throw new SketchError('OUTPUT_LIMIT','草图结构超过读取上限，请缩短用途或元素文字后重试',413);
   await this.host.check(owner,drawing.revision,signal);return result;
+ });}
+ setFocus(owner:Owner,input:unknown,drawing:Drawing|null){
+  const args=focusSchema.parse(input),key=ownerKey(owner);
+  if(drawing&&!sameOwner(owner,drawing.owner))throw new SketchError('SESSION_CHANGED','重点会话已变化',409);
+  if(!drawing||drawing.revision!==args.revision)throw new SketchError('REVISION_CONFLICT','草图已变化，请重新保存并设置重点',409);
+  const active=new Map(drawing.scene.elements.filter(e=>!e.isDeleted).map(e=>[e.id,e]));
+  if(args.elementIds.some(id=>!active.has(id)))throw new SketchError('ELEMENT_NOT_FOUND','重点元素不存在或已删除',409);
+  const selectedIds=new Set(args.elementIds),ids=new Set(selectedIds);
+  // Bound labels are necessary context, not a request to follow an entire graph.
+  for(const id of args.elementIds)for(const bound of active.get(id)?.boundElements??[])if(bound.type==='text'&&active.has(bound.id))ids.add(bound.id);
+  for(const e of active.values())if(e.type==='text'&&e.containerId&&selectedIds.has(e.containerId))ids.add(e.id);
+  if(ids.size>AGENT_LIMITS.maxElements)throw new SketchError('FOCUS_LIMIT','重点含绑定文字最多 50 个元素，请缩小选区',413);
+  this.focuses.delete(key);if(ids.size){this.focuses.set(key,{revision:args.revision,elementIds:[...ids]});if(this.focuses.size>100)this.focuses.delete(this.focuses.keys().next().value!);}
+  return {count:ids.size,revision:args.revision,persisted:false,message:ids.size?'选区重点已设置；修改草图后需重新设置，宿主重启后清除。':'选区重点已清除。'};
+ }
+ proposeEdit(session:SessionHeader,input:unknown,callId:string,signal:AbortSignal){return this.measured('sketch_propose_edit',async()=>{
+  if(!this.edits)throw new SketchError('AGENT_UNAVAILABLE','修改提议暂不可用',503);
+  const {owner}=await this.host.snapshot(session,signal);
+  const proposal=await this.edits.propose(owner,input,callId,()=>this.host.check(owner,null,signal));
+  this.host.changed(owner);return {proposalId:proposal.id,revision:proposal.baseRevision,status:proposal.status,operationCount:proposal.operations.length,message:'修改提议已保存，画板内容未改变。请用户打开画板预览并明确确认；Agent 没有应用工具。'};
  });}
  annotate(session:SessionHeader,input:unknown,callId:string,signal:AbortSignal){
   const work=()=>this.measured('sketch_annotate',async()=>{
@@ -66,13 +94,14 @@ export class SketchAgent {
   const task=this.tail.then(work);this.tail=task.catch(()=>{});return task;
  }
  async drain(){await this.tail;await this.comments.drain();}
- clear(){this.cache.clear();this.measurements.length=0;}
+ clear(){this.cache.clear();this.focuses.clear();this.measurements.length=0;}
 }
 function annotationResult(batch:AgentBatch){return {batchId:batch.id,revision:batch.analysisRevision,count:batch.comments.length,message:'批注已保存；没有修改图形或发送聊天。'};}
 
 /** Typed whitelist only; text is untrusted scene data, never instructions. */
-export function describeDrawing(drawing:Drawing,args:AgentRead):Record<string,JsonValue>{
+export function describeDrawing(drawing:Drawing,args:AgentRead,restrictions?:Map<string,EditRestriction>):Record<string,JsonValue>{
  const active=drawing.scene.elements.filter(e=>!e.isDeleted),ids=new Set(active.map(e=>e.id));
+ const editing=args.mode==='elements'?(restrictions??editRestrictions(drawing.scene)):null;
  if(args.elementIds?.some(id=>!ids.has(id)))throw new SketchError('ELEMENT_NOT_FOUND','元素不存在或已删除，请重新读取摘要',404);
  const selected=args.elementIds?args.elementIds.map(id=>active.find(e=>e.id===id)!):active.slice(args.offset);
  const counts:Record<string,number>={};for(const e of active)counts[e.type]=(counts[e.type]??0)+1;
@@ -88,7 +117,7 @@ export function describeDrawing(drawing:Drawing,args:AgentRead):Record<string,Js
   const item:Record<string,JsonValue>={id:e.id,type:e.type};
   if(e.type==='text'){item.text=clip(e.text??'',AGENT_LIMITS.maxTextChars);item.textTruncated=Array.from(e.text??'').length>AGENT_LIMITS.maxTextChars;}
   if(args.mode==='elements'){
-   Object.assign(item,{x:e.x,y:e.y,width:e.width,height:e.height,angle:e.angle??0});
+   Object.assign(item,{x:e.x,y:e.y,width:e.width,height:e.height,angle:e.angle??0,editRestriction:editing?.get(e.id)??'none'});
    if(e.containerId&&ids.has(e.containerId))item.containerId=e.containerId;
    const start=e.startBinding as {elementId?:string}|undefined,end=e.endBinding as {elementId?:string}|undefined;
    if(start?.elementId&&ids.has(start.elementId))item.startElementId=start.elementId;

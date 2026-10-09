@@ -24,8 +24,24 @@ export function apply(ctx){
   if(task.includes('CANCEL'))await new Promise((resolve,reject)=>{const timer=setTimeout(resolve,60000);request.signal.addEventListener('abort',()=>{clearTimeout(timer);reject(request.signal.reason);},{once:true});});
   const annotated=results.find(r=>r.batchId&&r.message?.includes('批注已保存'));
   if(annotated){yield* text('SKETCH_AGENT_DONE：模拟原生回答与批注已完成。');return;}
-  const read=results.find(r=>r.hasDrawing);
+  const proposed=results.find(r=>r.proposalId);
+  if(proposed){yield* text('SKETCH_EDIT_DONE：修改提议已保存，等待用户确认。');return;}
+  const read=results.findLast(r=>typeof r.hasDrawing==='boolean');
   if(!read){yield* tool('sketch_read',{});return;}
+  if(task.includes('FOCUS_STATE')){yield* text(`SKETCH_FOCUS_STATE：${read.focus?.stale?'stale':read.focus?'current':'none'}`);return;}
+  if(!read.hasDrawing){yield* text('SKETCH_NO_DRAWING：当前没有已保存草图。');return;}
+  if(task.includes('READ_FOCUS')){
+   if(read.scope!=='focus'){yield* tool('sketch_read',{scope:'focus',mode:'elements',revision:read.revision});return;}
+   yield* text(`SKETCH_FOCUS_DONE：已读取 ${read.totalElements} 个重点元素，未创建批注或修改。`);return;
+  }
+  if(task.includes('PROPOSE')){
+   if(read.elements.length&&!('x' in read.elements[0])){yield* tool('sketch_read',{mode:'elements',revision:read.revision});return;}
+   const target=read.elements.find(e=>e.type==='rectangle');
+   const operations=[{op:'move',elementId:target.id,x:target.x+50,y:target.y+40},{op:'resize',elementId:target.id,width:200,height:120},
+    ...['rectangle','ellipse','diamond','text','arrow'].map((type,i)=>({op:'create',type,x:420+i*20,y:160+i*60,width:120,height:40,...(type==='text'?{text:'Agent 中文文字'}:{})})),
+    ...(read.elements.some(e=>e.id==='edit-delete')?[{op:'delete',elementId:'edit-delete'}]:[])];
+   yield* tool('sketch_propose_edit',{revision:read.revision,expectedProposalId:read.proposal?.id??null,summary:'模拟受限修改：移动、调整、新增与删除',operations});return;
+  }
   if(task.includes('READ_ONLY')){yield* text(`SKETCH_AGENT_READ_DONE：当前已保存 ${read.totalElements} 个元素，未创建批注。`);return;}
   const target=read.elements.find(e=>e.type==='rectangle')??read.elements[0];
   yield* tool('sketch_annotate',{revision:read.revision,expectedBatchId:read.annotations?.batchId??null,summary:'模拟通用草图解释，仅验证原生工具链路',comments:[

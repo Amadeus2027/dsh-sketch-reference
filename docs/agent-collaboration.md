@@ -4,6 +4,8 @@
 
 本页记录初次 P0 交付。后续 Windows 真实模型小样例及 PR #6 修复见 [累计审查](review-v0.3.0-cumulative.md)，2026-10-09 云端批注失败恢复修订见 [稳定性补齐](stability-v0.3.0.md)。保留历史证据，不将初版模拟结果改称真实模型结果。
 
+后续 0.3.1 候选包新增受限修改和基础选区协作，见 [阶段增量记录](agent-edits.md)。本页中“后续版本/P1/P2 未开放”等描述保留为初版历史结论，当前能力以新记录和 README 为准。
+
 ## 当前实现
 
 - `sketch_read` 通过固定版 DSH 官方 `defineTool()` / `ctx.tools.register()` 接入。会话身份取自 `exec.agent.session.header`，请求不接受模型传入的 sessionId。默认读取宿主已保存快照的紧凑摘要；支持 revision 校验、按真实元素 ID 获取细节和分页。关闭画板不影响结构读取，未保存编辑不属于读取结果。

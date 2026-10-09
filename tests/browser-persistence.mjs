@@ -1,4 +1,4 @@
-// Explicit host restart / 0.2.1 -> 0.3.0 upgrade checks, using isolated profiles.
+// Explicit host restart / upgrade checks, using isolated profiles.
 import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
@@ -39,5 +39,16 @@ try{
   assert.equal(legacy.drawing.revision,comments.drawingRevision);assert.equal(legacy.drawing.contentDigest,comments.contentDigest);
   assert.equal(legacy.latestAdvice.id,comments.batchId);assert.equal(legacy.latestAdvice.commentRevision,comments.commentRevision);assert.deepEqual(legacy.latestAdvice.comments,comments.comments);
   console.log('PASS: after host restart, drawing revisions, full Agent batch/statuses and legacy batch/statuses restored from actual DSH storage.');
+  if(process.env.DSH_EDITS_PERSISTENCE==='1'){
+   const edits=JSON.parse(await readFile('test-results/edits-session.json','utf8'));
+   const current=await call('drawing/get',edits.owner,{sessionId:edits.owner.sessionId});
+   assert.deepEqual(current.drawing,edits.drawing);assert.deepEqual((await call('proposal/get',edits.owner,null)).proposal,edits.proposal);
+   const focus=JSON.parse(await readFile('test-results/focus-session.json','utf8'));
+   assert.equal((await call('drawing/get',focus.owner,{sessionId:focus.owner.sessionId})).drawing.revision,focus.revision);
+   await hostContext(page,'open',focus.owner.sessionId);
+   const answer='SKETCH_FOCUS_STATE：none',count=await page.getByText(answer,{exact:true}).count(),input=page.locator('[contenteditable=true]');
+   await input.fill('SKETCH_AGENT_TEST FOCUS_STATE：检查宿主重启后的重点。');await input.press('Enter');await page.getByText(answer,{exact:true}).nth(count).waitFor();
+   console.log('PASS: after real host restart, edit proposal/full recovery snapshot and drawing persist; ephemeral selection focus clears and native read confirms none. Scripted model.');
+  }
  }
 }finally{await browser.close();}

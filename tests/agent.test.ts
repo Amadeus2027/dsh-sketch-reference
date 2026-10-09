@@ -119,3 +119,28 @@ it('uses the fixed DSH tool DSL and requires an owning Agent, never model-provid
  const result=await tools[0]!.execute({}, {...exec,agent:{session:{header:session}}} as typeof exec);
  expect(result).toMatchObject({revision:s.drawing().revision});expect(tools[0]!.output.render({},result as never)[0]).toMatchObject({type:'text'});
 });
+it('reads explicitly set native selection and its bound labels without changing the full-summary cache or drawing',async()=>{
+ const s=await setup(),before=canonical(s.drawing());await s.read();
+ expect(s.agent.setFocus(owner,{revision:s.drawing().revision,elementIds:['rect']},s.drawing())).toMatchObject({count:2,persisted:false});
+ const result=await s.agent.read(session,{scope:'focus',mode:'elements',revision:s.drawing().revision},s.signal);
+ expect(result).toMatchObject({scope:'focus',totalElements:2,sceneTotalElements:3,focus:{count:2,stale:false},elements:[{id:'rect'},{id:'text',text:'三角形内角和'}]});
+ expect(result).toMatchObject({elements:[{editRestriction:'bound'},{editRestriction:'bound'}]});
+ expect(JSON.stringify(result)).not.toContain('NO_LEAK');expect(JSON.stringify(result)).not.toContain('"id":"free"');
+ expect(await s.read()).toMatchObject({scope:'all',totalElements:3,focus:{count:2}});expect(s.agent.measurements.at(-1)?.cacheHit).toBe(true);expect(canonical(s.drawing())).toBe(before);expect(s.stats().writes).toBe(0);
+});
+it('rejects stale, deleted, excessive and wrong-owner focus; clearing/restart cannot silently bind a different element',async()=>{
+ const s=await setup(),revision=s.drawing().revision;
+ for(const input of [{revision,elementIds:['deleted']},{revision,elementIds:['rect','rect']},{revision,elementIds:Array(51).fill('rect')},{revision:crypto.randomUUID(),elementIds:['rect']}])expect(()=>s.agent.setFocus(owner,input,s.drawing())).toThrow();
+ expect(()=>s.agent.setFocus({...owner,cwd:'/else'},{revision,elementIds:['rect']},s.drawing())).toThrow();
+ s.agent.setFocus(owner,{revision,elementIds:['free']},s.drawing());s.setDrawing({...s.drawing(),revision:crypto.randomUUID()});
+ expect(await s.read()).toMatchObject({focus:{stale:true}});await expect(s.agent.read(session,{scope:'focus',revision:s.drawing().revision},s.signal)).rejects.toMatchObject({code:'FOCUS_STALE'});
+ s.agent.setFocus(owner,{revision:s.drawing().revision,elementIds:[]},s.drawing());expect(await s.read()).toMatchObject({focus:null});
+ s.agent.setFocus(owner,{revision:s.drawing().revision,elementIds:['rect']},s.drawing());s.agent.clear();expect(await s.read()).toMatchObject({focus:null});
+ expect(agentReadSchema.safeParse({scope:'focus'}).success).toBe(false);expect(agentReadSchema.safeParse({scope:'focus',revision,mode:'elements',elementIds:['rect']}).success).toBe(false);
+});
+it('paginates focused data within exact byte limits without polluting the full-scene cache',async()=>{
+ const s=await setup();const drawing={...s.drawing(),scene:{...s.drawing().scene,elements:Array.from({length:50},(_,i)=>({id:String(i).padEnd(256,'x'),type:'text' as const,x:0,y:0,width:10,height:10,text:'😀'.repeat(240)}))}};s.setDrawing(drawing);
+ s.agent.setFocus(owner,{revision:drawing.revision,elementIds:drawing.scene.elements.map(e=>e.id)},drawing);const visited:string[]=[];let offset=0;
+ for(let page=0;page<50;page++){const result=await s.agent.read(session,{scope:'focus',revision:drawing.revision,offset},s.signal) as Record<string,unknown>;expect(Buffer.byteLength(JSON.stringify(result))).toBeLessThanOrEqual(AGENT_LIMITS.summaryBytes);const elements=result.elements as {id:string}[];expect(elements.length).toBeGreaterThan(0);visited.push(...elements.map(e=>e.id));if(!result.truncated)break;expect(Number(result.nextOffset)).toBeGreaterThan(offset);offset=Number(result.nextOffset);}
+ expect(visited).toEqual(drawing.scene.elements.map(e=>e.id));expect(s.stats().writes).toBe(0);
+});

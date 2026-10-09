@@ -7,6 +7,10 @@ import {withComments,anchorTarget,adviceIsStale} from '../core/comments.ts';
 import {CommentList,CommentOverlay,type CommentActions} from './comments.tsx';
 import {normalize} from './scene.ts';
 import {useAgentComments} from './agent-comments.ts';
+import {useEditProposal,EditPanel,type EditPreview} from './edit-proposals.tsx';
+import {buildEditElements} from './edit-scene.ts';
+import {validateEditScene,type EditProposal} from '../core/edits.ts';
+import {focusResultSchema} from '../core/agent.ts';
 import {rpc} from './rpc.ts';
 import {Autosave} from './autosave.ts';
 import {SceneUpdates} from './scene-updates.ts';
@@ -66,7 +70,8 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
  },()=>{
   if(mounted.current)render(v=>v+1);
  },(draft,revision)=>{try{writePending(owner,draft,revision);}catch{if(mounted.current)setBackupUnavailable(true);}}));
- const agent=useAgentComments(owner,()=>api.current?normalize(api.current.getSceneElements(),api.current.getAppState() as unknown as Record<string,unknown>):queue.current().scene,()=>goalRef.current);
+ const edits=useEditProposal(owner),[editUncertain,setEditUncertain]=useState(false);
+ const agent=useAgentComments(owner,()=>api.current?normalize(api.current.getSceneElements(),api.current.getAppState() as unknown as Record<string,unknown>):queue.current().scene,()=>goalRef.current,()=>void edits.refresh());
  const comments=source==='agent'?agent.batch:analysisComments,displayBatch=source==='agent'?agent.batch:batch,displayStale=source==='agent'?agent.stale:stale;
  const savingComments=source==='agent'?agent.saving||!!agent.pending:commentSaving||!!pendingComment.current;
  useEffect(()=>{setSource(agent.batch?'agent':'analysis');setSelected(null);setCopy('');},[agent.batch?.id]);
@@ -108,6 +113,40 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   if(sceneError.current)throw new Error(sceneError.current);return queue.current().scene;
  };
  const settle=async()=>{if(api.current)capture();return queue.settle();};
+ const prepareEdit=async(proposal:EditProposal):Promise<EditPreview>=>{
+  if(!api.current||pending||busy||preparing)throw new Error('请先结束当前操作');
+  setPreparing(true);
+  try{await settle();if(!mounted.current)throw new Error('画板已关闭');
+   if(queue.revision!==proposal.baseRevision||canonical(queue.current().scene)!==canonical(proposal.before)||goalRef.current!==proposal.goal)throw new Error('草图已变化，请让 Agent 重新读取并提议');
+   const elements=buildEditElements(api.current.getSceneElementsIncludingDeleted(),proposal),scene=normalize(elements,api.current.getAppState() as unknown as Record<string,unknown>);
+   validateEditScene(proposal,scene);return {elements,scene,image:await pngExport(scene)};
+  }finally{if(mounted.current)setPreparing(false);}
+ };
+ const applyEdit=async(proposal:EditProposal,preview:EditPreview)=>{
+  if(!api.current||pending||busy||preparing)throw new Error('请先结束当前操作');
+  setPreparing(true);
+  try{await settle();if(!mounted.current)throw new Error('画板已关闭');
+   if(queue.revision!==proposal.baseRevision||canonical(queue.current().scene)!==canonical(proposal.before)||goalRef.current!==proposal.goal)throw new Error('草图已变化，请重新提议，未覆盖本地内容');
+   let saved:Drawing;
+   edits.invalidate();
+   try{saved=drawingSchema.parse(await rpc('proposal/apply',owner,{proposalId:proposal.id,scene:preview.scene},lifecycle.current.signal,true));}
+   catch(e){if(mounted.current)setEditUncertain(true);throw e;}
+   if(!mounted.current)return;
+   edits.invalidate();
+   queue.acceptExternal(saved,proposal.baseRevision);
+   api.current.updateScene({elements:preview.elements,appState:{selectedElementIds:{}},captureUpdate:CaptureUpdateAction.IMMEDIATELY});
+   setEditUncertain(false);updateStale(saved.scene,saved.goal);setMessage('修改已应用并保存，可用画板原生撤销。');
+  }finally{if(mounted.current)setPreparing(false);}
+ };
+ const focusSelection=(clear=false)=>void run(async()=>{
+  if(!api.current||preparing)throw new Error('画板尚未就绪');setMoreOpen(false);setPreparing(true);
+  try{const ids=clear?[]:Object.entries(api.current.getAppState().selectedElementIds).filter(([,chosen])=>chosen).map(([id])=>id);
+   if(!clear&&!ids.length)throw new Error('请先使用画板原生选择或框选工具选中图形');
+   await settle();if(!mounted.current)return;if(!queue.revision)throw new Error('请先绘制并保存草图');
+   const result=focusResultSchema.parse(await rpc('agent/focus',owner,{revision:queue.revision,elementIds:ids},lifecycle.current.signal));
+   if(mounted.current)setMessage(`${result.message}${result.count?` 共 ${result.count} 个元素。可回到原生聊天询问此重点。`:''}`);
+  }finally{if(mounted.current)setPreparing(false);}
+ });
  const run=async(task:()=>Promise<void>)=>{setMessage('');try{await task();}catch(e){if(mounted.current)setMessage(e instanceof Error?e.message:'操作失败');}};
  const saveComment=async(input:CommentUpdate)=>{
   setCommentSaving(true);setCommentError(null);
@@ -153,7 +192,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   }catch(e){if(abort.signal.aborted)throw new Error('分析已取消，草图保留');throw e;
   }finally{if(mounted.current){setBusy(false);setPreparing(false);}active.current=null;}
  });
- const close=()=>void run(async()=>{if(pendingComment.current||agent.pending)throw new Error('批注状态尚未确认保存，请重试或刷新批注后关闭');try{await settle();}catch{throw new Error('请先重试保存或下载草稿备份，再关闭');}await closeBoard();});
+ const close=()=>void run(async()=>{if(preparing)throw new Error('请等待当前操作完成');if(editUncertain)throw new Error('修改结果尚未确认，请重试或载入服务器版本后关闭');if(pendingComment.current||agent.pending)throw new Error('批注状态尚未确认保存，请重试或刷新批注后关闭');try{await settle();}catch{throw new Error('请先重试保存或下载草稿备份，再关闭');}await closeBoard();});
  closeAction.current=close;
  const recover=()=>{if(!pending || !api.current)return;const {scene,goal:restored}=pending.draft;setGoal(restored);goalRef.current=restored;
   if(pending.draft.base!==queue.revision){setMessage('恢复副本与服务器版本不同。已载入本地供导出；为防止覆盖，请下载草稿后载入服务器版本。');queue.state='conflict';queue.error='恢复副本版本冲突';}
@@ -174,6 +213,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
    {copy&&<div className="copy"><textarea readOnly aria-label="建议指令" value={copy}/><button onClick={()=>void run(async()=>{await navigator.clipboard.writeText(copy);setMessage('指令已复制');})}>复制</button><button onClick={()=>setCopy('')}>收起</button></div>}
    </div>
   </section>}
+  <EditPanel state={edits} disabled={!editor||preparing||busy||!!pending||queue.state==='conflict'||!!agent.pending||!!pendingComment.current} uncertain={editUncertain} onPreview={prepareEdit} onApply={applyEdit} onReload={onReload}/>
   {agent.error&&<div className="notice" role="alert">Agent 批注：{agent.error}{agent.pending&&<button disabled={agent.saving} onClick={agent.retry}>重试 Agent 批注保存</button>}<button disabled={agent.saving} onClick={()=>void agent.refresh()}>刷新 Agent 批注</button></div>}
   {agent.disconnected&&<div className="notice" role="status">批注实时同步已断开，绘图和保存仍可使用。<button onClick={()=>void agent.refresh()}>刷新 Agent 批注</button></div>}
   {backupUnavailable&&<div className="notice" role="status">浏览器恢复存储不可用或空间不足，无法保证本地恢复副本；自动保存仍会尝试写入服务器。请及时下载草稿备份。</div>}
@@ -189,6 +229,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
    <button disabled={!editor||!!pending||busy||preparing||queue.state==='conflict'||commentSaving} onClick={analyze}>{batch?'重新分析草图':'AI 分析草图'}</button>
    <button className="primary" disabled={!editor||!!pending||preparing} title="加入原生输入框，由你确认发送" onClick={()=>void run(async()=>{setPreparing(true);try{const scene=capture();queue.update({scene,goal:goalRef.current});await settle();const png=await exportScene(scene);const result=await stageImage(owner,png,await digest(scene));setMessage(stale&&batch?'参考图已更新；输入框中若有旧建议，请重新获取后替换。'+result:result);}finally{if(mounted.current)setPreparing(false);}})}>作为参考发送</button>
    <div className="more"><button aria-expanded={moreOpen} aria-label="更多操作" onClick={()=>setMoreOpen(v=>!v)}>···</button>{moreOpen&&<div className="moreMenu" role="group" aria-label="导出与模型选项">
+    {agent.available&&<><button disabled={!editor||!!pending||preparing} onClick={()=>focusSelection()}>选区作为重点</button><button disabled={!editor||!!pending||preparing} onClick={()=>focusSelection(true)}>清除选区重点</button></>}
     <button disabled={!editor||!!pending||preparing||exporting} onClick={()=>{setMoreOpen(false);void run(async()=>{setExporting(true);try{download(await exportScene(capture()),'sketch-reference.png');}finally{if(mounted.current)setExporting(false);}});}}>导出 PNG</button>
     <button onClick={()=>{setMoreOpen(false);void run(async()=>{downloadScene(capture());});}}>草稿备份</button>
     <label className="route">建议模型 <select aria-label="建议模型" disabled={busy} value={routeIndex} onChange={e=>setRouteIndex(Number(e.target.value))}>{!routes.length&&<option>尚未配置官方 DS</option>}{routes.map((r,i)=><option key={r.provider} value={i}>{r.provider==='deepseek-account'?'DS 账户':'DS API'} · Flash</option>)}</select></label>
