@@ -14,6 +14,23 @@ describe('persisted ownership and revision',()=>{
  it('checks the session again before committing',async()=>{const repo=repository();let checks=0;await expect(repo.save(owner,input(),async()=>{if(++checks===2)throw new Error('deleted');})).rejects.toThrow('deleted');expect(repo.get(owner)).toBeNull();});
 });
 describe('autosave recovery',()=>{
+ it('persists new freehand strokes without their transient committed point',()=>{
+  const stroke={id:'stroke',type:'freedraw',x:0,y:0,width:180,height:120,points:[[0,0],[180,120]],lastCommittedPoint:[180,120]};
+  const saved=normalize([stroke],scene.appState);
+  expect(saved.elements[0]?.lastCommittedPoint).toBeNull();
+  expect(normalize([{...stroke,lastCommittedPoint:null}],scene.appState)).toEqual(saved);
+ });
+ it.each([{checkpoint:null},{checkpoint:[180,120]},{checkpoint:undefined}])('preserves a legacy freehand checkpoint ($checkpoint) without resaving hydration',async({checkpoint})=>{
+  const repo=repository(),stroke={id:'stroke',type:'freedraw',x:0,y:0,width:180,height:120,points:[[0,0],[180,120]],...(checkpoint===undefined?{}:{lastCommittedPoint:checkpoint})};
+  const saved=await repo.save(owner,{...input(),scene:sceneSchema.parse({...scene,elements:[stroke]})},async()=>{});let requests=0;
+  const queue=new Autosave(owner,saved,async value=>{requests++;return repo.save(owner,value,async()=>{});},()=>{},()=>{});
+  const restored={...stroke,lastCommittedPoint:null};
+  queue.update({scene:normalize([restored],saved.scene.appState,queue.current().scene),goal:saved.goal});await queue.settle();
+  expect(requests).toBe(0);expect(repo.get(owner)).toEqual(saved);
+  queue.update({scene:normalize([{...restored,x:20}],saved.scene.appState,queue.current().scene),goal:saved.goal});await queue.settle();
+  expect(requests).toBe(1);expect(repo.get(owner)?.revision).not.toBe(saved.revision);expect(repo.get(owner)?.contentDigest).not.toBe(saved.contentDigest);
+  queue.dispose();
+ });
  it('does not resave a scene solely because Excalidraw restored empty bindings',async()=>{
   const repo=repository(),saved=await repo.save(owner,{...input(),scene:{...scene,elements:[{id:'rect',type:'rectangle',x:0,y:0,width:10,height:10,boundElements:null}]}},async()=>{});let requests=0;
   const queue=new Autosave(owner,saved,async value=>{requests++;return repo.save(owner,value,async()=>{});},()=>{},()=>{});

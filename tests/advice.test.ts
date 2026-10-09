@@ -25,6 +25,14 @@ describe('DS independent suggestion request',()=>{
   const c=carrier();c.ctx.llm.resolveModelInfo=async()=>({provider:'deepseek-official',id:'deepseek-flash',name:'DeepSeek Flash',inputModalities:['text']});
   await expect(generateAdvice(c.ctx,{provider:'deepseek-official',model:'deepseek-flash'},new Uint8Array([1]),'',new AbortController().signal)).rejects.toMatchObject({code:'VISION_UNAVAILABLE'});expect(c.read()).toBeUndefined();
  });
+ it('allows text-only routes for structure mode and explicitly supplies nonempty purpose and signed paths',async()=>{
+  const c=carrier(),register=vi.spyOn(c.ctx.attachments,'saveImage');
+  c.ctx.llm.resolveModelInfo=async()=>({provider:'deepseek-official',id:'deepseek-flash',name:'DeepSeek Flash',inputModalities:['text']});
+  const scene={elements:[{id:'line',type:'line' as const,x:10,y:20,width:10,height:20,points:[[0,0],[-10,20]] as [number,number][]}],appState:{},files:{}};
+  await generateAdvice(c.ctx,{provider:'deepseek-official',model:'deepseek-flash'},new Uint8Array([1]),'解释几何',new AbortController().signal,scene,'structure');
+  const messages=JSON.stringify(c.read()!['messages']);
+  expect(messages).toContain('purposeProvided');expect(messages).toContain('解释几何');expect(messages).toContain('[-10,20]');expect(register).not.toHaveBeenCalled();
+ });
  it.each(['image','structure','hybrid'] as const)('uses only the requested %s input channels for a controlled comparison',async mode=>{
   const c=carrier(),register=vi.spyOn(c.ctx.attachments,'saveImage');
   const scene={elements:[{id:'rect-123',type:'rectangle' as const,x:1,y:2,width:100,height:20}],appState:{viewBackgroundColor:'#ffffff'},files:{}};
