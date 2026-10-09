@@ -104,6 +104,13 @@ it('cancellation, absent drawing and invalid operation fields leave storage unto
  expect(agentAnnotateSchema.safeParse({...s.input(),execute:'code'}).success).toBe(false);expect(agentReadSchema.safeParse({sessionId:'another'}).success).toBe(false);
  s.setDrawing(null);expect(await s.read()).toMatchObject({hasDrawing:false,revision:null});expect(s.stats().writes).toBe(0);
 });
+it('rejects a quoted null batch token without a write and accepts a corrected JSON null',async()=>{
+ const s=await setup(),before=canonical(s.drawing());
+ await expect(s.agent.annotate(session,{...s.input(),expectedBatchId:'null'},'bad-null',s.signal)).rejects.toThrow();
+ expect(s.stats().writes).toBe(0);expect(canonical(s.drawing())).toBe(before);
+ await expect(s.agent.annotate(session,s.input(),'correct-null',s.signal)).resolves.toMatchObject({count:1});
+ expect(s.stats().writes).toBe(1);expect(canonical(s.drawing())).toBe(before);
+});
 it('uses the fixed DSH tool DSL and requires an owning Agent, never model-provided session identity',async()=>{
  const s=await setup(),tools=createSketchTools(s.agent,s.signal,p=>p);
  expect(tools.map(t=>t.name)).toEqual(['sketch_read','sketch_annotate']);

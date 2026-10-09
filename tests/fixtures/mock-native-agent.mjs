@@ -7,6 +7,7 @@ export function apply(ctx){
  const calls=[];const previous=ctx.llm.stream;
  ctx.effect(()=>ctx.webServer.register({kind:'exact',path:'/sketch-reference-test-agent-stats',handler:(req,res)=>{
   const rejection=ctx.connection.requestRejection(req);if(rejection){res.writeHead(rejection);res.end();return;}
+  if(req.method==='POST'){ctx.get('sketchReference').events.close();res.writeHead(204);res.end();return;}
   res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});
   res.end(JSON.stringify({calls,registered:['sketch_read','sketch_annotate'].map(name=>!!ctx.tools.get(name)),eventClients:ctx.get('sketchReference').events.size}));
  }}));

@@ -28,4 +28,6 @@
 
 优先公开 Slot/hooks、主题事件、会话与原生输入/附件动作；固定版适配保留明确边界，不以 DOM 劫持或模拟发送替代宿主接口。UI/通信优化补跑 `pnpm run test:browser:native`，批注链路补跑 `pnpm run test:browser:comments`。
 
+原生 Agent 工具或批注同步改动补跑 `pnpm run test:browser:agent`，覆盖失败刷新、响应丢失重试、读取/写入交错和通知断线。模型夹具仅用于隔离 profile，不能代替真实模型验收。
+
 声称性能收益时使用 `pnpm run test:performance` 与相同场景/视口/采样条件，并保留原始数据与安装包客户端核对。隔离测试覆盖层应复制到安装 profile 内，避免从源码路径解析到其他版本；不得提交登录地址或个人会话。参见 `docs/native-integration.md`。
