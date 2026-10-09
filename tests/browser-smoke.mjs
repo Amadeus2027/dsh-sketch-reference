@@ -42,6 +42,12 @@ try {
  if(storageFailure)await frame.getByRole('status').filter({hasText:'浏览器恢复存储不可用'}).waitFor();
  console.log('exporting PNG');const downloading=page.waitForEvent('download');await frame.getByRole('button',{name:'更多操作',exact:true}).click();await frame.getByRole('button',{name:'导出 PNG',exact:true}).click();const png=await downloading;await png.saveAs('test-results/reference.png');
  const bytes=await readFile('test-results/reference.png');assert(bytes.length>100);assert(bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])));
+ const dimensions=await page.evaluate(async bytes=>{const bitmap=await createImageBitmap(new Blob([new Uint8Array(bytes)],{type:'image/png'}));const size={width:bitmap.width,height:bitmap.height};bitmap.close();return size;},Array.from(bytes));assert(dimensions.width>0&&dimensions.height>0);
+ const backingUp=page.waitForEvent('download');await frame.getByRole('button',{name:'更多操作',exact:true}).click();await frame.getByRole('button',{name:'草稿备份',exact:true}).click();
+ const backup=await backingUp;assert.equal(backup.suggestedFilename(),'sketch-reference.excalidraw');await backup.saveAs('test-results/reference.excalidraw');
+ const editable=JSON.parse(await readFile('test-results/reference.excalidraw','utf8'));assert.equal(editable.type,'excalidraw');assert.equal(editable.version,2);assert.deepEqual(editable.files,{});
+ assert.deepEqual(editable.elements.map(e=>e.id),latestDrawing.scene.elements.map(e=>e.id));
+ for(const expected of latestDrawing.scene.elements){const actual=editable.elements.find(e=>e.id===expected.id);for(const key of ['type','x','y','width','height','text'])assert.deepEqual(actual[key],expected[key]);}
  await page.locator('input[type=file]').setInputFiles({name:'existing.png',mimeType:'image/png',buffer:bytes});
  console.log('staging image');await frame.getByRole('button',{name:'作为参考发送',exact:true}).click();await frame.getByRole('alert').filter({hasText:'参考图已加入左侧输入框'}).waitFor();
  assert((await input.innerText()).includes('保留已有文字'));await page.getByRole('img',{name:'existing.png',exact:true}).waitFor();await page.getByRole('img',{name:'sketch-reference.png',exact:true}).first().waitFor();
@@ -56,6 +62,6 @@ try {
  await page.setViewportSize({width:900,height:900});await frame.getByRole('button',{name:'返回聊天 ×'}).click();await page.locator('iframe[title="手绘参考板"]').waitFor({state:'detached'});assert((await input.innerText()).includes('保留已有文字'));
  const anonymous=await browser.newContext();const response=await anonymous.request.post(new URL('/sketch-reference-rpc/v1/drawing/get',url).href,{data:{}});assert.equal(response.status(),401);await anonymous.close();
  assert.deepEqual(errors,[]);assert.deepEqual(remoteFonts,[]);
- console.log('PASS: draw, Chinese PNG, persisted editable scene, close/reopen, native attachments, existing input, duplicate prevention, narrow screen close, anonymous rejection, no CDN requests. No real DS calls.');
+ console.log('PASS: draw, decoded PNG and editable Excalidraw backup downloads, Chinese text/geometry retained, persisted scene, close/reopen, native attachments, existing input, duplicate prevention, narrow screen close, anonymous rejection, no CDN requests. No real DS calls.');
  if(storageFailure)console.log(`PASS: local storage ${storageFailure}; persistent backup warning, server autosave and export remain usable.`);
 }finally{await browser.close();}

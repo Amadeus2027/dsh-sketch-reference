@@ -3,6 +3,7 @@ import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import {prepareHost,hostContext,editorFrame,installEditorInspection} from './fixtures/browser-session.mjs';
+import {verifyAgentRecovery} from './fixtures/agent-recovery.mjs';
 const url=process.env.DSH_SMOKE_URL;if(!url)throw new Error('Dedicated DSH URL with mock-native-agent.overlay.yml required');
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH??'/usr/bin/chromium',args:['--no-sandbox']});
 let page;const report={fixture:'scripted model; real installed DSH native Agent/tool execution',realModel:false,inputTokens:null};
@@ -33,6 +34,8 @@ try{
  const agent=await call('agent/get',first.owner,null);assert.equal(agent.batch.advice.suggestions[0].anchor.elementId,'agent-rect');assert.equal(agent.batch.advice.suggestions[1].anchor,undefined);
  assert.equal((await stats()).calls.slice(baseline).some(c=>c.hasImage),true);
  assert.equal(analysisRequests,0,'Native Agent must not trigger independent advice');
+ await verifyAgentRecovery(page,frame,call,first.owner,agent.batch);report.transportRecoveryVerified=true;
+ assert.equal((await load()).drawing.revision,first.drawing.revision,'Comment transport recovery must leave the drawing unchanged');
  await frame.getByRole('button',{name:'AI 分析草图',exact:true}).click();await frame.getByText('模拟布局建议：用于协议与界面测试',{exact:true}).waitFor();
  assert((await load()).latestAdvice);assert.equal((await call('agent/get',first.owner,null)).batch.id,agent.batch.id);
  await frame.getByRole('button',{name:'Agent 批注',exact:true}).click();await frame.getByRole('button',{name:'① 几何关系',exact:true}).click();
@@ -60,5 +63,5 @@ try{
  report.measurements=metrics.measurements;report.calls=(await stats()).calls.slice(baseline);report.analysisRequests=analysisRequests;report.errors=errors;
  assert.equal(analysisRequests,1,'Only the one explicit analysis may call advice');assert.deepEqual(errors,[]);await mkdir('test-results',{recursive:true});await page.screenshot({path:'test-results/agent.png'});await writeFile('test-results/agent-native.json',JSON.stringify(report,null,2));
  await writeFile('test-results/agent-session.json',JSON.stringify({owner:first.owner,drawingRevision:protectedDrawing.revision,batch:(await call('agent/get',first.owner,null)).batch}));
- console.log('PASS: native Agent chat/tool loop (scripted model), PNG input, live anchored/global/stacked comments, independent legacy advice, status persistence, closed-board reads, stale comments, failure/cancel safety, export/reference, session isolation and event cleanup; one explicit analysis only.');
+ console.log('PASS: native Agent chat/tool loop (scripted model), failed refresh close protection, lost-ACK idempotent retry, delayed read ordering, SSE manual reconnect, PNG input, anchored/global/stacked comments, independent legacy advice, status persistence, closed-board reads, stale comments, failure/cancel safety, export/reference, session isolation and event cleanup; one explicit analysis only.');
 }catch(error){if(page){await mkdir('test-results',{recursive:true});await page.screenshot({path:'test-results/agent-failure.png'}).catch(()=>{});console.log('Agent test diagnostic:',await page.locator('body').innerText().then(s=>s.slice(-2200)).catch(()=>''));}throw error;}finally{await browser.close();}
