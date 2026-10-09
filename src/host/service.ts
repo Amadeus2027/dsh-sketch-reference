@@ -18,6 +18,8 @@ import {agentBatchSchema,AGENT_EVENTS,type AgentBatch} from '../core/agent.ts';
 import {SketchAgent} from './agent.ts';
 import {createSketchTools} from './tools.ts';
 import {AgentEvents} from './agent-events.ts';
+import {proposalSchema,proposalActionSchema,applyEditSchema,type EditProposal} from '../core/edits.ts';
+import {EditRepository} from './edit-repository.ts';
 import type {} from '@deepseek-ai/dsh-tools';
 export interface Config { adviceDeadlineMs:number }
 export const Config:z<Config> = z.object({adviceDeadlineMs:z.number().min(ADVICE_TIMEOUT.minMs).max(ADVICE_TIMEOUT.maxMs).default(ADVICE_TIMEOUT.defaultMs)});
@@ -25,6 +27,7 @@ interface Sessions {get(id:SessionId):{header:SessionHeader}|undefined}
 const domainSpec=defineDomain({name:'sketch_reference',version:0,tables:{drawings:domainTable<string,Drawing>(drawingSchema),advice:domainTable<string,Batch>(batchSchema)}});
 // Separate additive domain: old authoritative drafts and advice keep their exact format.
 const agentDomainSpec=defineDomain({name:'sketch_agent',version:0,tables:{annotations:domainTable<string,AgentBatch>(agentBatchSchema)}});
+const editDomainSpec=defineDomain({name:'sketch_edits',version:0,tables:{proposals:domainTable<string,EditProposal>(proposalSchema)}});
 export class SketchService extends Service {
  static inject=['storageDomain','sessionPersistence','sessions','webServer','connection','llm','attachments'];
  static Config=Config;
@@ -36,6 +39,7 @@ export class SketchService extends Service {
  private times=new Map<string,number[]>();
  private tasks=new Set<Promise<unknown>>();
  private agent:SketchAgent|undefined;
+ private edits:EditRepository|undefined;
  private events=new AgentEvents();
  private track=<T>(task:Promise<T>):Promise<T>=>{this.tasks.add(task);void task.finally(()=>this.tasks.delete(task)).catch(()=>{});return task;};
  constructor(ctx:Context,private config:Config,private root:string){super(ctx,'sketchReference');}
@@ -72,18 +76,21 @@ export class SketchService extends Service {
    let disposeAgent:(()=>Promise<void>)|undefined;
    try{
     const domain=await toolCtx.storageDomain.open(agentDomainSpec);
+    const editDomain=await toolCtx.storageDomain.open(editDomainSpec).catch(error=>{toolCtx.logger.warn('修改提议存储暂不可用，读取与批注保留：%s',error instanceof Error?error.message:'unknown');return undefined;});
+    const edits=editDomain?new EditRepository(editDomain.table('proposals'),this.repository):undefined;
     const agent=new SketchAgent({
      snapshot:async(session,signal)=>{
       const owner={sessionId:String(session.id),createdAt:String(session.createdAt),cwd:session.cwd??''};
       await this.checkAgent(owner,null,signal);return {owner,drawing:this.repository.get(owner)};
      },check:(owner,revision,signal)=>this.checkAgent(owner,revision,signal),changed:owner=>this.events.changed(owner),
-    },new CommentRepository(domain.table('annotations')));
+    },new CommentRepository(domain.table('annotations')),edits);
     let closing:Promise<void>|undefined;
-    disposeAgent=()=>closing??= (async()=>{abort.abort();if(this.agent===agent)this.agent=undefined;this.events.close();await agent.drain();agent.clear();await domain.close();})();
+    disposeAgent=()=>closing??= (async()=>{abort.abort();if(this.agent===agent){this.agent=undefined;this.edits=undefined;}this.events.close();await agent.drain();await edits?.drain();agent.clear();await editDomain?.close();await domain.close();})();
     toolCtx.effect(()=>disposeAgent!);
     this.lifetime.signal.throwIfAborted();
     for(const tool of createSketchTools(agent,AbortSignal.any([abort.signal,this.lifetime.signal]),this.track))unregister.push(toolCtx.tools.register(tool));
     this.agent=agent;
+    this.edits=edits;
    }catch(error){abort.abort();for(const dispose of unregister.reverse())dispose();await disposeAgent?.();toolCtx.logger.warn('Agent 协作初始化失败，基础画板保留：%s',error instanceof Error?error.message:'unknown');}
   });
  }
@@ -122,6 +129,12 @@ export class SketchService extends Service {
   const check=async()=>{signal.throwIfAborted();if(!sameOwner(owner,await this.resolve(owner.sessionId,signal)))throw new SketchError('SESSION_CHANGED','会话已变化',409);};
   await check();
   if(method==='agent/get')return {available:!!this.agent,batch:this.agent?.comments.get(owner)??null};
+  if(method==='proposal/get')return {available:!!this.edits,proposal:this.edits?.get(owner)??null};
+  if(method==='proposal/dismiss'||method==='proposal/apply'){
+   if(!this.edits)throw new SketchError('AGENT_UNAVAILABLE','修改提议暂不可用，基础画板保留',503);
+   const result=method==='proposal/dismiss'?await this.edits.dismiss(owner,proposalActionSchema.parse(body.payload).proposalId,check):await (async()=>{const input=applyEditSchema.parse(body.payload);return this.edits!.apply(owner,input.proposalId,input.scene,check);})();
+   this.events.changed(owner);return result;
+  }
   if(method==='agent/metrics')return {measurements:this.agent?.measurements??[],inputTokens:null,scope:'plugin tools only; not model or total Agent latency'};
   if(method==='agent/update'){
    if(!this.agent)throw new SketchError('AGENT_UNAVAILABLE','Agent 工具暂不可用，基础画板保留',503);

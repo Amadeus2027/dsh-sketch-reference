@@ -5,19 +5,20 @@ import {SketchError,digest,canonical,ownerKey,type Drawing,type Owner} from '../
 import {AGENT_LIMITS,agentReadSchema,agentAnnotateSchema,type AgentBatch,type AgentRead} from '../core/agent.ts';
 import type {CommentRepository} from './comment-repository.ts';
 import type {JsonValue} from '../core/scene.ts';
+import type {EditRepository} from './edit-repository.ts';
 
 export interface SketchAgentHost {
  snapshot(session:SessionHeader,signal:AbortSignal):Promise<{owner:Owner;drawing:Drawing|null}>;
  check(owner:Owner,revision:string|null,signal:AbortSignal):Promise<void>;
  changed(owner:Owner):void;
 }
-export interface ToolMeasurement {tool:'sketch_read'|'sketch_annotate';ms:number;outputBytes:number;ok:boolean;cacheHit:boolean;inputTokens:null}
+export interface ToolMeasurement {tool:'sketch_read'|'sketch_annotate'|'sketch_propose_edit';ms:number;outputBytes:number;ok:boolean;cacheHit:boolean;inputTokens:null}
 /** No model request, rendering or browser RPC is needed for an Agent read. */
 export class SketchAgent {
  private cache=new Map<string,{revision:string;summary:Record<string,JsonValue>}>();
  private tail:Promise<unknown>=Promise.resolve();
  readonly measurements:ToolMeasurement[]=[];
- constructor(private host:SketchAgentHost,readonly comments:CommentRepository<AgentBatch>){}
+ constructor(private host:SketchAgentHost,readonly comments:CommentRepository<AgentBatch>,readonly edits?:EditRepository){}
  private async measured<T>(tool:ToolMeasurement['tool'],work:(hit:()=>void)=>Promise<T>):Promise<T>{
   const start=performance.now();let cacheHit=false,ok=false,outputBytes=0;
   try{const value=await work(()=>{cacheHit=true;});ok=true;outputBytes=Buffer.byteLength(JSON.stringify(value));return value;}
@@ -35,7 +36,8 @@ export class SketchAgent {
    if(args.mode==='summary'&&args.offset===0){this.cache.set(key,{revision:drawing.revision,summary:data});if(this.cache.size>100)this.cache.delete(this.cache.keys().next().value!);}
   }
   const batch=this.comments.get(owner);
-  const result={...data,truncated:data.truncated??false,nextOffset:data.nextOffset??null,elements:[...(data.elements as Record<string,JsonValue>[])],annotations:batch?{batchId:batch.id,commentRevision:batch.commentRevision,count:batch.comments.length,stale:batch.contentDigest!==drawing.contentDigest||batch.goal!==drawing.goal,itemsTruncated:false,
+  const proposal=this.edits?.get(owner);
+  const result={...data,...(this.edits?{proposal:proposal?{id:proposal.id,status:proposal.status,baseRevision:proposal.baseRevision,stale:proposal.baseRevision!==drawing.revision,operationCount:proposal.operations.length}:null}:{}),truncated:data.truncated??false,nextOffset:data.nextOffset??null,elements:[...(data.elements as Record<string,JsonValue>[])],annotations:batch?{batchId:batch.id,commentRevision:batch.commentRevision,count:batch.comments.length,stale:batch.contentDigest!==drawing.contentDigest||batch.goal!==drawing.goal,itemsTruncated:false,
    items:batch.comments.filter(c=>c.status!=='ignored').map(c=>{const v=batch.advice.suggestions[c.suggestionIndex]!;return {id:c.id,status:c.status,title:v.title,reason:clip(v.reason,120),reasonTruncated:Array.from(v.reason).length>120,...(v.anchor?{elementId:v.anchor.elementId}:{})};})}:null};
   const limit=args.mode==='summary'?AGENT_LIMITS.summaryBytes:AGENT_LIMITS.detailBytes;
   while(result.annotations&&Buffer.byteLength(JSON.stringify(result.annotations))>2048&&result.annotations.items.length){result.annotations.items.pop();result.annotations.itemsTruncated=true;}
@@ -44,6 +46,12 @@ export class SketchAgent {
   while(Buffer.byteLength(JSON.stringify(result))>limit&&result.annotations?.items.length){result.annotations.items.pop();result.annotations.itemsTruncated=true;}
   if(Buffer.byteLength(JSON.stringify(result))>limit || (result.truncated&&!result.elements.length))throw new SketchError('OUTPUT_LIMIT','草图结构超过读取上限，请缩短用途或元素文字后重试',413);
   await this.host.check(owner,drawing.revision,signal);return result;
+ });}
+ proposeEdit(session:SessionHeader,input:unknown,callId:string,signal:AbortSignal){return this.measured('sketch_propose_edit',async()=>{
+  if(!this.edits)throw new SketchError('AGENT_UNAVAILABLE','修改提议暂不可用',503);
+  const {owner}=await this.host.snapshot(session,signal);
+  const proposal=await this.edits.propose(owner,input,callId,()=>this.host.check(owner,null,signal));
+  this.host.changed(owner);return {proposalId:proposal.id,revision:proposal.baseRevision,status:proposal.status,operationCount:proposal.operations.length,message:'修改提议已保存，画板内容未改变。请用户打开画板预览并明确确认；Agent 没有应用工具。'};
  });}
  annotate(session:SessionHeader,input:unknown,callId:string,signal:AbortSignal){
   const work=()=>this.measured('sketch_annotate',async()=>{

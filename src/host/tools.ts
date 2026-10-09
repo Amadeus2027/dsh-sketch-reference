@@ -16,5 +16,11 @@ export function createSketchTools(agent:SketchAgent,signal:AbortSignal,track:<T>
   output,timeoutMs:20000,
   execute:async(args,exec)=>{if(!exec.agent)throw new Error('sketch_annotate requires an owning Agent session');return track(agent.annotate(exec.agent.session.header,args,String(exec.callId),AbortSignal.any([exec.signal,signal])));},
   presentCall:()=>({card:'generic',title:'添加草图批注',kind:'other'}),
- })];
+ }),...(agent.edits?[defineTool({
+  name:'sketch_propose_edit',description:'Only when the user requests a drawing change, propose up to 20 restricted operations on the SAVED current sketch. Read revision and proposal.id (or JSON null) via sketch_read first; use elements mode for coordinates. This NEVER applies changes: user must preview and confirm on the board. No apply tool exists. Do not submit arbitrary scene JSON, code, style, bindings or ids for new elements. Create rectangle/ellipse/diamond/text/arrow at x,y with positive width,height; only text needs text (native engine computes its dimensions). Arrows point down/right. Move to absolute x,y; resize only independent rectangle/ellipse/diamond; delete independent elements. Locked, bound or grouped targets are rejected; ask user to edit these manually.',
+  parameters:{revision:{type:'string',required:true},expectedProposalId:{oneOf:[{type:'string'},{type:'null'}],required:true},summary:{type:'string',required:true},operations:{type:'array',required:true,items:{type:'object',additionalProperties:false,properties:{op:{type:'string',enum:['create','move','resize','delete'],required:true},type:{type:'string',enum:['rectangle','ellipse','diamond','text','arrow']},elementId:{type:'string'},x:{type:'number'},y:{type:'number'},width:{type:'number'},height:{type:'number'},text:{type:'string'}}}}},
+  output,timeoutMs:20000,
+  execute:async(args,exec)=>{if(!exec.agent)throw new Error('sketch_propose_edit requires an owning Agent session');return track(agent.proposeEdit(exec.agent.session.header,args,String(exec.callId),AbortSignal.any([exec.signal,signal])));},
+  presentCall:()=>({card:'generic',title:'提议草图修改（待用户确认）',kind:'other'}),
+ })]:[])];
 }

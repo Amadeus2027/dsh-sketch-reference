@@ -13,7 +13,8 @@ export function subscribeAgentComments(owner:Owner,changed:()=>void,failed:()=>v
  stream.onerror=()=>{stream.close();failed();};
  return()=>stream.close();
 }
-export function useAgentComments(owner:Owner,scene:()=>Drawing['scene'],goal:()=>string){
+export function useAgentComments(owner:Owner,scene:()=>Drawing['scene'],goal:()=>string,invalidated?:()=>void){
+ const invalidatedRef=useRef(invalidated);invalidatedRef.current=invalidated;
  const [batch,setBatch]=useState<AgentBatch|null>(null),[available,setAvailable]=useState(false),[stale,setStale]=useState(false);
  const [saving,setSaving]=useState(false),[error,setError]=useState(''),[disconnected,setDisconnected]=useState(false),[connectionEpoch,setConnectionEpoch]=useState(0);
  const [pending,setPending]=useState<CommentUpdate|null>(null);
@@ -51,7 +52,7 @@ export function useAgentComments(owner:Owner,scene:()=>Drawing['scene'],goal:()=
  useEffect(()=>{mounted.current=true;void refresh();return()=>{mounted.current=false;abort.current.abort();};},[refresh]);
  useEffect(()=>{
   if(!available)return;
-  setDisconnected(false);return subscribeAgentComments(owner,()=>{void refresh();},()=>{if(mounted.current)setDisconnected(true);});
+  setDisconnected(false);return subscribeAgentComments(owner,()=>{void refresh();invalidatedRef.current?.();},()=>{if(mounted.current)setDisconnected(true);});
  },[owner,available,refresh,connectionEpoch]);
  const save=async(input:CommentUpdate)=>{
   savingRef.current=true;writeEpoch.current++;setSaving(true);setError('');

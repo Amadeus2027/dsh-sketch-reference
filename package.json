@@ -1,6 +1,6 @@
 {
   "name": "dsh-sketch-reference",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "DeepSeek Harness 原生可视化协作：可编辑草图、参考输入与 Agent 批注",
   "type": "module",
   "main": "lib/index.js",
@@ -55,7 +55,8 @@
     "test:model-comparison": "node tests/model-comparison.mjs",
     "test:browser:native": "node tests/browser-native.mjs",
     "test:performance": "node tests/browser-performance.mjs",
-    "test:browser:agent": "node tests/browser-agent.mjs"
+    "test:browser:agent": "node tests/browser-agent.mjs",
+    "test:browser:edits": "node tests/browser-edits.mjs"
   },
   "engines": {
     "node": "^22.19.0 || >=24.0.0"

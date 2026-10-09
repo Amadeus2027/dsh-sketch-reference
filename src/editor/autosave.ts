@@ -1,4 +1,4 @@
-import {canonical,type Drawing,type Save,type Owner} from '../core/contracts.ts';
+import {canonical,sameOwner,type Drawing,type Save,type Owner} from '../core/contracts.ts';
 export type SaveState='clean'|'dirty'|'saving'|'error'|'conflict';
 export interface Draft {scene:Drawing['scene'];goal:string}
 /** A single-flight queue retains failed mutation IDs for retry and never overwrites a conflict. */
@@ -15,6 +15,11 @@ export class Autosave {
   this.persisted=this.latestCanonical=canonical(this.latest);
  }
  current():Draft{return this.latest;}
+ /** Adopt an acknowledged external CAS write only while the editor is settled/frozen. */
+ acceptExternal(record:Drawing,baseRevision:string){
+  if(this.disposed||this.closing||this.flight||this.retry||this.state!=='clean'||this.revision!==baseRevision||!sameOwner(record.owner,this.owner))throw new Error('本地草稿已变化，请载入服务器版本');
+  clearTimeout(this.timer);this.revision=record.revision;this.latest={scene:record.scene,goal:record.goal};this.persisted=this.latestCanonical=canonical(this.latest);this.error='';this.changed();
+ }
  update(draft:Draft) {
   if(this.disposed||this.closing)return false;
   const serialized=canonical(draft);if(this.latestCanonical===serialized)return false;
