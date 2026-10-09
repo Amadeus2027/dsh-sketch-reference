@@ -39,6 +39,18 @@ try{
   assert.equal(legacy.drawing.revision,comments.drawingRevision);assert.equal(legacy.drawing.contentDigest,comments.contentDigest);
   assert.equal(legacy.latestAdvice.id,comments.batchId);assert.equal(legacy.latestAdvice.commentRevision,comments.commentRevision);assert.deepEqual(legacy.latestAdvice.comments,comments.comments);
   console.log('PASS: after host restart, drawing revisions, full Agent batch/statuses and legacy batch/statuses restored from actual DSH storage.');
+  if(process.env.DSH_VISUAL_PERSISTENCE==='1'){
+   const visual=JSON.parse(await readFile('test-results/visual-session.json','utf8'));
+   assert.equal((await call('drawing/get',visual.owner,{sessionId:visual.owner.sessionId})).drawing.revision,visual.revision);
+   const state=await call('visual/get',visual.owner,null);assert.deepEqual(state.all,visual.state.all);assert.equal(state.selection,null);assert.equal(state.focus.stale,true);
+   await hostContext(page,'open',visual.owner.sessionId);
+   if(await page.locator('iframe[title="手绘参考板"]').count()){
+    const frame=await editorFrame(page);await frame.getByRole('button',{name:'返回聊天 ×'}).click();await page.locator('iframe[title="手绘参考板"]').waitFor({state:'detached'});
+   }
+   const answer='SKETCH_VISUAL_DONE：all 原生图片可见，未修改草图。',count=await page.getByText(answer,{exact:true}).count(),input=page.locator('[contenteditable=true]');
+   await input.fill('SKETCH_AGENT_TEST READ_VISUAL：宿主重启后读取已保存图片。');await input.press('Enter');await page.getByText(answer,{exact:true}).nth(count).waitFor();
+   console.log('PASS: real host restart preserves native visual reference and pixels; native image tool reads with no prepared editor required. Ephemeral focus clears. Scripted model.');
+  }
   if(process.env.DSH_EDITS_PERSISTENCE==='1'){
    const edits=JSON.parse(await readFile('test-results/edits-session.json','utf8'));
    const current=await call('drawing/get',edits.owner,{sessionId:edits.owner.sessionId});

@@ -24,11 +24,14 @@ export async function verifyAgentRecovery(page,frame,call,owner,batch){
   await frame.getByRole('alert').filter({hasText:'批注状态尚未确认保存'}).waitFor();
   assert.equal(await page.locator('iframe[title="手绘参考板"]').count(),1);
   await page.unroute('**/agent/get',read);
+  await page.waitForFunction(async()=>{const value=await (await fetch('/sketch-reference-test-agent-stats')).json();return value.eventClients===1;});
   const unavailable=async route=>{const request=route.request().postDataJSON();await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,requestId:request.requestId,value:{available:false,batch:null}})});};
   await page.route('**/agent/get',unavailable);
   await frame.getByRole('button',{name:'刷新 Agent 批注',exact:true}).click();
   await frame.getByRole('alert').filter({hasText:'Agent 工具暂不可用'}).waitFor();
   assert.equal(await frame.getByRole('button',{name:'重试 Agent 批注保存'}).count(),1,'Unavailable tools do not confirm an uncertain mutation');
+  await frame.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  await page.waitForFunction(async()=>{const value=await (await fetch('/sketch-reference-test-agent-stats')).json();return value.eventClients===1;});
   assert.equal(await frame.locator('.commentCard').count(),3,'A missing tool service is not an authoritative empty batch');
   await page.unroute('**/agent/get',unavailable);
   assert.equal((await call('agent/get',owner,null)).batch.comments[0].status,committed?'resolved':'open');
@@ -65,7 +68,7 @@ export async function verifyAgentRecovery(page,frame,call,owner,batch){
   assert.equal((await call('agent/get',owner,null)).batch.id,batch.id);
   await card.getByRole('button',{name:'重新打开'}).click();await card.getByRole('button',{name:'标记已解决'}).waitFor();
  }
- if(mode==='all'){
+ if(mode==='all')for(let reconnect=0;reconnect<3;reconnect++){
   await page.waitForFunction(async()=>{const value=await (await fetch('/sketch-reference-test-agent-stats')).json();return value.eventClients===1;});
   await page.evaluate(async()=>{const response=await fetch('/sketch-reference-test-agent-stats',{method:'POST'});if(response.status!==204)throw new Error('Event disconnect fixture unavailable');});
   await frame.getByRole('status').filter({hasText:'批注实时同步已断开'}).waitFor();

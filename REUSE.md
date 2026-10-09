@@ -35,3 +35,9 @@
 审阅上述固定版 DSH `dsh-tools` 的公开 DSL、工具执行会话上下文与注册释放接口，以及 dsh-diagram v0.6.1 `src/host/tools.ts` 的会话限定读取模式。新工具和 SSE 通知为本项目实现，未复制其语义图布局、编译器或独立聊天 UI。现有 MIT 许可与来源声明继续保留。
 
 0.3.1 的图形提议通过 Excalidraw 0.18.1 已公开的 `convertToExcalidrawElements`、`newElementWith`、`restoreElements`、`updateScene` 与历史捕获 API 应用；没有复制其内部几何、绑定或渲染代码。原生选择/框选直接读取公开 appState 的 selectedElementIds。操作契约、结果校验、提议存储及界面为本项目增量实现，第三方许可清单保持原样。
+
+0.3.2 的选区 PNG 直接复用同版 `exportToBlob`，不复制边界、字体或光栅化算法。审阅官方 v0.18.1（`a2ec2889babf7d2295469c6d90ebe77fae57df84`）Collab 的历史捕获/连接释放边界，未复制多人同步实现。
+
+`src/host/image-reference.ts` 和 `service.ts` 的图片工具输出、路线能力门禁模式改编自固定版 DSH [`packages/fs/tool-fs/src/read-image.ts`](https://github.com/deepseek-ai/deepseek-harness/blob/5badb15009ae1756c3afe0ae0cef1faafc290ccc/packages/fs/tool-fs/src/read-image.ts)。使用其公开 attachments/工具接口，沿用 DSH MIT 归属与许可；未复制文件路径读取能力。
+
+另外只参考 tldraw [`image-export.mdx`](https://github.com/tldraw/tldraw/blob/035b741dc331bf76a4cb9af27c346be10bba2a88/apps/docs/content/sdk-features/image-export.mdx) 的选区导出流程。其 SDK 许可证与 MIT 不同，没有复制代码、引入依赖或将其列为本包包含组件。详细取舍见 [0.3.2 实现说明](docs/submission-v0.3.2.md)。

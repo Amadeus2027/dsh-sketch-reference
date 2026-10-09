@@ -11,6 +11,7 @@ import {useEditProposal,EditPanel,type EditPreview} from './edit-proposals.tsx';
 import {buildEditElements} from './edit-scene.ts';
 import {validateEditScene,type EditProposal} from '../core/edits.ts';
 import {focusResultSchema} from '../core/agent.ts';
+import {useVisualReference} from './visual-reference.ts';
 import {rpc} from './rpc.ts';
 import {Autosave} from './autosave.ts';
 import {SceneUpdates} from './scene-updates.ts';
@@ -70,6 +71,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
  },()=>{
   if(mounted.current)render(v=>v+1);
  },(draft,revision)=>{try{writePending(owner,draft,revision);}catch{if(mounted.current)setBackupUnavailable(true);}}));
+ const visual=useVisualReference(owner);
  const edits=useEditProposal(owner),[editUncertain,setEditUncertain]=useState(false);
  const agent=useAgentComments(owner,()=>api.current?normalize(api.current.getSceneElements(),api.current.getAppState() as unknown as Record<string,unknown>):queue.current().scene,()=>goalRef.current,()=>void edits.refresh());
  const comments=source==='agent'?agent.batch:analysisComments,displayBatch=source==='agent'?agent.batch:batch,displayStale=source==='agent'?agent.stale:stale;
@@ -144,7 +146,18 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
    if(!clear&&!ids.length)throw new Error('请先使用画板原生选择或框选工具选中图形');
    await settle();if(!mounted.current)return;if(!queue.revision)throw new Error('请先绘制并保存草图');
    const result=focusResultSchema.parse(await rpc('agent/focus',owner,{revision:queue.revision,elementIds:ids},lifecycle.current.signal));
+   await visual.refresh();
    if(mounted.current)setMessage(`${result.message}${result.count?` 共 ${result.count} 个元素。可回到原生聊天询问此重点。`:''}`);
+  }finally{if(mounted.current)setPreparing(false);}
+ });
+ const prepareVisual=(scope:'all'|'focus')=>void run(async()=>{
+  if(!api.current||pending||preparing)throw new Error('请先结束当前操作');setMoreOpen(false);setPreparing(true);
+  try{await settle();if(!mounted.current)return;if(!queue.revision)throw new Error('先画一点内容并保存');
+   const current=await visual.refresh(),focus=current.selection;
+   if(scope==='focus'&&(!focus||focus.stale||focus.revision!==queue.revision))throw new Error('请先选中图形并设置当前选区重点');
+   const scene=queue.current().scene,png=await exportScene(scene,scope==='focus'?focus!.elementIds:undefined);
+   visual.accept(await rpc('visual/prepare',owner,{revision:queue.revision,scope,pngBase64:await base64(png)},lifecycle.current.signal));
+   if(mounted.current)setMessage(scope==='focus'?'重点视觉参考已更新；Agent 可按需读取，尚未发送消息或调用模型。':'视觉参考已更新；关闭画板后 Agent 仍可按需读取，尚未调用模型。');
   }finally{if(mounted.current)setPreparing(false);}
  });
  const run=async(task:()=>Promise<void>)=>{setMessage('');try{await task();}catch(e){if(mounted.current)setMessage(e instanceof Error?e.message:'操作失败');}};
@@ -213,7 +226,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
    {copy&&<div className="copy"><textarea readOnly aria-label="建议指令" value={copy}/><button onClick={()=>void run(async()=>{await navigator.clipboard.writeText(copy);setMessage('指令已复制');})}>复制</button><button onClick={()=>setCopy('')}>收起</button></div>}
    </div>
   </section>}
-  <EditPanel state={edits} disabled={!editor||preparing||busy||!!pending||queue.state==='conflict'||!!agent.pending||!!pendingComment.current} uncertain={editUncertain} onPreview={prepareEdit} onApply={applyEdit} onReload={onReload}/>
+  <EditPanel currentRevision={queue.revision} dirty={queue.state!=='clean'} state={edits} disabled={!editor||preparing||busy||!!pending||queue.state==='conflict'||!!agent.pending||!!pendingComment.current} uncertain={editUncertain} onPreview={prepareEdit} onApply={applyEdit} onReload={onReload}/>
   {agent.error&&<div className="notice" role="alert">Agent 批注：{agent.error}{agent.pending&&<button disabled={agent.saving} onClick={agent.retry}>重试 Agent 批注保存</button>}<button disabled={agent.saving} onClick={()=>void agent.refresh()}>刷新 Agent 批注</button></div>}
   {agent.disconnected&&<div className="notice" role="status">批注实时同步已断开，绘图和保存仍可使用。<button onClick={()=>void agent.refresh()}>刷新 Agent 批注</button></div>}
   {backupUnavailable&&<div className="notice" role="status">浏览器恢复存储不可用或空间不足，无法保证本地恢复副本；自动保存仍会尝试写入服务器。请及时下载草稿备份。</div>}
@@ -225,11 +238,14 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
    {comments&&<CommentOverlay api={editor} batch={comments} selected={selected} stale={displayStale} saving={savingComments||busy} shown={showComments&&!pending&&!preparing} actions={actions} onMissing={reportMissing}/>}
    {(preparing||!!pending)&&<div className="freeze">{pending?'请先选择是否恢复本地草稿':'正在保存并生成参考图…'}</div>}
   </div>
-  <footer><div className="actions">
+  <footer>
+   {visual.state?.available&&<span className="collaborationStatus" aria-label="协作状态">{visual.state.selection?`重点 ${visual.state.selection.elementIds.length} 个${visual.state.selection.revision!==queue.revision||queue.state!=='clean'?' · 已过期':''}`:''}{visual.state.all?`${visual.state.selection?' · ':''}视觉参考${!visual.state.all.stale&&visual.state.all.revision===queue.revision&&queue.state==='clean'?'可读':'待更新'}`:''}</span>}<div className="actions">
    <button disabled={!editor||!!pending||busy||preparing||queue.state==='conflict'||commentSaving} onClick={analyze}>{batch?'重新分析草图':'AI 分析草图'}</button>
    <button className="primary" disabled={!editor||!!pending||preparing} title="加入原生输入框，由你确认发送" onClick={()=>void run(async()=>{setPreparing(true);try{const scene=capture();queue.update({scene,goal:goalRef.current});await settle();const png=await exportScene(scene);const result=await stageImage(owner,png,await digest(scene));setMessage(stale&&batch?'参考图已更新；输入框中若有旧建议，请重新获取后替换。'+result:result);}finally{if(mounted.current)setPreparing(false);}})}>作为参考发送</button>
    <div className="more"><button aria-expanded={moreOpen} aria-label="更多操作" onClick={()=>setMoreOpen(v=>!v)}>···</button>{moreOpen&&<div className="moreMenu" role="group" aria-label="导出与模型选项">
     {agent.available&&<><button disabled={!editor||!!pending||preparing} onClick={()=>focusSelection()}>选区作为重点</button><button disabled={!editor||!!pending||preparing} onClick={()=>focusSelection(true)}>清除选区重点</button></>}
+    {agent.available&&<button disabled={preparing} onClick={()=>void run(async()=>{setMoreOpen(false);await visual.refresh();await edits.refresh();setMessage('协作状态已刷新');})}>刷新协作状态</button>}
+    {visual.state?.available&&<><button disabled={!editor||!!pending||preparing} onClick={()=>prepareVisual('all')}>更新视觉参考</button><button disabled={!editor||!!pending||preparing||!visual.state.selection||visual.state.selection.stale} onClick={()=>prepareVisual('focus')}>更新重点视觉参考</button></>}
     <button disabled={!editor||!!pending||preparing||exporting} onClick={()=>{setMoreOpen(false);void run(async()=>{setExporting(true);try{download(await exportScene(capture()),'sketch-reference.png');}finally{if(mounted.current)setExporting(false);}});}}>导出 PNG</button>
     <button onClick={()=>{setMoreOpen(false);void run(async()=>{downloadScene(capture());});}}>草稿备份</button>
     <label className="route">建议模型 <select aria-label="建议模型" disabled={busy} value={routeIndex} onChange={e=>setRouteIndex(Number(e.target.value))}>{!routes.length&&<option>尚未配置官方 DS</option>}{routes.map((r,i)=><option key={r.provider} value={i}>{r.provider==='deepseek-account'?'DS 账户':'DS API'} · Flash</option>)}</select></label>

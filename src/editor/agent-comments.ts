@@ -1,22 +1,17 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {z} from 'zod';
-import {agentBatchSchema,AGENT_EVENTS,type AgentBatch} from '../core/agent.ts';
+import {agentBatchSchema,type AgentBatch} from '../core/agent.ts';
 import {contentDigest,type Owner,type CommentUpdate,type CommentStatus,type Drawing} from '../core/contracts.ts';
 import {adviceIsStale} from '../core/comments.ts';
 import {rpc} from './rpc.ts';
+import {subscribeAgentComments} from './agent-stream.ts';
 
 const stateSchema=z.object({available:z.boolean(),batch:agentBatchSchema.nullable()}).strict();
 /** One live connection per open board; events coalesce into bounded reads. */
-export function subscribeAgentComments(owner:Owner,changed:()=>void,failed:()=>void){
- const stream=new EventSource(`${AGENT_EVENTS}?${new URLSearchParams(owner)}`);
- stream.onmessage=event=>{if(event.data==='changed')changed();};
- stream.onerror=()=>{stream.close();failed();};
- return()=>stream.close();
-}
 export function useAgentComments(owner:Owner,scene:()=>Drawing['scene'],goal:()=>string,invalidated?:()=>void){
  const invalidatedRef=useRef(invalidated);invalidatedRef.current=invalidated;
  const [batch,setBatch]=useState<AgentBatch|null>(null),[available,setAvailable]=useState(false),[stale,setStale]=useState(false);
- const [saving,setSaving]=useState(false),[error,setError]=useState(''),[disconnected,setDisconnected]=useState(false),[connectionEpoch,setConnectionEpoch]=useState(0);
+ const [saving,setSaving]=useState(false),[error,setError]=useState(''),[disconnected,setDisconnected]=useState(false),[connectionEpoch,setConnectionEpoch]=useState(0),[streamEnabled,setStreamEnabled]=useState(false);
  const [pending,setPending]=useState<CommentUpdate|null>(null);
  const pendingRef=useRef<CommentUpdate|null>(null),batchRef=useRef(batch),current=useRef({scene,goal});current.current={scene,goal};batchRef.current=batch;
  const savingRef=useRef(false),writeEpoch=useRef(0);
@@ -42,7 +37,7 @@ export function useAgentComments(owner:Owner,scene:()=>Drawing['scene'],goal:()=
     // A delayed read must not overwrite a newer confirmed state write.
     if(epoch!==writeEpoch.current){again.current=true;continue;}
     confirmed=next.available;setAvailable(next.available);
-    if(next.available)await setCurrent(next.batch);
+    if(next.available){setStreamEnabled(true);await setCurrent(next.batch);}
     else if(pendingRef.current)setError('Agent 工具暂不可用，批注状态尚未确认，请稍后刷新或重试。');
    }while(again.current&&mounted.current);
    return mounted.current&&confirmed;
@@ -51,9 +46,9 @@ export function useAgentComments(owner:Owner,scene:()=>Drawing['scene'],goal:()=
  },[owner,setCurrent]);
  useEffect(()=>{mounted.current=true;void refresh();return()=>{mounted.current=false;abort.current.abort();};},[refresh]);
  useEffect(()=>{
-  if(!available)return;
+  if(!streamEnabled)return;
   setDisconnected(false);return subscribeAgentComments(owner,()=>{void refresh();invalidatedRef.current?.();},()=>{if(mounted.current)setDisconnected(true);});
- },[owner,available,refresh,connectionEpoch]);
+ },[owner,streamEnabled,refresh,connectionEpoch]);
  const save=async(input:CommentUpdate)=>{
   savingRef.current=true;writeEpoch.current++;setSaving(true);setError('');
   try{
