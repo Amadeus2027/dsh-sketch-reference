@@ -13,3 +13,11 @@ export const focusStateSchema=focusSchema.extend({stale:z.boolean()}).strict().n
 export const visualInfoSchema=z.object({revision:z.uuid(),stale:z.boolean(),width:z.number().int().positive(),height:z.number().int().positive()}).strict().nullable();
 export const visualStateSchema=z.object({available:z.boolean(),all:visualInfoSchema,focus:visualInfoSchema,selection:focusStateSchema}).strict();
 export type VisualState=z.infer<typeof visualStateSchema>;
+
+/** Cache admission preserves the user's focus boundary, including stale focus. */
+export function visualCacheRequest(state:VisualState,revision:string){
+ if(!state.available||state.selection&&(state.selection.stale||state.selection.revision!==revision))return null;
+ const scope=state.selection?'focus':'all',image=state[scope];
+ if(image?.revision===revision&&!image.stale)return null;
+ return {scope:scope as 'all'|'focus',elementIds:state.selection?.elementIds};
+}

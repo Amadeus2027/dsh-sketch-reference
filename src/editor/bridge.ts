@@ -1,5 +1,6 @@
 import {bridgeResult} from '../core/bridge.ts';
 import type {Owner} from '../core/contracts.ts';
+import type {CommentRequest} from '../core/comment-context.ts';
 import {appearanceSchema} from '../core/appearance.ts';
 import {applyAppearance} from './appearance.ts';
 const params=new URLSearchParams(location.search),nonce=params.get('nonce'),sessionId=params.get('sessionId');
@@ -32,4 +33,5 @@ function send(message:Record<string,unknown>,transfer:Transferable[]=[]):Promise
 }
 export async function stageImage(owner:Owner,blob:Blob,digest:string){const bytes=await blob.arrayBuffer();return send({type:'STAGE_IMAGE',owner,bytes,digest},[bytes]);}
 export function insertAdvice(owner:Owner,batchId:string,index:number){return send({type:'INSERT_ADVICE',owner,batchId,index});}
+export function insertComment(owner:Owner,request:CommentRequest){return send({type:'INSERT_COMMENT',owner,request});}
 export function closeBoard(){return send({type:'CLOSE'});}

@@ -23,14 +23,14 @@ export function useEditProposal(owner:Owner){
  const dismiss=async()=>{if(!proposal||busy)return;epoch.current++;setBusy(true);try{const next=proposalSchema.parse(await rpc('proposal/dismiss',owner,{proposalId:proposal.id},abort.current.signal));if(mounted.current){epoch.current++;known.current=next;setProposal(next);setError('');}}catch(e){if(mounted.current)setError(e instanceof Error?e.message:'忽略失败');}finally{if(mounted.current)setBusy(false);}};
  return {proposal,error,busy,available,refresh,dismiss,invalidate:()=>{epoch.current++;}};
 }
-export interface EditPreview {scene:Drawing['scene'];elements:readonly ExcalidrawElement[];image:Blob}
+export interface EditPreview {scene:Drawing['scene'];elements:readonly ExcalidrawElement[];images:{before:Blob;after:Blob}}
 export function EditPanel({state,disabled,uncertain,onPreview,onApply,onReload,currentRevision,dirty}:{currentRevision:string|null;dirty:boolean;state:ReturnType<typeof useEditProposal>;disabled:boolean;uncertain:boolean;onPreview:(p:EditProposal)=>Promise<EditPreview>;onApply:(p:EditProposal,preview:EditPreview)=>Promise<void>;onReload:()=>void}){
  const {proposal,error,busy,available,refresh,dismiss}=state;
- const [open,setOpen]=useState(false),[preview,setPreview]=useState<EditPreview|null>(null),[image,setImage]=useState(''),[working,setWorking]=useState(false),[message,setMessage]=useState('');
+ const [open,setOpen]=useState(false),[preview,setPreview]=useState<EditPreview|null>(null),[images,setImages]=useState<{before:string;after:string}|null>(null),[working,setWorking]=useState(false),[message,setMessage]=useState('');
  const alive=useRef(true),selected=useRef(proposal?.id);selected.current=proposal?.id;
  useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
  useEffect(()=>{setPreview(null);setMessage('');setOpen(false);},[proposal?.id]);
- useEffect(()=>{if(!preview){setImage('');return;}const url=URL.createObjectURL(preview.image);setImage(url);return()=>URL.revokeObjectURL(url);},[preview]);
+ useEffect(()=>{if(!preview){setImages(null);return;}const before=URL.createObjectURL(preview.images.before),after=URL.createObjectURL(preview.images.after);setImages({before,after});return()=>{URL.revokeObjectURL(before);URL.revokeObjectURL(after);};},[preview]);
  if(!proposal&&!error)return null;
  const run=async(task:()=>Promise<void>)=>{setWorking(true);setMessage('');try{await task();}catch(e){if(alive.current)setMessage(e instanceof Error?e.message:'修改提议操作失败');}finally{if(alive.current)setWorking(false);}};
  const stale=proposal?.status==='pending'&&(dirty||proposal.baseRevision!==currentRevision);
@@ -40,7 +40,10 @@ export function EditPanel({state,disabled,uncertain,onPreview,onApply,onReload,c
   {open&&proposal&&<div className="editBody">
    <p>{stale?'草图或用途已变化，请让 Agent 重新读取后提议。旧提议不能覆盖当前画板。':'仅在点击确认后修改画板。可用原生撤销或修改前备份恢复。'}</p>
    <ol>{proposal.operations.map((op,i)=><li key={i}>{op.op==='create'?`新增${shapeNames[op.type]}${op.text?`：${op.text}`:''}`:op.op==='move'?`移动 ${op.elementId} 至 (${op.x}, ${op.y})`:op.op==='resize'?`调整 ${op.elementId} 尺寸为 ${op.width} × ${op.height}`:`删除 ${op.elementId}`}</li>)}</ol>
-   {image&&<img className="editPreview" src={image} alt={proposal.status==='applied'&&!uncertain?'已应用草图预览':'修改后的草图预览（尚未应用）'}/>}
+   {images&&<><p className="editLegend">同一视角对照 · 绿色新增 · 红色删除 · 蓝色移动/尺寸 · 序号对应上方操作</p><div className="editComparison">
+    <figure><figcaption>修改前 · 虚线定位</figcaption><img src={images.before} alt="修改前草图，虚线标出受影响元素"/></figure>
+    <figure><figcaption>{proposal.status==='applied'&&!uncertain?'已应用':'修改后 · 尚未应用'}</figcaption><img src={images.after} alt="修改后草图，实线标出新增和变化元素"/></figure>
+   </div></>}
    <div className="commentTools">
     {proposal.status==='pending'&&!uncertain&&<button disabled={blocked||stale||!available} onClick={()=>void run(async()=>{const value=await onPreview(proposal);if(alive.current&&selected.current===proposal.id)setPreview(value);})}>预览修改</button>}
     {preview&&(proposal.status==='pending'||uncertain)&&<button className="primary" disabled={blocked||!available||!!stale&&!uncertain} onClick={()=>void run(async()=>{await onApply(proposal,preview);if(alive.current){setMessage('修改已保存，可使用 Excalidraw 撤销。');void refresh();}})}>{uncertain?'重试确认修改':'确认应用修改'}</button>}
