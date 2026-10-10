@@ -3,6 +3,10 @@ import type {Context} from '@deepseek-ai/cordis';
 import type {ConversationSlotProps} from '@deepseek-ai/dsh-client-ui-conversation/client';
 import {ASSETS,loadSchema,batchSchema,routeSchema,sameOwner} from '../core/contracts.ts';
 import {bridgeMessage} from '../core/bridge.ts';
+import {agentBatchSchema} from '../core/agent.ts';
+import {withComments} from '../core/comments.ts';
+import {commentContext} from '../core/comment-context.ts';
+import {insertCommentText} from './comment-insertion.ts';
 import {rpc} from '../editor/rpc.ts';
 import {draftBridge} from './harness-draft-bridge.ts';
 import type {Appearance} from '../core/appearance.ts';
@@ -46,10 +50,17 @@ export function SketchFrame({ctx,props,onClose,appearance,subscribeClose}:{ctx:C
     processing=true;
     void(async()=>{
      if(!props.sessionId || latest.current.sessionId!==props.sessionId || signal.aborted)throw new Error('会话已变化');
+     const agentState=message.type==='INSERT_COMMENT'&&message.request.source==='agent'?await rpc('agent/get',message.owner,null,signal) as {batch:unknown}:null;
      const loaded=loadSchema.parse(await rpc('drawing/get',message.owner,{sessionId:props.sessionId},signal));
      if(!sameOwner(loaded.owner,message.owner))throw new Error('会话已变化');
      const actions=latest.current.inputActions;
      if(!actions)throw new Error('输入框尚未就绪');
+     if(message.type==='INSERT_COMMENT'){
+      const batch=message.request.source==='agent'?agentBatchSchema.nullable().parse(agentState?.batch):loaded.latestAdvice?withComments(loaded.latestAdvice):null;
+      const text=commentContext(loaded.drawing,batch,message.request);
+      insertCommentText(actions,text,()=>latest.current.sessionId===props.sessionId&&!signal.aborted);
+      reply(true,'批注已加入原生输入框，请补充内容并手动发送');return;
+     }
      if(message.type==='INSERT_ADVICE'){
       const batch=batchSchema.parse(loaded.latestAdvice);
       if(batch.id!==message.batchId || batch.contentDigest!==loaded.drawing?.contentDigest || batch.goal!==loaded.drawing?.goal)throw new Error('建议基于较早草图，请重新获取');

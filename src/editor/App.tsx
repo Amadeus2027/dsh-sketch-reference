@@ -9,6 +9,7 @@ import {normalize} from './scene.ts';
 import {useAgentComments} from './agent-comments.ts';
 import {useEditProposal,EditPanel,type EditPreview} from './edit-proposals.tsx';
 import {buildEditElements} from './edit-scene.ts';
+import {editComparison} from './edit-preview.ts';
 import {validateEditScene,type EditProposal} from '../core/edits.ts';
 import {focusResultSchema} from '../core/agent.ts';
 import {useVisualReference} from './visual-reference.ts';
@@ -20,7 +21,8 @@ import {RPC_LIMITS} from '../core/limits.ts';
 import {writePending,clearPending,consumePending,recoverPending} from './pending.ts';
 import {pngExport,download,downloadScene,base64} from './export.ts';
 import {createSceneExport} from './scene-export.ts';
-import {startBridge,stageImage,insertAdvice,closeBoard} from './bridge.ts';
+import {startBridge,stageImage,insertAdvice,insertComment,closeBoard} from './bridge.ts';
+import type {CommentRequest} from '../core/comment-context.ts';
 const labels={clean:'已保存',dirty:'未保存',saving:'正在保存',error:'保存失败',conflict:'版本冲突'};
 export function SketchApp({sessionId}:{sessionId:string}) {
  const [loaded,setLoaded]=useState<ReturnType<typeof loadSchema.parse>|null>(null),[error,setError]=useState('');
@@ -49,6 +51,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
  const analysisComments=useMemo(()=>batch?withComments(batch):null,[batch]);
  const [source,setSource]=useState<'analysis'|'agent'>('analysis');
  const [editor,setEditor]=useState<ExcalidrawImperativeAPI|null>(null),[selected,setSelected]=useState<string|null>(null),[showComments,setShowComments]=useState(true),[showIgnored,setShowIgnored]=useState(false);
+ const [hovered,setHovered]=useState<string|null>(null);
  const [commentSaving,setCommentSaving]=useState(false),[commentError,setCommentError]=useState<{message:string;conflict:boolean}|null>(null);
  const pendingComment=useRef<CommentUpdate|null>(null);
  const [missing,setMissing]=useState(()=>new Set(analysisComments?.comments.filter(c=>!anchorTarget(analysisComments.advice.suggestions[c.suggestionIndex]?.anchor,initial?.scene.elements??[])&&analysisComments.advice.suggestions[c.suggestionIndex]?.anchor).map(c=>c.id)));
@@ -73,6 +76,15 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   if(mounted.current)render(v=>v+1);
  },(draft,revision)=>{try{writePending(owner,draft,revision);}catch{if(mounted.current)setBackupUnavailable(true);}}));
  const visual=useVisualReference(owner);
+ // Warm only a settled saved version. No model call or native-chat attachment;
+ // repeated versions reuse the existing export and immutable image record.
+ const focusKey=JSON.stringify(visual.state?.selection??null);
+ useEffect(()=>{
+  const revision=queue.revision;if(!revision||queue.state!=='clean'||!visual.state?.available||pending)return;
+  const timer=setTimeout(()=>void visual.prepareCurrent(revision,queue.current().scene,exportScene,()=>mounted.current&&queue.revision===revision&&queue.state==='clean').catch(()=>{}),500);
+  return()=>clearTimeout(timer);
+ },[queue.revision,queue.state,visual.state?.available,focusKey,pending,queue,exportScene,visual.prepareCurrent]);
+ const prepareChatReference=async()=>{const revision=queue.revision;if(revision)await visual.prepareCurrent(revision,queue.current().scene,exportScene,()=>mounted.current&&queue.revision===revision&&queue.state==='clean').catch(()=>{});};
  const edits=useEditProposal(owner),[editUncertain,setEditUncertain]=useState(false);
  const agent=useAgentComments(owner,()=>api.current?normalize(api.current.getSceneElements(),api.current.getAppState() as unknown as Record<string,unknown>,queue.current().scene):queue.current().scene,()=>goalRef.current,()=>void edits.refresh());
  const comments=source==='agent'?agent.batch:analysisComments,displayBatch=source==='agent'?agent.batch:batch,displayStale=source==='agent'?agent.stale:stale;
@@ -122,7 +134,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   try{await settle();if(!mounted.current)throw new Error('画板已关闭');
    if(queue.revision!==proposal.baseRevision||canonical(queue.current().scene)!==canonical(proposal.before)||goalRef.current!==proposal.goal)throw new Error('草图已变化，请让 Agent 重新读取并提议');
    const elements=buildEditElements(api.current.getSceneElementsIncludingDeleted(),proposal),scene=normalize(elements,api.current.getAppState() as unknown as Record<string,unknown>,queue.current().scene);
-   validateEditScene(proposal,scene);return {elements,scene,image:await pngExport(scene)};
+   validateEditScene(proposal,scene);return {elements,scene,images:await editComparison(proposal,scene)};
   }finally{if(mounted.current)setPreparing(false);}
  };
  const applyEdit=async(proposal:EditProposal,preview:EditPreview)=>{
@@ -187,11 +199,20 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
  });
  const refreshComments=()=>source==='agent'?void agent.refresh():refreshAnalysis();
  const selectComment=(id:string,locate:boolean)=>{
-  setSelected(id||null);if(!id||!comments||!api.current)return;
+  setSelected(id||null);setHovered(null);if(id)setAdviceOpen(true);if(!id||!comments||!api.current)return;
   const comment=comments.comments.find(c=>c.id===id),target=anchorTarget(comment?comments.advice.suggestions[comment.suggestionIndex]?.anchor:undefined,api.current.getSceneElements());
-  if(target){api.current.updateScene({appState:{selectedElementIds:{[target.id]:true}},captureUpdate:CaptureUpdateAction.NEVER});if(locate)api.current.scrollToContent(target,{animate:false});}
+  if(target&&locate)api.current.scrollToContent(target,{animate:false});
  };
- const actions:CommentActions={select:selectComment,change:changeComment,use:index=>void run(async()=>{if(!batch)return;await settle();setMessage(await insertAdvice(owner,batch.id,index));}),prompt:index=>{setCopy(batch?.advice.suggestions[index]?.actionPrompt??'');setAdviceOpen(true);}};
+ const discuss=(id:string,intent:CommentRequest['intent'])=>void run(async()=>{
+  if(!comments||preparing||busy||pending||savingComments||editUncertain)throw new Error('请先结束或确认当前操作');
+  setPreparing(true);
+  try{await settle();if(!mounted.current||!queue.revision)throw new Error('画板已关闭或草图尚未保存');
+   await prepareChatReference();
+   await insertComment(owner,{source,batchId:comments.id,commentId:id,revision:queue.revision,intent});
+   if(mounted.current)await closeBoard();
+  }finally{if(mounted.current)setPreparing(false);}
+ });
+ const actions:CommentActions={select:selectComment,hover:setHovered,discuss,change:changeComment,use:index=>void run(async()=>{if(!batch)return;await settle();setMessage(await insertAdvice(owner,batch.id,index));}),prompt:index=>{setCopy(batch?.advice.suggestions[index]?.actionPrompt??'');setAdviceOpen(true);}};
  const analyze=()=>void run(async()=>{
   if(busy)return;if(pendingComment.current)throw new Error('请先重试保存或刷新批注');const route=routes[routeIndex];if(!route)throw new Error('请先在 Harness 中登录 DS 或配置官方 DS 路线');
   const abort=new AbortController();active.current=abort;setBusy(true);setPreparing(true);
@@ -206,7 +227,12 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   }catch(e){if(abort.signal.aborted)throw new Error('分析已取消，草图保留');throw e;
   }finally{if(mounted.current){setBusy(false);setPreparing(false);}active.current=null;}
  });
- const close=()=>void run(async()=>{if(preparing)throw new Error('请等待当前操作完成');if(editUncertain)throw new Error('修改结果尚未确认，请重试或载入服务器版本后关闭');if(pendingComment.current||agent.pending)throw new Error('批注状态尚未确认保存，请重试或刷新批注后关闭');try{await settle();}catch{throw new Error('请先重试保存或下载草稿备份，再关闭');}await closeBoard();});
+ const close=()=>void run(async()=>{
+  if(preparing)throw new Error('请等待当前操作完成');if(editUncertain)throw new Error('修改结果尚未确认，请重试或载入服务器版本后关闭');if(pendingComment.current||agent.pending)throw new Error('批注状态尚未确认保存，请重试或刷新批注后关闭');
+  setPreparing(true);
+  try{try{await settle();}catch{throw new Error('请先重试保存或下载草稿备份，再关闭');}await prepareChatReference();await closeBoard();}
+  finally{if(mounted.current)setPreparing(false);}
+ });
  closeAction.current=close;
  const recover=()=>{if(!pending || !api.current)return;const {scene,goal:restored}=pending.draft;setGoal(restored);goalRef.current=restored;
   if(pending.draft.base!==queue.revision){setMessage('恢复副本与服务器版本不同。已载入本地供导出；为防止覆盖，请下载草稿后载入服务器版本。');queue.state='conflict';queue.error='恢复副本版本冲突';}
@@ -219,16 +245,18 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   <section className="intent"><label className="srOnly" htmlFor="goal">这张图准备用来做什么？</label><input id="goal" maxLength={2000} value={goal} disabled={preparing||!!pending} placeholder="用途：例如识别物品、解释几何图形或讨论流程" onChange={e=>{const value=e.target.value;void run(async()=>{const scene=api.current?capture():queue.current().scene;setGoal(value);goalRef.current=value;queue.update({scene,goal:value});updateStale(scene,value);});}} />
   </section>
   {(batch||agent.batch||busy)&&<section className="advice" aria-label="AI 建议与批注">
-   <div className="adviceTitle"><button aria-expanded={adviceOpen} aria-label={adviceOpen?'收起建议与批注':'展开建议与批注'} onClick={()=>setAdviceOpen(v=>!v)}>建议与批注{displayBatch?` · ${displayBatch.advice.suggestions.length}`:''} {adviceOpen?'⌃':'⌄'}</button><span>{busy?'正在分析草图…':displayBatch?.advice.summary}</span>{displayStale&&!busy&&<small>较早版本</small>}{busy&&<button onClick={()=>{active.current?.abort();setMessage('分析已取消，草图保留');}}>取消</button>}</div>
-   <div hidden={!adviceOpen}>
+   <div className="adviceTitle"><button aria-expanded={adviceOpen} aria-label={adviceOpen?'收起建议与批注':'展开建议与批注'} onClick={()=>{setAdviceOpen(v=>!v);setHovered(null);}}>建议与批注{displayBatch?` · ${displayBatch.advice.suggestions.length}`:''} {adviceOpen?'⌃':'⌄'}</button>{displayStale&&!busy&&<small>较早版本</small>}{comments&&<button className="markerToggle" aria-pressed={showComments} onClick={()=>setShowComments(v=>!v)}>{showComments?'隐藏图中标记':'显示图中标记'}</button>}{busy&&<button onClick={()=>{active.current?.abort();setMessage('分析已取消，草图保留');}}>取消</button>}</div>
+   <p className="analysisSummary">{busy?'正在分析草图…':displayBatch?.advice.summary}</p>
+   <div className="adviceDetails" hidden={!adviceOpen}>
    {batch&&agent.batch&&<div className="commentTools" role="group" aria-label="批注来源"><button aria-pressed={source==='analysis'} onClick={()=>{setSource('analysis');setSelected(null);setCopy('');}}>AI 分析建议</button><button aria-pressed={source==='agent'} onClick={()=>{setSource('agent');setSelected(null);setCopy('');}}>Agent 批注</button></div>}
-   {comments&&<><div className="commentTools"><span title={new Date(comments.createdAt).toLocaleString('zh-CN')}>{displayStale?'草图或用途已修改，批注基于较早版本':source==='agent'?'原生聊天 Agent 批注':'本次分析'}</span><button aria-pressed={showComments} onClick={()=>setShowComments(v=>!v)}>{showComments?'隐藏批注':'显示批注'}</button><button onClick={refreshComments} disabled={savingComments}>刷新批注</button>{comments.comments.some(c=>c.status==='ignored')&&<button aria-pressed={showIgnored} onClick={()=>setShowIgnored(v=>!v)}>{showIgnored?'隐藏已忽略':'显示已忽略'}</button>}</div>
-    <CommentList batch={comments} selected={selected} stale={displayStale||!!pending} saving={savingComments||busy} showIgnored={showIgnored} actions={actions} missing={missing}/></>}
+   {comments&&<><div className="commentTools"><span title={new Date(comments.createdAt).toLocaleString('zh-CN')}>{displayStale?'草图或用途已修改，批注基于较早版本':source==='agent'?'原生聊天 Agent 批注':'本次分析'}</span><button onClick={refreshComments} disabled={savingComments}>刷新批注</button>{comments.comments.some(c=>c.status==='ignored')&&<button aria-pressed={showIgnored} onClick={()=>setShowIgnored(v=>!v)}>{showIgnored?'隐藏已忽略':'显示已忽略'}</button>}</div>
+    <CommentList batch={comments} selected={selected} stale={displayStale||!!pending} saving={savingComments||busy||preparing} showIgnored={showIgnored} actions={actions} missing={missing}/></>}
    {copy&&<div className="copy"><textarea readOnly aria-label="建议指令" value={copy}/><button onClick={()=>void run(async()=>{await navigator.clipboard.writeText(copy);setMessage('指令已复制');})}>复制</button><button onClick={()=>setCopy('')}>收起</button></div>}
    </div>
   </section>}
   <EditPanel currentRevision={queue.revision} dirty={queue.state!=='clean'} state={edits} disabled={!editor||preparing||busy||!!pending||queue.state==='conflict'||!!agent.pending||!!pendingComment.current} uncertain={editUncertain} onPreview={prepareEdit} onApply={applyEdit} onReload={onReload}/>
   {agent.error&&<div className="notice" role="alert">Agent 批注：{agent.error}{agent.pending&&<button disabled={agent.saving} onClick={agent.retry}>重试 Agent 批注保存</button>}<button disabled={agent.saving} onClick={()=>void agent.refresh()}>刷新 Agent 批注</button></div>}
+  {visual.error&&<div className="notice" role="status">{visual.error}</div>}
   {agent.disconnected&&<div className="notice" role="status">批注实时同步已断开，绘图和保存仍可使用。<button onClick={()=>void agent.refresh()}>刷新 Agent 批注</button></div>}
   {backupUnavailable&&<div className="notice" role="status">浏览器恢复存储不可用或空间不足，无法保证本地恢复副本；自动保存仍会尝试写入服务器。请及时下载草稿备份。</div>}
   {pending&&<div className="notice">发现未保存的恢复副本。<button onClick={recover}>恢复本地草稿</button><button onClick={()=>{downloadScene(pending.draft.scene);}}>下载恢复副本</button><button onClick={()=>setPending(null)}>暂不恢复</button></div>}
@@ -236,7 +264,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   {(message||queue.error)&&<div className="notice" role="alert">{message||queue.error}{queue.state==='error'&&<button onClick={()=>void run(async()=>{await settle();})}>重试保存</button>}{queue.state==='conflict'&&<><button onClick={()=>void run(async()=>{downloadScene(capture());})}>下载我的草稿</button><button onClick={onReload}>载入服务器版本</button></>}</div>}
   <div ref={canvas} className="canvas" data-preparing={preparing||!!pending}>
    <Excalidraw theme={appearance.theme} langCode="zh-CN" initialData={initialData} excalidrawAPI={ready} onChange={updated} UIOptions={{canvasActions:{loadScene:false,saveToActiveFile:false,export:false,saveAsImage:false,toggleTheme:false},tools:{image:false}}} />
-   {comments&&<CommentOverlay api={editor} batch={comments} selected={selected} stale={displayStale} saving={savingComments||busy} shown={showComments&&!pending&&!preparing} actions={actions} onMissing={reportMissing}/>}
+   {comments&&<CommentOverlay api={editor} batch={comments} selected={selected} hovered={hovered} stale={displayStale} saving={savingComments||busy} shown={showComments} disabled={!!pending||preparing} actions={actions} onMissing={reportMissing}/>}
    {(preparing||!!pending)&&<div className="freeze">{pending?'请先选择是否恢复本地草稿':'正在保存并生成参考图…'}</div>}
   </div>
   <footer>

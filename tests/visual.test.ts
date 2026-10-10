@@ -1,4 +1,17 @@
 import {it,expect,vi} from 'vitest';
+import {visualCacheRequest} from '../src/core/visual.ts';
+
+it('caches only missing current images and never expands a stale focus',()=>{
+ const revision=randomUUID(),state={available:true,all:null,focus:null,selection:null};
+ expect(visualCacheRequest(state,revision)).toEqual({scope:'all',elementIds:undefined});
+ const focus={...state,selection:{revision,elementIds:['r'],stale:false}};
+ expect(visualCacheRequest(focus,revision)).toEqual({scope:'focus',elementIds:['r']});
+ expect(visualCacheRequest({...focus,all:{revision,width:100,height:100,stale:false}},revision)?.scope).toBe('focus');
+ expect(visualCacheRequest({...focus,selection:{...focus.selection,stale:true}},revision)).toBeNull();
+ expect(visualCacheRequest(focus,randomUUID())).toBeNull();
+ expect(visualCacheRequest({...state,all:{revision,width:100,height:100,stale:false}},revision)).toBeNull();
+ expect(visualCacheRequest({...state,available:false},revision)).toBeNull();
+});
 import {randomUUID} from 'node:crypto';
 import type {KvTable} from '@deepseek-ai/dsh-storage-domain';
 import type {ImageAttachmentRef} from '@deepseek-ai/dsh-attachment';

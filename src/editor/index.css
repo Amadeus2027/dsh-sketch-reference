@@ -27,3 +27,15 @@
 
 .collaborationStatus{font-size:11px;color:var(--sketch-muted);margin-right:auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.collaborationStatus:empty{display:none}
 @media(max-width:600px){.collaborationStatus{display:none}}
+
+.advice{display:flex;flex-direction:column;max-height:36%;overflow:hidden;min-height:0}
+.adviceTitle{flex:none;flex-wrap:wrap}.adviceTitle .markerToggle{margin-left:auto;padding:3px 6px;color:var(--sketch-muted)}
+.analysisSummary{margin:0 0 6px;flex:none;max-height:4.5em;overflow:auto;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.adviceDetails{min-height:0;overflow:auto;padding:2px}
+.commentCard{cursor:pointer;overflow-wrap:anywhere}.commentCard:hover{border-color:color-mix(in srgb,var(--sketch-accent) 55%,var(--sketch-border));background:var(--sketch-hover)}
+.commentCard:focus-within{outline:2px solid var(--sketch-accent);outline-offset:1px}.commentCard.active{border-color:var(--sketch-accent);background:color-mix(in srgb,var(--sketch-accent) 7%,var(--sketch-surface))}
+.commentHighlight{position:absolute;pointer-events:none;border:2px solid var(--sketch-accent);border-radius:5px;background:color-mix(in srgb,var(--sketch-accent) 8%,transparent)}
+.commentOverlay[data-stale=true] .commentHighlight{border-style:dashed}
+@media(max-width:420px){.advice{max-height:36%}.cards{grid-template-columns:1fr}}
+.editComparison{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.editComparison figure{margin:0;min-width:0}.editComparison figcaption{font-size:11px;color:var(--sketch-muted);margin-bottom:4px}.editComparison img{display:block;width:100%;height:160px;object-fit:contain;border:1px solid var(--sketch-border);border-radius:6px;background:white}.editLegend{font-size:11px!important}
+@media(max-width:420px){.editComparison{grid-template-columns:1fr}.editComparison img{height:140px}}
