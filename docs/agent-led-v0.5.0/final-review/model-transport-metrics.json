@@ -1,0 +1,1797 @@
+{
+  "exportedUtc": "2026-10-10T09:04:03.999Z",
+  "streaming": "Responses buffered by isolated review transport; UI tok/s is not a native streaming benchmark",
+  "requests": [
+    {
+      "at": "2026-10-10T05:11:54.982Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3358,
+      "requestBytes": 111456,
+      "responseBytes": 30401
+    },
+    {
+      "at": "2026-10-10T05:11:56.970Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1850,
+      "requestBytes": 69685,
+      "responseBytes": 17375
+    },
+    {
+      "at": "2026-10-10T05:11:59.536Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2498,
+      "requestBytes": 68978,
+      "responseBytes": 30419
+    },
+    {
+      "at": "2026-10-10T05:12:01.770Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2134,
+      "requestBytes": 109290,
+      "responseBytes": 25355
+    },
+    {
+      "at": "2026-10-10T05:12:03.911Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2078,
+      "requestBytes": 86856,
+      "responseBytes": 30569
+    },
+    {
+      "at": "2026-10-10T05:12:07.552Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3548,
+      "requestBytes": 149119,
+      "responseBytes": 58035
+    },
+    {
+      "at": "2026-10-10T05:12:10.887Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3206,
+      "requestBytes": 157183,
+      "responseBytes": 52821
+    },
+    {
+      "at": "2026-10-10T05:12:15.258Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4247,
+      "requestBytes": 194500,
+      "responseBytes": 69998
+    },
+    {
+      "at": "2026-10-10T05:12:23.583Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 8228,
+      "requestBytes": 217272,
+      "responseBytes": 160124
+    },
+    {
+      "at": "2026-10-10T05:12:27.581Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3877,
+      "requestBytes": 255772,
+      "responseBytes": 58415
+    },
+    {
+      "at": "2026-10-10T05:12:56.073Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 28385,
+      "requestBytes": 251746,
+      "responseBytes": 783558
+    },
+    {
+      "at": "2026-10-10T05:12:58.581Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2184,
+      "requestBytes": 360176,
+      "responseBytes": 18490
+    },
+    {
+      "at": "2026-10-10T05:12:59.161Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2719,
+      "requestBytes": 109703,
+      "responseBytes": 10579
+    },
+    {
+      "at": "2026-10-10T05:12:59.956Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1364,
+      "requestBytes": 113201,
+      "responseBytes": 10505
+    },
+    {
+      "at": "2026-10-10T05:13:00.931Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1761,
+      "requestBytes": 108829,
+      "responseBytes": 19238
+    },
+    {
+      "at": "2026-10-10T05:13:01.492Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1527,
+      "requestBytes": 109442,
+      "responseBytes": 19584
+    },
+    {
+      "at": "2026-10-10T05:13:03.246Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1742,
+      "requestBytes": 87541,
+      "responseBytes": 10717
+    },
+    {
+      "at": "2026-10-10T05:13:04.853Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1599,
+      "requestBytes": 91625,
+      "responseBytes": 10090
+    },
+    {
+      "at": "2026-10-10T05:13:06.144Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 5201,
+      "requestBytes": 281684,
+      "responseBytes": 76261
+    },
+    {
+      "at": "2026-10-10T05:13:06.971Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2112,
+      "requestBytes": 140158,
+      "responseBytes": 21471
+    },
+    {
+      "at": "2026-10-10T05:13:08.455Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1475,
+      "requestBytes": 137435,
+      "responseBytes": 10588
+    },
+    {
+      "at": "2026-10-10T05:13:08.470Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2305,
+      "requestBytes": 197325,
+      "responseBytes": 30137
+    },
+    {
+      "at": "2026-10-10T05:13:10.046Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1580,
+      "requestBytes": 166468,
+      "responseBytes": 14799
+    },
+    {
+      "at": "2026-10-10T05:13:12.109Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2056,
+      "requestBytes": 131792,
+      "responseBytes": 22196
+    },
+    {
+      "at": "2026-10-10T05:13:13.648Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1525,
+      "requestBytes": 207202,
+      "responseBytes": 13310
+    },
+    {
+      "at": "2026-10-10T05:13:15.577Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1920,
+      "requestBytes": 169028,
+      "responseBytes": 21048
+    },
+    {
+      "at": "2026-10-10T05:13:16.355Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 7869,
+      "requestBytes": 306350,
+      "responseBytes": 146571
+    },
+    {
+      "at": "2026-10-10T05:13:17.384Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1794,
+      "requestBytes": 164496,
+      "responseBytes": 12626
+    },
+    {
+      "at": "2026-10-10T05:13:18.210Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1820,
+      "requestBytes": 157552,
+      "responseBytes": 18868
+    },
+    {
+      "at": "2026-10-10T05:13:19.782Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2386,
+      "requestBytes": 264867,
+      "responseBytes": 26525
+    },
+    {
+      "at": "2026-10-10T05:13:20.419Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2197,
+      "requestBytes": 155733,
+      "responseBytes": 22837
+    },
+    {
+      "at": "2026-10-10T05:13:22.608Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2178,
+      "requestBytes": 151062,
+      "responseBytes": 12281
+    },
+    {
+      "at": "2026-10-10T05:13:25.035Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2418,
+      "requestBytes": 224614,
+      "responseBytes": 13460
+    },
+    {
+      "at": "2026-10-10T05:13:27.116Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 7324,
+      "requestBytes": 293684,
+      "responseBytes": 145543
+    },
+    {
+      "at": "2026-10-10T05:13:28.043Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2998,
+      "requestBytes": 242901,
+      "responseBytes": 29762
+    },
+    {
+      "at": "2026-10-10T05:13:29.819Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2667,
+      "requestBytes": 221002,
+      "responseBytes": 38466
+    },
+    {
+      "at": "2026-10-10T05:13:29.912Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1856,
+      "requestBytes": 152678,
+      "responseBytes": 15385
+    },
+    {
+      "at": "2026-10-10T05:13:31.641Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1809,
+      "requestBytes": 163483,
+      "responseBytes": 17258
+    },
+    {
+      "at": "2026-10-10T05:13:33.442Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3520,
+      "requestBytes": 312028,
+      "responseBytes": 35548
+    },
+    {
+      "at": "2026-10-10T05:13:34.260Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2610,
+      "requestBytes": 272757,
+      "responseBytes": 42780
+    },
+    {
+      "at": "2026-10-10T05:13:35.265Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1812,
+      "requestBytes": 156128,
+      "responseBytes": 17314
+    },
+    {
+      "at": "2026-10-10T05:13:36.261Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1984,
+      "requestBytes": 181529,
+      "responseBytes": 22197
+    },
+    {
+      "at": "2026-10-10T05:13:37.158Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1884,
+      "requestBytes": 167209,
+      "responseBytes": 11652
+    },
+    {
+      "at": "2026-10-10T05:13:40.833Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3666,
+      "requestBytes": 323163,
+      "responseBytes": 52020
+    },
+    {
+      "at": "2026-10-10T05:13:41.139Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4864,
+      "requestBytes": 460360,
+      "responseBytes": 80738
+    },
+    {
+      "at": "2026-10-10T05:13:42.937Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2091,
+      "requestBytes": 182569,
+      "responseBytes": 17696
+    },
+    {
+      "at": "2026-10-10T05:13:43.298Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2136,
+      "requestBytes": 213514,
+      "responseBytes": 22237
+    },
+    {
+      "at": "2026-10-10T05:13:45.116Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1807,
+      "requestBytes": 296887,
+      "responseBytes": 22759
+    },
+    {
+      "at": "2026-10-10T05:13:45.255Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2311,
+      "requestBytes": 232482,
+      "responseBytes": 15265
+    },
+    {
+      "at": "2026-10-10T05:13:48.213Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2950,
+      "requestBytes": 352239,
+      "responseBytes": 35893
+    },
+    {
+      "at": "2026-10-10T05:13:50.780Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2557,
+      "requestBytes": 255198,
+      "responseBytes": 31702
+    },
+    {
+      "at": "2026-10-10T05:13:52.885Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 7758,
+      "requestBytes": 392771,
+      "responseBytes": 159482
+    },
+    {
+      "at": "2026-10-10T05:13:53.786Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2996,
+      "requestBytes": 352472,
+      "responseBytes": 25912
+    },
+    {
+      "at": "2026-10-10T05:13:54.680Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1769,
+      "requestBytes": 229916,
+      "responseBytes": 9209
+    },
+    {
+      "at": "2026-10-10T05:13:56.754Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2067,
+      "requestBytes": 237682,
+      "responseBytes": 19220
+    },
+    {
+      "at": "2026-10-10T05:13:58.412Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4616,
+      "requestBytes": 353672,
+      "responseBytes": 121174
+    },
+    {
+      "at": "2026-10-10T05:14:00.236Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3472,
+      "requestBytes": 424408,
+      "responseBytes": 46577
+    },
+    {
+      "at": "2026-10-10T05:14:00.940Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2486,
+      "requestBytes": 324239,
+      "responseBytes": 29580
+    },
+    {
+      "at": "2026-10-10T05:14:02.539Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2292,
+      "requestBytes": 252935,
+      "responseBytes": 16778
+    },
+    {
+      "at": "2026-10-10T05:14:03.805Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2855,
+      "requestBytes": 246780,
+      "responseBytes": 44010
+    },
+    {
+      "at": "2026-10-10T05:14:06.178Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2360,
+      "requestBytes": 390071,
+      "responseBytes": 24898
+    },
+    {
+      "at": "2026-10-10T05:14:06.675Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4127,
+      "requestBytes": 426801,
+      "responseBytes": 76752
+    },
+    {
+      "at": "2026-10-10T05:14:08.980Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2793,
+      "requestBytes": 356381,
+      "responseBytes": 36474
+    },
+    {
+      "at": "2026-10-10T05:14:11.318Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2328,
+      "requestBytes": 255794,
+      "responseBytes": 24057
+    },
+    {
+      "at": "2026-10-10T05:14:13.553Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2226,
+      "requestBytes": 390789,
+      "responseBytes": 23441
+    },
+    {
+      "at": "2026-10-10T05:14:16.471Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2909,
+      "requestBytes": 415771,
+      "responseBytes": 53430
+    },
+    {
+      "at": "2026-10-10T05:14:25.270Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 18578,
+      "requestBytes": 312221,
+      "responseBytes": 408132
+    },
+    {
+      "at": "2026-10-10T05:14:43.162Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 26679,
+      "requestBytes": 369314,
+      "responseBytes": 710768
+    },
+    {
+      "at": "2026-10-10T05:14:47.896Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4627,
+      "requestBytes": 464553,
+      "responseBytes": 84825
+    },
+    {
+      "at": "2026-10-10T05:14:50.646Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2732,
+      "requestBytes": 440186,
+      "responseBytes": 33171
+    },
+    {
+      "at": "2026-10-10T05:14:52.527Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1870,
+      "requestBytes": 324317,
+      "responseBytes": 11128
+    },
+    {
+      "at": "2026-10-10T05:14:55.078Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2542,
+      "requestBytes": 461108,
+      "responseBytes": 35860
+    },
+    {
+      "at": "2026-10-10T05:14:56.880Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1791,
+      "requestBytes": 432133,
+      "responseBytes": 14761
+    },
+    {
+      "at": "2026-10-10T05:14:58.879Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1990,
+      "requestBytes": 491183,
+      "responseBytes": 19995
+    },
+    {
+      "at": "2026-10-10T05:15:21.815Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 56487,
+      "requestBytes": 248193,
+      "responseBytes": 1451269
+    },
+    {
+      "at": "2026-10-10T05:15:22.474Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 23586,
+      "requestBytes": 308188,
+      "responseBytes": 579978
+    },
+    {
+      "at": "2026-10-10T05:15:29.565Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 7013,
+      "requestBytes": 432414,
+      "responseBytes": 137980
+    },
+    {
+      "at": "2026-10-10T05:15:31.762Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2175,
+      "requestBytes": 431068,
+      "responseBytes": 23942
+    },
+    {
+      "at": "2026-10-10T05:15:32.224Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 10221,
+      "requestBytes": 405404,
+      "responseBytes": 228620
+    },
+    {
+      "at": "2026-10-10T05:15:35.914Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3633,
+      "requestBytes": 380925,
+      "responseBytes": 57365
+    },
+    {
+      "at": "2026-10-10T05:15:39.051Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3120,
+      "requestBytes": 513218,
+      "responseBytes": 32873
+    },
+    {
+      "at": "2026-10-10T05:15:41.515Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2452,
+      "requestBytes": 503809,
+      "responseBytes": 28124
+    },
+    {
+      "at": "2026-10-10T05:15:44.106Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2581,
+      "requestBytes": 412599,
+      "responseBytes": 29737
+    },
+    {
+      "at": "2026-10-10T05:15:45.321Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 13549,
+      "requestBytes": 478267,
+      "responseBytes": 458119
+    },
+    {
+      "at": "2026-10-10T05:15:48.061Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2671,
+      "requestBytes": 649821,
+      "responseBytes": 29419
+    },
+    {
+      "at": "2026-10-10T05:15:51.023Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 6906,
+      "requestBytes": 496905,
+      "responseBytes": 113503
+    },
+    {
+      "at": "2026-10-10T05:15:54.879Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3835,
+      "requestBytes": 544234,
+      "responseBytes": 70332
+    },
+    {
+      "at": "2026-10-10T05:15:58.304Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3409,
+      "requestBytes": 539030,
+      "responseBytes": 32518
+    },
+    {
+      "at": "2026-10-10T05:16:01.663Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3348,
+      "requestBytes": 641618,
+      "responseBytes": 47013
+    },
+    {
+      "at": "2026-10-10T05:16:05.837Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4161,
+      "requestBytes": 508775,
+      "responseBytes": 46214
+    },
+    {
+      "at": "2026-10-10T05:16:16.294Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 10445,
+      "requestBytes": 574132,
+      "responseBytes": 250450
+    },
+    {
+      "at": "2026-10-10T05:16:18.846Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2514,
+      "requestBytes": 525242,
+      "responseBytes": 18298
+    },
+    {
+      "at": "2026-10-10T05:16:23.753Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4898,
+      "requestBytes": 711629,
+      "responseBytes": 82499
+    },
+    {
+      "at": "2026-10-10T05:16:31.124Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 7353,
+      "requestBytes": 504453,
+      "responseBytes": 130916
+    },
+    {
+      "at": "2026-10-10T05:16:33.846Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2696,
+      "requestBytes": 658992,
+      "responseBytes": 18743
+    },
+    {
+      "at": "2026-10-10T05:16:41.400Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 7545,
+      "requestBytes": 529061,
+      "responseBytes": 131994
+    },
+    {
+      "at": "2026-10-10T05:16:47.165Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 5742,
+      "requestBytes": 624595,
+      "responseBytes": 117500
+    },
+    {
+      "at": "2026-10-10T05:16:54.781Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 66710,
+      "requestBytes": 392048,
+      "responseBytes": 1782131
+    },
+    {
+      "at": "2026-10-10T05:16:57.556Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2498,
+      "requestBytes": 665727,
+      "responseBytes": 15420
+    },
+    {
+      "at": "2026-10-10T05:17:03.296Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 5709,
+      "requestBytes": 678312,
+      "responseBytes": 98214
+    },
+    {
+      "at": "2026-10-10T05:17:06.477Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 19287,
+      "requestBytes": 535037,
+      "responseBytes": 428355
+    },
+    {
+      "at": "2026-10-10T05:17:07.453Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4137,
+      "requestBytes": 723526,
+      "responseBytes": 52998
+    },
+    {
+      "at": "2026-10-10T05:17:11.587Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4037,
+      "requestBytes": 677148,
+      "responseBytes": 56567
+    },
+    {
+      "at": "2026-10-10T05:17:15.215Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3549,
+      "requestBytes": 689253,
+      "responseBytes": 52183
+    },
+    {
+      "at": "2026-10-10T05:17:20.228Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 13653,
+      "requestBytes": 635260,
+      "responseBytes": 289059
+    },
+    {
+      "at": "2026-10-10T05:17:22.585Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 7284,
+      "requestBytes": 776877,
+      "responseBytes": 126964
+    },
+    {
+      "at": "2026-10-10T05:17:24.724Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2059,
+      "requestBytes": 729632,
+      "responseBytes": 12137
+    },
+    {
+      "at": "2026-10-10T05:17:37.819Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 13029,
+      "requestBytes": 755111,
+      "responseBytes": 279077
+    },
+    {
+      "at": "2026-10-10T05:17:38.725Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4666,
+      "requestBytes": 597281,
+      "responseBytes": 50105
+    },
+    {
+      "at": "2026-10-10T05:17:42.653Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4731,
+      "requestBytes": 787315,
+      "responseBytes": 79501
+    },
+    {
+      "at": "2026-10-10T05:17:42.960Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4145,
+      "requestBytes": 648485,
+      "responseBytes": 55381
+    },
+    {
+      "at": "2026-10-10T05:18:01.582Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 18857,
+      "requestBytes": 771904,
+      "responseBytes": 434244
+    },
+    {
+      "at": "2026-10-10T05:18:01.617Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 18552,
+      "requestBytes": 612969,
+      "responseBytes": 390107
+    },
+    {
+      "at": "2026-10-10T05:18:04.253Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2483,
+      "requestBytes": 845924,
+      "responseBytes": 20929
+    },
+    {
+      "at": "2026-10-10T05:18:40.468Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 36136,
+      "requestBytes": 777278,
+      "responseBytes": 1076803
+    },
+    {
+      "at": "2026-10-10T05:18:44.718Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4067,
+      "requestBytes": 950146,
+      "responseBytes": 48924
+    },
+    {
+      "at": "2026-10-10T05:18:56.625Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 15943,
+      "requestBytes": 691369,
+      "responseBytes": 313002
+    },
+    {
+      "at": "2026-10-10T05:19:06.226Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 9503,
+      "requestBytes": 675554,
+      "responseBytes": 141089
+    },
+    {
+      "at": "2026-10-10T05:22:42.694Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4113,
+      "requestBytes": 657218,
+      "responseBytes": 21706
+    },
+    {
+      "at": "2026-10-10T05:22:45.824Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3072,
+      "requestBytes": 644725,
+      "responseBytes": 39028
+    },
+    {
+      "at": "2026-10-10T05:22:52.430Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 6543,
+      "requestBytes": 653858,
+      "responseBytes": 121113
+    },
+    {
+      "at": "2026-10-10T05:22:53.079Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/files",
+      "status": 200,
+      "elapsedMs": 565,
+      "requestBytes": 32871,
+      "responseBytes": 209
+    },
+    {
+      "at": "2026-10-10T05:22:59.212Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 6098,
+      "requestBytes": 668741,
+      "responseBytes": 102066
+    },
+    {
+      "at": "2026-10-10T05:23:15.225Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 15938,
+      "requestBytes": 669885,
+      "responseBytes": 324297
+    },
+    {
+      "at": "2026-10-10T05:25:31.463Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 10095,
+      "requestBytes": 715888,
+      "responseBytes": 177827
+    },
+    {
+      "at": "2026-10-10T05:25:38.037Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 6451,
+      "requestBytes": 701277,
+      "responseBytes": 124826
+    },
+    {
+      "at": "2026-10-10T05:25:42.133Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3988,
+      "requestBytes": 697086,
+      "responseBytes": 57047
+    },
+    {
+      "at": "2026-10-10T05:26:54.258Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 5961,
+      "requestBytes": 685731,
+      "responseBytes": 74216
+    },
+    {
+      "at": "2026-10-10T05:26:56.690Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2347,
+      "requestBytes": 692902,
+      "responseBytes": 22886
+    },
+    {
+      "at": "2026-10-10T05:27:07.813Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 11063,
+      "requestBytes": 696046,
+      "responseBytes": 245209
+    },
+    {
+      "at": "2026-10-10T08:22:55.438Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 12425,
+      "requestBytes": 735299,
+      "responseBytes": 231966
+    },
+    {
+      "at": "2026-10-10T08:23:00.923Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 5275,
+      "requestBytes": 807645,
+      "responseBytes": 95619
+    },
+    {
+      "at": "2026-10-10T08:23:03.608Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2609,
+      "requestBytes": 743746,
+      "responseBytes": 16704
+    },
+    {
+      "at": "2026-10-10T08:23:07.063Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3319,
+      "requestBytes": 948600,
+      "responseBytes": 31641
+    },
+    {
+      "at": "2026-10-10T08:23:10.771Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3579,
+      "requestBytes": 923595,
+      "responseBytes": 42697
+    },
+    {
+      "at": "2026-10-10T08:23:13.630Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2762,
+      "requestBytes": 861793,
+      "responseBytes": 16569
+    },
+    {
+      "at": "2026-10-10T08:23:16.018Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2295,
+      "requestBytes": 863537,
+      "responseBytes": 14012
+    },
+    {
+      "at": "2026-10-10T08:23:19.196Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3072,
+      "requestBytes": 872389,
+      "responseBytes": 28185
+    },
+    {
+      "at": "2026-10-10T08:23:38.121Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 18823,
+      "requestBytes": 872991,
+      "responseBytes": 418413
+    },
+    {
+      "at": "2026-10-10T08:32:23.493Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3284,
+      "requestBytes": 117760,
+      "responseBytes": 34833
+    },
+    {
+      "at": "2026-10-10T08:32:26.410Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2788,
+      "requestBytes": 243199,
+      "responseBytes": 25627
+    },
+    {
+      "at": "2026-10-10T08:32:29.816Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3222,
+      "requestBytes": 233008,
+      "responseBytes": 51847
+    },
+    {
+      "at": "2026-10-10T08:32:36.803Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 6852,
+      "requestBytes": 224500,
+      "responseBytes": 143082
+    },
+    {
+      "at": "2026-10-10T08:32:41.300Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4369,
+      "requestBytes": 276632,
+      "responseBytes": 97376
+    },
+    {
+      "at": "2026-10-10T08:32:45.647Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4240,
+      "requestBytes": 259230,
+      "responseBytes": 82870
+    },
+    {
+      "at": "2026-10-10T08:32:58.702Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 12942,
+      "requestBytes": 314311,
+      "responseBytes": 330065
+    },
+    {
+      "at": "2026-10-10T08:33:05.623Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 6736,
+      "requestBytes": 336583,
+      "responseBytes": 162684
+    },
+    {
+      "at": "2026-10-10T08:33:06.324Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/files",
+      "status": 200,
+      "elapsedMs": 547,
+      "requestBytes": 33102,
+      "responseBytes": 209
+    },
+    {
+      "at": "2026-10-10T08:33:28.688Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 22336,
+      "requestBytes": 323521,
+      "responseBytes": 542781
+    },
+    {
+      "at": "2026-10-10T08:33:41.707Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 12797,
+      "requestBytes": 421084,
+      "responseBytes": 332053
+    },
+    {
+      "at": "2026-10-10T08:34:10.764Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 28879,
+      "requestBytes": 457662,
+      "responseBytes": 772090
+    },
+    {
+      "at": "2026-10-10T08:34:21.895Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 10844,
+      "requestBytes": 513322,
+      "responseBytes": 293360
+    },
+    {
+      "at": "2026-10-10T08:34:41.234Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 19217,
+      "requestBytes": 471280,
+      "responseBytes": 469682
+    },
+    {
+      "at": "2026-10-10T08:34:49.862Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 8424,
+      "requestBytes": 534799,
+      "responseBytes": 176649
+    },
+    {
+      "at": "2026-10-10T08:35:19.012Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 29047,
+      "requestBytes": 504484,
+      "responseBytes": 730625
+    },
+    {
+      "at": "2026-10-10T08:41:03.533Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 13616,
+      "requestBytes": 581593,
+      "responseBytes": 288624
+    },
+    {
+      "at": "2026-10-10T08:41:21.132Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 17467,
+      "requestBytes": 535127,
+      "responseBytes": 402249
+    },
+    {
+      "at": "2026-10-10T08:51:24.965Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2530,
+      "requestBytes": 115224,
+      "responseBytes": 19983
+    },
+    {
+      "at": "2026-10-10T08:51:26.768Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1654,
+      "requestBytes": 134712,
+      "responseBytes": 18272
+    },
+    {
+      "at": "2026-10-10T08:51:31.249Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4349,
+      "requestBytes": 179247,
+      "responseBytes": 81274
+    },
+    {
+      "at": "2026-10-10T08:51:35.423Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4072,
+      "requestBytes": 144003,
+      "responseBytes": 72114
+    },
+    {
+      "at": "2026-10-10T08:51:37.748Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2224,
+      "requestBytes": 183193,
+      "responseBytes": 19295
+    },
+    {
+      "at": "2026-10-10T08:51:40.100Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2308,
+      "requestBytes": 144567,
+      "responseBytes": 36049
+    },
+    {
+      "at": "2026-10-10T08:51:42.081Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1880,
+      "requestBytes": 188843,
+      "responseBytes": 23982
+    },
+    {
+      "at": "2026-10-10T08:51:43.676Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1514,
+      "requestBytes": 206940,
+      "responseBytes": 15536
+    },
+    {
+      "at": "2026-10-10T08:51:47.301Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3575,
+      "requestBytes": 173546,
+      "responseBytes": 58205
+    },
+    {
+      "at": "2026-10-10T08:51:50.567Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3168,
+      "requestBytes": 262637,
+      "responseBytes": 39043
+    },
+    {
+      "at": "2026-10-10T08:51:54.944Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4322,
+      "requestBytes": 211897,
+      "responseBytes": 98694
+    },
+    {
+      "at": "2026-10-10T08:51:57.160Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2112,
+      "requestBytes": 221822,
+      "responseBytes": 28987
+    },
+    {
+      "at": "2026-10-10T08:51:58.787Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1566,
+      "requestBytes": 213861,
+      "responseBytes": 17528
+    },
+    {
+      "at": "2026-10-10T08:52:00.474Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1647,
+      "requestBytes": 212937,
+      "responseBytes": 13284
+    },
+    {
+      "at": "2026-10-10T08:52:03.044Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2483,
+      "requestBytes": 289574,
+      "responseBytes": 23526
+    },
+    {
+      "at": "2026-10-10T08:52:05.040Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1952,
+      "requestBytes": 240774,
+      "responseBytes": 19663
+    },
+    {
+      "at": "2026-10-10T08:52:20.107Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 14990,
+      "requestBytes": 284562,
+      "responseBytes": 334726
+    },
+    {
+      "at": "2026-10-10T08:52:25.148Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4911,
+      "requestBytes": 318996,
+      "responseBytes": 77826
+    },
+    {
+      "at": "2026-10-10T08:52:27.139Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 1923,
+      "requestBytes": 281239,
+      "responseBytes": 9002
+    },
+    {
+      "at": "2026-10-10T08:52:34.619Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 7424,
+      "requestBytes": 275805,
+      "responseBytes": 155637
+    },
+    {
+      "at": "2026-10-10T08:52:40.758Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 6066,
+      "requestBytes": 301471,
+      "responseBytes": 113027
+    },
+    {
+      "at": "2026-10-10T08:52:43.986Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3159,
+      "requestBytes": 300687,
+      "responseBytes": 60791
+    },
+    {
+      "at": "2026-10-10T08:52:56.526Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 12489,
+      "requestBytes": 294667,
+      "responseBytes": 279973
+    },
+    {
+      "at": "2026-10-10T08:54:09.999Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3074,
+      "requestBytes": 336446,
+      "responseBytes": 20843
+    },
+    {
+      "at": "2026-10-10T08:54:20.771Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 10683,
+      "requestBytes": 339075,
+      "responseBytes": 234764
+    },
+    {
+      "at": "2026-10-10T08:54:58.939Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 8716,
+      "requestBytes": 336566,
+      "responseBytes": 134506
+    },
+    {
+      "at": "2026-10-10T08:55:37.690Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4491,
+      "requestBytes": 336817,
+      "responseBytes": 29836
+    },
+    {
+      "at": "2026-10-10T08:55:42.237Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4494,
+      "requestBytes": 327225,
+      "responseBytes": 68769
+    },
+    {
+      "at": "2026-10-10T08:55:44.802Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2486,
+      "requestBytes": 334047,
+      "responseBytes": 11744
+    },
+    {
+      "at": "2026-10-10T08:55:47.495Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2640,
+      "requestBytes": 325155,
+      "responseBytes": 11462
+    },
+    {
+      "at": "2026-10-10T08:55:52.376Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4806,
+      "requestBytes": 330864,
+      "responseBytes": 74927
+    },
+    {
+      "at": "2026-10-10T08:57:54.540Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 5517,
+      "requestBytes": 341076,
+      "responseBytes": 74623
+    },
+    {
+      "at": "2026-10-10T08:57:57.012Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2404,
+      "requestBytes": 348713,
+      "responseBytes": 28129
+    },
+    {
+      "at": "2026-10-10T08:57:59.237Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2149,
+      "requestBytes": 340626,
+      "responseBytes": 12073
+    },
+    {
+      "at": "2026-10-10T08:58:03.843Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 4533,
+      "requestBytes": 344127,
+      "responseBytes": 79761
+    },
+    {
+      "at": "2026-10-10T09:02:01.509Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3226,
+      "requestBytes": 356105,
+      "responseBytes": 16454
+    },
+    {
+      "at": "2026-10-10T09:02:04.063Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2499,
+      "requestBytes": 346906,
+      "responseBytes": 25074
+    },
+    {
+      "at": "2026-10-10T09:02:10.724Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 6612,
+      "requestBytes": 349004,
+      "responseBytes": 138791
+    },
+    {
+      "at": "2026-10-10T09:03:29.227Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 3023,
+      "requestBytes": 371841,
+      "responseBytes": 8494
+    },
+    {
+      "at": "2026-10-10T09:03:31.304Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 2007,
+      "requestBytes": 358410,
+      "responseBytes": 19645
+    },
+    {
+      "at": "2026-10-10T09:03:31.860Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/files",
+      "status": 200,
+      "elapsedMs": 492,
+      "requestBytes": 4930,
+      "responseBytes": 208
+    },
+    {
+      "at": "2026-10-10T09:03:38.341Z",
+      "kind": "official-model-request",
+      "path": "/anthropic/v1/messages",
+      "status": 200,
+      "elapsedMs": 6463,
+      "requestBytes": 360151,
+      "responseBytes": 141927
+    }
+  ]
+}

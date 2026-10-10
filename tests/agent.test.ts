@@ -4,6 +4,7 @@ import type {KvTable} from '@deepseek-ai/dsh-storage-domain';
 import type {SessionHeader} from '@deepseek-ai/dsh-session';
 import {SketchAgent,describeDrawing} from '../src/host/agent.ts';
 import {createSketchTools} from '../src/host/tools.ts';
+import {validateJsonSchemaValue} from '@deepseek-ai/dsh-tools';
 import {CommentRepository} from '../src/host/comment-repository.ts';
 import {agentBatchSchema,agentReadSchema,agentAnnotateSchema,AGENT_LIMITS,type AgentBatch} from '../src/core/agent.ts';
 import {ownerKey,contentDigest,canonical,SketchError,drawingSchema,type Owner,type Drawing} from '../src/core/contracts.ts';
@@ -146,17 +147,32 @@ it('uses the fixed DSH tool DSL and requires an owning Agent, never model-provid
  await expect(tools[0]!.execute({},exec)).rejects.toThrow('owning Agent');
  const result=await tools[0]!.execute({}, {...exec,agent:{session:{header:session}}} as typeof exec);
  expect(result).toMatchObject({revision:s.drawing().revision});expect(tools[0]!.output.render({},result as never)[0]).toMatchObject({type:'text'});
+ expect(validateJsonSchemaValue(tools[0]!.output.schema,result)).toEqual([]);
+ s.setDrawing(null);expect(validateJsonSchemaValue(tools[0]!.output.schema,await s.read())).toEqual([]);
+});
+it('advertises operation capabilities from the full-scene admission rules without scene writes',async()=>{
+ const s=await setup(),before=canonical(s.drawing());
+ const result=await s.agent.read(session,{mode:'elements'},s.signal);
+ expect(result).toMatchObject({elements:[{id:'rect',allowedOperations:[]},{id:'text',allowedOperations:[]},{id:'free',allowedOperations:['move','delete']}]});
+ expect(s.stats().writes).toBe(0);expect(canonical(s.drawing())).toBe(before);
 });
 it('reads explicitly set native selection and its bound labels without changing the full-summary cache or drawing',async()=>{
  const s=await setup(),before=canonical(s.drawing());await s.read();
  expect(s.agent.setFocus(owner,{revision:s.drawing().revision,elementIds:['rect']},s.drawing())).toMatchObject({count:2,persisted:false});
  const result=await s.agent.read(session,{scope:'focus',mode:'elements',revision:s.drawing().revision},s.signal);
- expect(result).toMatchObject({scope:'focus',totalElements:2,sceneTotalElements:3,focus:{count:2,stale:false},elements:[{id:'rect'},{id:'text',text:'三角形内角和'}]});
+ expect(result).toMatchObject({scope:'focus',totalElements:2,sceneTotalElements:2,focus:{count:2,stale:false},elements:[{id:'rect'},{id:'text',text:'三角形内角和'}]});
  expect(result).toMatchObject({elements:[{editRestriction:'bound'},{editRestriction:'bound'}]});
  expect(JSON.stringify(result)).not.toContain('NO_LEAK');expect(JSON.stringify(result)).not.toContain('"id":"free"');
  expect(await s.read()).toMatchObject({scope:'focus',totalElements:2,focus:{count:2}});expect(canonical(s.drawing())).toBe(before);expect(s.stats().writes).toBe(0);
  s.agent.setFocus(owner,{revision:s.drawing().revision,elementIds:[]},s.drawing());
  expect(await s.read()).toMatchObject({scope:'all',totalElements:3});expect(s.agent.measurements.at(-1)?.cacheHit).toBe(true);
+});
+it('limits scene and annotation counts to visible focus instead of leaking outside scope',async()=>{
+ const s=await setup();await s.agent.annotate(session,s.input(),'counts',s.signal);
+ s.agent.setFocus(owner,{revision:s.drawing().revision,elementIds:['free']},s.drawing());
+ expect(await s.agent.read(session,{scope:'all'},s.signal)).toMatchObject({scope:'focus',sceneTotalElements:1,totalElements:1,annotations:{count:0,scope:'focus',items:[],itemsTruncated:false}});
+ s.agent.setFocus(owner,{revision:s.drawing().revision,elementIds:[]},s.drawing());
+ expect(await s.read()).toMatchObject({scope:'all',sceneTotalElements:3,annotations:{count:1,scope:'all'}});
 });
 it('rejects stale, deleted, excessive and wrong-owner focus; clearing/restart cannot silently bind a different element',async()=>{
  const s=await setup(),revision=s.drawing().revision;

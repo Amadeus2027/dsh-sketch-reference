@@ -1,0 +1,57 @@
+{
+  "baselineCommit": "7737cfe2b239bf01b025ca08db2d9762bdac577f",
+  "implementationCommit": "3539f3fc670c1fb1b4e8a16d4044e8f4607c3db8",
+  "measurement": "UTF-8 JSON bytes of public native tool schema, not tokenizer output or per-turn usage",
+  "baseline": [
+    {
+      "name": "sketch_read",
+      "nativeSchemaBytes": 4140,
+      "parameterBytes": 499,
+      "outputSchemaBytes": 45
+    },
+    {
+      "name": "sketch_annotate",
+      "nativeSchemaBytes": 1514,
+      "parameterBytes": 758,
+      "outputSchemaBytes": 45
+    },
+    {
+      "name": "sketch_propose_edit",
+      "nativeSchemaBytes": 1951,
+      "parameterBytes": 1038,
+      "outputSchemaBytes": 45
+    },
+    {
+      "name": "sketch_read_image",
+      "nativeSchemaBytes": 898,
+      "parameterBytes": 134,
+      "outputSchemaBytes": 45
+    }
+  ],
+  "implementation": [
+    {
+      "name": "sketch_read",
+      "nativeSchemaBytes": 5018,
+      "parameterBytes": 1377,
+      "outputSchemaBytes": 894
+    },
+    {
+      "name": "sketch_annotate",
+      "nativeSchemaBytes": 2005,
+      "parameterBytes": 1249,
+      "outputSchemaBytes": 256
+    },
+    {
+      "name": "sketch_propose_edit",
+      "nativeSchemaBytes": 3167,
+      "parameterBytes": 2254,
+      "outputSchemaBytes": 325
+    },
+    {
+      "name": "sketch_read_image",
+      "nativeSchemaBytes": 1194,
+      "parameterBytes": 430,
+      "outputSchemaBytes": 704
+    }
+  ]
+}

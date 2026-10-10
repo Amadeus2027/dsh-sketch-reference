@@ -71,6 +71,14 @@ describe('durable comments independent from drawing CAS',()=>{
   expect(batchSchema.parse(old)).toEqual(old);expect(s.repo.get(owner)).toEqual(s.repo.get(owner));
   expect(s.repo.get(owner)?.comments[0]?.status).toBe('open');expect(s.writes()).toBe(0);
  });
+ it('updates a legacy batch without stored comment IDs and persists the synthesized target',async()=>{
+  const s=store(),old=batch();s.rows.set(ownerKey(owner),old);
+  const target=withComments(old).comments[0]!.id;
+  const updated=await s.repo.update(owner,change(old),async()=>{});
+  expect(updated.comments[0]).toMatchObject({id:target,status:'resolved'});
+  expect(batchSchema.parse(s.rows.get(ownerKey(owner)))).toEqual(updated);
+  expect(s.writes()).toBe(1);
+ });
  it('persists resolve, reopen and ignore and restores them through a new repository',async()=>{
   const s=store(),initial=await s.repo.put(batch(),async()=>{});
   let current=await s.repo.update(owner,change(initial),async()=>{});expect(current.comments[0]?.status).toBe('resolved');

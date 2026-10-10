@@ -1,0 +1,60 @@
+{
+  "auditedUtc": "2026-10-10T09:22:02.855Z",
+  "textFiles": 32,
+  "credentialAbsent": true,
+  "jsonValid": true,
+  "reasoningExport": "Exporter skips reasoning/system blocks and delegation status snippets; only dedicated research sessions",
+  "phases": [
+    {
+      "phase": "/initial",
+      "sessions": 5,
+      "modelSteps": 137,
+      "sourceReads": 210,
+      "usage": {
+        "inputTokens": 519745,
+        "outputTokens": 135677,
+        "cacheReadTokens": 12291584,
+        "cacheWriteTokens": 0,
+        "totalTokens": 12947006
+      }
+    },
+    {
+      "phase": "/review",
+      "sessions": 1,
+      "modelSteps": 17,
+      "sourceReads": 31,
+      "usage": {
+        "inputTokens": 90114,
+        "outputTokens": 39733,
+        "cacheReadTokens": 1173248,
+        "cacheWriteTokens": 0,
+        "totalTokens": 1303095
+      }
+    },
+    {
+      "phase": "/final-review",
+      "sessions": 1,
+      "modelSteps": 40,
+      "sourceReads": 22,
+      "usage": {
+        "inputTokens": 66228,
+        "outputTokens": 21148,
+        "cacheReadTokens": 2393600,
+        "cacheWriteTokens": 0,
+        "totalTokens": 2480976
+      }
+    }
+  ],
+  "transport": {
+    "scope": "Cumulative dedicated gateway, do not sum per-phase transport files. Not billing totals or native streaming benchmarks.",
+    "requests": 199,
+    "statusCounts": {
+      "200": 199
+    },
+    "elapsedMs": {
+      "min": 492,
+      "median": 3284,
+      "max": 66710
+    }
+  }
+}

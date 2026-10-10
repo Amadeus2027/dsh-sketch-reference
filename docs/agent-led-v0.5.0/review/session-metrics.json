@@ -1,0 +1,34 @@
+{
+  "exportedUtc": "2026-10-10T08:44:43.329Z",
+  "usageScope": "Usage reported in durable assistant/message events; failed assistant/attempt streams may not carry usage. Not billing totals or token savings.",
+  "sessions": [
+    {
+      "sessionId": "session-cafd9cd0-1aa1-46dc-bdeb-5483789f9b56",
+      "delegationDepth": 0,
+      "cwd": "R:\\snapshot-e2d386400841",
+      "modelSteps": 17,
+      "reads": 31,
+      "usage": {
+        "inputTokens": 90114,
+        "outputTokens": 39733,
+        "cacheReadTokens": 1173248,
+        "cacheWriteTokens": 0,
+        "totalTokens": 1303095
+      },
+      "completed": [
+        {
+          "turn": 1,
+          "reason": {
+            "kind": "completed"
+          }
+        },
+        {
+          "turn": 2,
+          "reason": {
+            "kind": "completed"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -8,7 +8,7 @@ import type {JsonValue} from '../core/scene.ts';
 import type {EditRepository} from './edit-repository.ts';
 import type {VisualRepository} from './visual-repository.ts';
 import {visualReadSchema} from '../core/visual.ts';
-import {editRestrictions,type EditRestriction} from '../core/edits.ts';
+import {editRestrictions,allowedOperations,type EditRestriction} from '../core/edits.ts';
 import {linearGeometry} from '../core/geometry.ts';
 import {withComments} from '../core/comments.ts';
 import {resolveCommentReference} from '../core/comment-context.ts';
@@ -56,15 +56,16 @@ export class SketchAgent {
   const proposal=this.edits?.get(owner);
   const visuals=this.visual?.status(owner,drawing,focus??null);
   const image=visuals?.[args.scope];
-  const result={...data,...(visuals?{image:{...(data.image as Record<string,JsonValue>),prepared:!!image&&!image.stale,focusPrepared:!!visuals.focus&&!visuals.focus.stale,instruction:'如需视觉细节，按需调用 sketch_read_image（需要当前 revision）；未准备或过期时请用户更新视觉参考，也可使用原生聊天 PNG。不要在每轮聊天重复读取图片。'}}:{}),scope:args.scope,scopeInstruction:focus?'用户已设置选区重点；当前所有结构与图像读取均限定此重点。不能据此描述选区外内容；要读取全图，请用户在画板清除选区重点。':'未设置重点，可按需读取全图。',sceneTotalElements:drawing.scene.elements.filter(e=>!e.isDeleted).length,focus:focus?{revision:focus.revision,count:focus.elementIds.length,stale:focus.revision!==drawing.revision}:null,...(this.edits?{proposal:proposal?{id:proposal.id,status:proposal.status,baseRevision:proposal.baseRevision,stale:proposal.baseRevision!==drawing.revision,operationCount:proposal.operations.length,...(proposal.status==='applied'?{statusInstruction:'applied 仅表示历史上曾应用，可能已撤销或继续编辑；当前状态以本次读取的草图为准。'}:{})}:null}:{}),truncated:data.truncated??false,nextOffset:data.nextOffset??null,elements:[...(data.elements as Record<string,JsonValue>[])],annotations:batch?{batchId:batch.id,commentRevision:batch.commentRevision,count:batch.comments.length,stale:batch.contentDigest!==drawing.contentDigest||batch.goal!==drawing.goal,itemsTruncated:false,
-   items:batch.comments.filter(c=>c.status!=='ignored'&&(!focus||focusIds.has(batch.advice.suggestions[c.suggestionIndex]?.anchor?.elementId??''))).map(c=>{const v=batch.advice.suggestions[c.suggestionIndex]!;return {id:c.id,status:c.status,title:v.title,reason:clip(v.reason,120),reasonTruncated:Array.from(v.reason).length>120,...(v.anchor?{elementId:v.anchor.elementId}:{})};})}:null};
+  const visibleComments=batch?.comments.filter(c=>c.status!=='ignored'&&(!focus||focusIds.has(batch.advice.suggestions[c.suggestionIndex]?.anchor?.elementId??'')))??[];
+  const result={...data,...(visuals?{image:{...(data.image as Record<string,JsonValue>),prepared:!!image&&!image.stale,focusPrepared:!!visuals.focus&&!visuals.focus.stale,instruction:'如需视觉细节，按需调用 sketch_read_image（需要当前 revision）；未准备或过期时请用户更新视觉参考，也可使用原生聊天 PNG。不要在每轮聊天重复读取图片。'}}:{}),scope:args.scope,scopeInstruction:focus?'用户已设置选区重点；当前所有结构与图像读取均限定此重点。不能据此描述选区外内容；要读取全图，请用户在画板清除选区重点。':'未设置重点，可按需读取全图。',sceneTotalElements:scoped.scene.elements.filter(e=>!e.isDeleted).length,focus:focus?{revision:focus.revision,count:focus.elementIds.length,stale:focus.revision!==drawing.revision}:null,...(this.edits?{proposal:proposal?{id:proposal.id,status:proposal.status,baseRevision:proposal.baseRevision,stale:proposal.baseRevision!==drawing.revision,operationCount:proposal.operations.length,...(proposal.status==='applied'?{statusInstruction:'applied 仅表示历史上曾应用，可能已撤销或继续编辑；当前状态以本次读取的草图为准。'}:{})}:null}:{}),truncated:data.truncated??false,nextOffset:data.nextOffset??null,elements:[...(data.elements as Record<string,JsonValue>[])],annotations:batch?{batchId:batch.id,commentRevision:batch.commentRevision,count:visibleComments.length,scope:args.scope,stale:batch.contentDigest!==drawing.contentDigest||batch.goal!==drawing.goal,itemsTruncated:false,
+   items:visibleComments.map(c=>{const v=batch.advice.suggestions[c.suggestionIndex]!;return {id:c.id,status:c.status,title:v.title,reason:clip(v.reason,120),reasonTruncated:Array.from(v.reason).length>120,...(v.anchor?{elementId:v.anchor.elementId}:{})};})}:null};
   const response={...result,...(discussion?{discussion}:{})};
   const limit=args.mode==='summary'?AGENT_LIMITS.summaryBytes:AGENT_LIMITS.detailBytes;
   while(result.annotations&&Buffer.byteLength(JSON.stringify(result.annotations))>2048&&result.annotations.items.length){result.annotations.items.pop();result.annotations.itemsTruncated=true;}
   // Keep one element before trimming optional annotations so a page cannot stall.
   while(Buffer.byteLength(JSON.stringify(response))>limit&&response.elements.length>1){response.elements.pop();Object.assign(response,{truncated:true,nextOffset:args.elementIds?null:args.offset+response.elements.length});}
   while(Buffer.byteLength(JSON.stringify(response))>limit&&response.annotations?.items.length){response.annotations.items.pop();response.annotations.itemsTruncated=true;}
-  if(Buffer.byteLength(JSON.stringify(response))>limit || (response.truncated&&!response.elements.length))throw new SketchError('OUTPUT_LIMIT','草图结构超过读取上限，请缩短用途或元素文字后重试',413);
+  if(Buffer.byteLength(JSON.stringify(response))>limit || (response.truncated&&!response.elements.length))throw new SketchError('OUTPUT_LIMIT','草图结构超过读取上限。请用 elements 模式按已读取的真实 ID 缩小请求；仍失败时请用户在画板缩小重点或简化用途。不要自行修改文字或扩大重点。',413);
   await this.host.check(owner,drawing.revision,signal);return response;
  });}
  getFocus(owner:Owner):SketchFocus|null{const value=this.focuses.get(ownerKey(owner));return value?structuredClone(value):null;}
@@ -143,7 +144,7 @@ export function describeDrawing(drawing:Drawing,args:AgentRead,restrictions?:Map
   const item:Record<string,JsonValue>={id:e.id,type:e.type};
   if(e.type==='text'){item.text=clip(e.text??'',AGENT_LIMITS.maxTextChars);item.textTruncated=Array.from(e.text??'').length>AGENT_LIMITS.maxTextChars;}
   if(args.mode==='elements'){
-   Object.assign(item,{x:e.x,y:e.y,width:e.width,height:e.height,angle:e.angle??0,...linearGeometry(e),editRestriction:editing?.get(e.id)??'none'});
+   Object.assign(item,{x:e.x,y:e.y,width:e.width,height:e.height,angle:e.angle??0,...linearGeometry(e),editRestriction:editing?.get(e.id)??'none',allowedOperations:allowedOperations(e,editing?.get(e.id))});
    if(e.containerId&&ids.has(e.containerId))item.containerId=e.containerId;
    const start=e.startBinding as {elementId?:string}|undefined,end=e.endBinding as {elementId?:string}|undefined;
    if(start?.elementId&&ids.has(start.elementId))item.startElementId=start.elementId;
