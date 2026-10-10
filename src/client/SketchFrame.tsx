@@ -57,7 +57,7 @@ export function SketchFrame({ctx,props,onClose,appearance,subscribeClose}:{ctx:C
      if(!actions)throw new Error('输入框尚未就绪');
      if(message.type==='INSERT_COMMENT'){
       const batch=message.request.source==='agent'?agentBatchSchema.nullable().parse(agentState?.batch):loaded.latestAdvice?withComments(loaded.latestAdvice):null;
-      const text=commentContext(loaded.drawing,batch,message.request);
+      const text=await commentContext(loaded.drawing,batch,message.request);
       insertCommentText(actions,text,()=>latest.current.sessionId===props.sessionId&&!signal.aborted);
       reply(true,'批注已加入原生输入框，请补充内容并手动发送');return;
      }

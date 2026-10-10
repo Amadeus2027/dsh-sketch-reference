@@ -8,17 +8,20 @@ import {CommentRepository} from '../src/host/comment-repository.ts';
 import {agentBatchSchema,agentReadSchema,agentAnnotateSchema,AGENT_LIMITS,type AgentBatch} from '../src/core/agent.ts';
 import {ownerKey,contentDigest,canonical,SketchError,drawingSchema,type Owner,type Drawing} from '../src/core/contracts.ts';
 import type {VisualRepository} from '../src/host/visual-repository.ts';
+import type {EditRepository} from '../src/host/edit-repository.ts';
+import {commentReference} from '../src/core/comment-context.ts';
+import type {Batch} from '../src/core/contracts.ts';
 
 const owner:Owner={sessionId:'session',createdAt:'123',cwd:'/workspace'};
 const session={id:owner.sessionId,createdAt:123,cwd:owner.cwd} as unknown as SessionHeader;
-async function setup(visual?:VisualRepository){
+async function setup(visual?:VisualRepository,analysis?:()=>Batch|null,edits?:EditRepository){
  const scene:Drawing['scene']={elements:[{id:'rect',type:'rectangle',x:20,y:40,width:100,height:80,customData:{secret:'NO_LEAK'}},{id:'text',type:'text',x:20,y:40,width:90,height:25,text:'三角形内角和',containerId:'rect'},{id:'free',type:'freedraw',x:300,y:30,width:50,height:50,points:[[0,0],[50,50]]},{id:'deleted',type:'ellipse',x:0,y:0,width:80,height:80,isDeleted:true}],appState:{viewBackgroundColor:'#fff'},files:{}};
  let drawing:Drawing|null={formatVersion:1,owner,revision:randomUUID(),mutationId:randomUUID(),sceneDigest:'scene',contentDigest:await contentDigest(scene),scene,goal:'解释几何关系',updatedAt:new Date().toISOString()};
  let liveOwner=owner,notifications=0,writes=0;
  const rows=new Map<string,AgentBatch>();
  const table={get:(k:string)=>rows.get(k),put:async(k:string,v:AgentBatch)=>{rows.set(k,structuredClone(v));writes++;},update:async(k:string,f:(v:AgentBatch)=>AgentBatch)=>{const v=f(rows.get(k)!);rows.set(k,structuredClone(v));writes++;return v;},get size(){return rows.size;}} as unknown as KvTable<string,AgentBatch>;
  const check=async(o:Owner,revision:string|null,signal:AbortSignal)=>{signal.throwIfAborted();if(ownerKey(o)!==ownerKey(liveOwner))throw new SketchError('SESSION_CHANGED','changed');if(revision&&revision!==drawing?.revision)throw new SketchError('REVISION_CONFLICT','changed');};
- const agent=new SketchAgent({snapshot:async(s,signal)=>{const o={sessionId:String(s.id),createdAt:String(s.createdAt),cwd:s.cwd??''};await check(o,null,signal);return {owner:o,drawing};},check,changed:()=>{notifications++;}},new CommentRepository(table),undefined,visual);
+ const agent=new SketchAgent({snapshot:async(s,signal)=>{const o={sessionId:String(s.id),createdAt:String(s.createdAt),cwd:s.cwd??''};await check(o,null,signal);return {owner:o,drawing};},check,changed:()=>{notifications++;},...(analysis?{analysis}:{} )},new CommentRepository(table),edits,visual);
  const input=()=>({revision:drawing!.revision,expectedBatchId:agent.comments.get(owner)?.id??null,summary:'几何解释',comments:[{title:'内角和',reason:'欧氏平面三角形的内角和为 180°。',anchor:{type:'element',elementId:'rect'}}]});
  const signal=new AbortController().signal;
  return {agent,rows,input,signal,read:()=>agent.read(session,{},signal),drawing:()=>drawing!,setDrawing:(v:Drawing|null)=>{drawing=v;},setOwner:(o:Owner)=>{liveOwner=o;},stats:()=>({notifications,writes})};
@@ -27,6 +30,30 @@ it('reads a saved compact snapshot without editor, image export or an LLM',async
  const s=await setup(),result=await s.read();expect(result).toMatchObject({revision:s.drawing().revision,totalElements:3,types:{rectangle:1,text:1,freedraw:1},image:{included:false,requiredForFreehand:true},annotations:null});
  expect(JSON.stringify(result)).not.toContain('NO_LEAK');expect(JSON.stringify(result)).not.toContain('deleted');expect(result).not.toHaveProperty('owner');
  await s.read();expect(s.agent.measurements[1]).toMatchObject({cacheHit:true,inputTokens:null});expect(s.stats().writes).toBe(0);
+});
+it('describes an applied proposal as history when the current drawing has changed',async()=>{
+ const historical={id:randomUUID(),status:'applied',baseRevision:randomUUID(),operations:[{op:'move',elementId:'rect',x:60,y:40}]};
+ const s=await setup(undefined,undefined,{get:()=>historical} as unknown as EditRepository);
+ const value=await s.read();
+ expect(value).toMatchObject({revision:s.drawing().revision,proposal:{status:'applied',stale:true,statusInstruction:'applied 仅表示历史上曾应用，可能已撤销或继续编辑；当前状态以本次读取的草图为准。'}});
+ expect(s.stats().writes).toBe(0);
+});
+it('resolves an exact short comment reference in the existing read tool without scene writes',async()=>{
+ const s=await setup();await s.agent.annotate(session,s.input(),'ref',s.signal);
+ const batch=s.agent.comments.get(owner)!,reference=await commentReference(s.drawing(),batch,'agent',batch.comments[0]!.id),before=canonical(s.drawing()),writes=s.stats().writes;
+ const value=await s.agent.read(session,{commentReference:reference},s.signal);
+ expect(value).toMatchObject({discussion:{reference,elementId:'rect',title:'内角和'}});
+ expect(await s.read()).not.toHaveProperty('discussion');expect(s.stats().writes).toBe(writes);expect(canonical(s.drawing())).toBe(before);
+ s.agent.setFocus(owner,{revision:s.drawing().revision,elementIds:['free']},s.drawing());
+ await expect(s.agent.read(session,{commentReference:reference},s.signal)).rejects.toMatchObject({code:'COMMENT_UNAVAILABLE'});
+ s.agent.setFocus(owner,{revision:s.drawing().revision,elementIds:[]},s.drawing());s.setDrawing({...s.drawing(),revision:randomUUID()});
+ await expect(s.agent.read(session,{commentReference:reference},s.signal)).rejects.toMatchObject({code:'COMMENT_UNAVAILABLE'});
+});
+it('also resolves legacy analysis comments independently of Agent annotations',async()=>{
+ let analysis:Batch|null=null;const s=await setup(undefined,()=>analysis);
+ analysis={id:randomUUID(),owner,createdAt:new Date().toISOString(),contentDigest:s.drawing().contentDigest,goal:s.drawing().goal,route:{provider:'deepseek-official',model:'deepseek-flash'},advice:{summary:'分析',suggestions:[{kind:'clarify',title:'相同标题',reason:'来自分析入口',actionPrompt:'说明',anchor:{type:'element',elementId:'text'}}]}};
+ const {withComments}=await import('../src/core/comments.ts');const current=withComments(analysis),reference=await commentReference(s.drawing(),current,'analysis',current.comments[0]!.id);
+ expect(await s.agent.read(session,{commentReference:reference},s.signal)).toMatchObject({discussion:{reference,elementId:'text',reason:'来自分析入口'}});
 });
 it('supports revision-bound IDs and compact binding relationships without arbitrary metadata',async()=>{
  const s=await setup(),result=await s.agent.read(session,{mode:'elements',revision:s.drawing().revision,elementIds:['text']},s.signal);

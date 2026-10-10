@@ -88,7 +88,7 @@ export class SketchService extends Service {
      snapshot:async(session,signal)=>{
       const owner={sessionId:String(session.id),createdAt:String(session.createdAt),cwd:session.cwd??''};
       await this.checkAgent(owner,null,signal);return {owner,drawing:this.repository.get(owner)};
-     },check:(owner,revision,signal)=>this.checkAgent(owner,revision,signal),changed:owner=>this.events.changed(owner),
+     },check:(owner,revision,signal)=>this.checkAgent(owner,revision,signal),changed:owner=>this.events.changed(owner),analysis:owner=>this.advice.get(owner),
     },new CommentRepository(domain.table('annotations')),edits,visual);
     let closing:Promise<void>|undefined;
     disposeAgent=()=>closing??= (async()=>{abort.abort();if(this.agent===agent){this.agent=undefined;this.edits=undefined;this.visual=undefined;}this.events.close();await agent.drain();await edits?.drain();await visual?.drain();agent.clear();await visualDomain?.close();await editDomain?.close();await domain.close();})();

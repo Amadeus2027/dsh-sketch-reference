@@ -1,3 +1,4 @@
+import {proposalLabel} from '../core/edits.ts';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {z} from 'zod';
 import {proposalSchema,type EditProposal} from '../core/edits.ts';
@@ -29,6 +30,7 @@ export function EditPanel({state,disabled,uncertain,onPreview,onApply,onReload,c
  const [open,setOpen]=useState(false),[preview,setPreview]=useState<EditPreview|null>(null),[images,setImages]=useState<{before:string;after:string}|null>(null),[working,setWorking]=useState(false),[message,setMessage]=useState('');
  const alive=useRef(true),selected=useRef(proposal?.id);selected.current=proposal?.id;
  useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
+ useEffect(()=>{setMessage('');},[currentRevision,dirty]);
  useEffect(()=>{setPreview(null);setMessage('');setOpen(false);},[proposal?.id]);
  useEffect(()=>{if(!preview){setImages(null);return;}const before=URL.createObjectURL(preview.images.before),after=URL.createObjectURL(preview.images.after);setImages({before,after});return()=>{URL.revokeObjectURL(before);URL.revokeObjectURL(after);};},[preview]);
  if(!proposal&&!error)return null;
@@ -36,13 +38,13 @@ export function EditPanel({state,disabled,uncertain,onPreview,onApply,onReload,c
  const stale=proposal?.status==='pending'&&(dirty||proposal.baseRevision!==currentRevision);
  const blocked=disabled||working||busy;
  return <section className="editPanel" aria-label="Agent 修改提议">
-  <div className="editTitle"><button aria-expanded={open} onClick={()=>setOpen(v=>!v)}>修改提议 {open?'⌃':'⌄'}</button><span>{proposal?.summary}</span><small>{proposal?.status==='applied'?'已应用':proposal?.status==='dismissed'?'已忽略':stale?'需重新提议':'待确认'}</small><button disabled={blocked} onClick={()=>void refresh()}>刷新提议</button></div>
+  <div className="editTitle"><button aria-expanded={open} onClick={()=>setOpen(v=>!v)}>修改提议 {open?'⌃':'⌄'}</button><span>{proposal?.summary}</span><small>{proposal?proposalLabel(proposal,currentRevision,dirty,!!preview):''}</small><button disabled={blocked} onClick={()=>void refresh()}>刷新提议</button></div>
   {open&&proposal&&<div className="editBody">
-   <p>{stale?'草图或用途已变化，请让 Agent 重新读取后提议。旧提议不能覆盖当前画板。':'仅在点击确认后修改画板。可用原生撤销或修改前备份恢复。'}</p>
+   <p>{proposal.status==='applied'?'这是曾应用的修改记录，可能已被撤销或继续编辑；请以当前画板为准。':proposal.status==='dismissed'?'这条提议已忽略，没有应用到画板。':stale?'草图或用途已变化，请让 Agent 重新读取后提议。旧提议不能覆盖当前画板。':'仅在点击确认后修改画板。可用原生撤销或修改前备份恢复。'}</p>
    <ol>{proposal.operations.map((op,i)=><li key={i}>{op.op==='create'?`新增${shapeNames[op.type]}${op.text?`：${op.text}`:''}`:op.op==='move'?`移动 ${op.elementId} 至 (${op.x}, ${op.y})`:op.op==='resize'?`调整 ${op.elementId} 尺寸为 ${op.width} × ${op.height}`:`删除 ${op.elementId}`}</li>)}</ol>
    {images&&<><p className="editLegend">同一视角对照 · 绿色新增 · 红色删除 · 蓝色移动/尺寸 · 序号对应上方操作</p><div className="editComparison">
     <figure><figcaption>修改前 · 虚线定位</figcaption><img src={images.before} alt="修改前草图，虚线标出受影响元素"/></figure>
-    <figure><figcaption>{proposal.status==='applied'&&!uncertain?'已应用':'修改后 · 尚未应用'}</figcaption><img src={images.after} alt="修改后草图，实线标出新增和变化元素"/></figure>
+    <figure><figcaption>{proposal.status==='applied'&&!uncertain?'曾应用的提议效果（历史）':'修改后 · 尚未应用'}</figcaption><img src={images.after} alt="修改后草图，实线标出新增和变化元素"/></figure>
    </div></>}
    <div className="commentTools">
     {proposal.status==='pending'&&!uncertain&&<button disabled={blocked||stale||!available} onClick={()=>void run(async()=>{const value=await onPreview(proposal);if(alive.current&&selected.current===proposal.id)setPreview(value);})}>预览修改</button>}

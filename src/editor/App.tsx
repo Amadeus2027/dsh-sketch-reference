@@ -52,6 +52,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
  const [source,setSource]=useState<'analysis'|'agent'>('analysis');
  const [editor,setEditor]=useState<ExcalidrawImperativeAPI|null>(null),[selected,setSelected]=useState<string|null>(null),[showComments,setShowComments]=useState(true),[showIgnored,setShowIgnored]=useState(false);
  const [hovered,setHovered]=useState<string|null>(null);
+ const discussionPending=useRef(false),[discussing,setDiscussing]=useState(false);
  const [commentSaving,setCommentSaving]=useState(false),[commentError,setCommentError]=useState<{message:string;conflict:boolean}|null>(null);
  const pendingComment=useRef<CommentUpdate|null>(null);
  const [missing,setMissing]=useState(()=>new Set(analysisComments?.comments.filter(c=>!anchorTarget(analysisComments.advice.suggestions[c.suggestionIndex]?.anchor,initial?.scene.elements??[])&&analysisComments.advice.suggestions[c.suggestionIndex]?.anchor).map(c=>c.id)));
@@ -150,7 +151,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
    edits.invalidate();
    queue.acceptExternal(saved,proposal.baseRevision);
    api.current.updateScene({elements:preview.elements,appState:{selectedElementIds:{}},captureUpdate:CaptureUpdateAction.IMMEDIATELY});
-   setEditUncertain(false);updateStale(saved.scene,saved.goal);setMessage('修改已应用并保存，可用画板原生撤销。');
+   setEditUncertain(false);updateStale(saved.scene,saved.goal);setMessage('本次修改曾应用并保存；可用原生撤销，当前状态以画板为准。');
   }finally{if(mounted.current)setPreparing(false);}
  };
  const focusSelection=(clear=false)=>void run(async()=>{
@@ -204,13 +205,14 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   if(target&&locate)api.current.scrollToContent(target,{animate:false});
  };
  const discuss=(id:string,intent:CommentRequest['intent'])=>void run(async()=>{
+  if(discussionPending.current)return;
   if(!comments||preparing||busy||pending||savingComments||editUncertain)throw new Error('请先结束或确认当前操作');
-  setPreparing(true);
+  discussionPending.current=true;setDiscussing(true);setPreparing(true);
   try{await settle();if(!mounted.current||!queue.revision)throw new Error('画板已关闭或草图尚未保存');
    await prepareChatReference();
    await insertComment(owner,{source,batchId:comments.id,commentId:id,revision:queue.revision,intent});
    if(mounted.current)await closeBoard();
-  }finally{if(mounted.current)setPreparing(false);}
+  }finally{discussionPending.current=false;if(mounted.current){setDiscussing(false);setPreparing(false);}}
  });
  const actions:CommentActions={select:selectComment,hover:setHovered,discuss,change:changeComment,use:index=>void run(async()=>{if(!batch)return;await settle();setMessage(await insertAdvice(owner,batch.id,index));}),prompt:index=>{setCopy(batch?.advice.suggestions[index]?.actionPrompt??'');setAdviceOpen(true);}};
  const analyze=()=>void run(async()=>{
@@ -265,7 +267,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   <div ref={canvas} className="canvas" data-preparing={preparing||!!pending}>
    <Excalidraw theme={appearance.theme} langCode="zh-CN" initialData={initialData} excalidrawAPI={ready} onChange={updated} UIOptions={{canvasActions:{loadScene:false,saveToActiveFile:false,export:false,saveAsImage:false,toggleTheme:false},tools:{image:false}}} />
    {comments&&<CommentOverlay api={editor} batch={comments} selected={selected} hovered={hovered} stale={displayStale} saving={savingComments||busy} shown={showComments} disabled={!!pending||preparing} actions={actions} onMissing={reportMissing}/>}
-   {(preparing||!!pending)&&<div className="freeze">{pending?'请先选择是否恢复本地草稿':'正在保存并生成参考图…'}</div>}
+   {(preparing||!!pending)&&<div className="freeze" role="status">{pending?'请先选择是否恢复本地草稿':discussing?'正在打开聊天…':'正在保存并生成参考图…'}</div>}
   </div>
   <footer>
    {visual.state?.available&&<span className="collaborationStatus" aria-label="协作状态">{visual.state.selection?`重点 ${visual.state.selection.elementIds.length} 个${visual.state.selection.revision!==queue.revision||queue.state!=='clean'?' · 已过期':''}`:''}{visual.state.all?`${visual.state.selection?' · ':''}视觉参考${!visual.state.all.stale&&visual.state.all.revision===queue.revision&&queue.state==='clean'?'可读':'待更新'}`:''}</span>}<div className="actions">
