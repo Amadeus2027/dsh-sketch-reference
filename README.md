@@ -2,7 +2,7 @@
 
 在 DeepSeek Harness 会话中画草图、保存可编辑版本，用官方 DeepSeek 理解 PNG、用途和精简元素数据，再把指令和参考图加入原生聊天输入框。定位为 DSH 特化的可视化需求交互插件，可用于物品、数学图形、流程、结构和 UI 等草图讨论；AI 锚点批注是可选增强。
 
-**状态：0.4.1 维护补丁，批注以自然中文和最小短引用进入 DSH 原生聊天，精确定位目标，修改仍由用户确认。** 补充操作反馈和撤销后的历史状态说明，保留 0.4.0 布局、批注高亮与视觉缓存。锁定 DSH `0.2.1-alpha.1` 和 Excalidraw `0.18.1`；尚未正式发布或提交比赛。改动与实测边界见 [0.4.1 说明](docs/release-v0.4.1.md)及 [Windows 验证记录](docs/windows-validation-v0.4.1-20261010.md)，前一版见 [0.4.0 说明](docs/release-v0.4.0.md)。
+**状态：0.5.0，真实 DeepSeek 参与工具设计审查。** 修改提议参数按操作区分，元素详情明确允许的操作，参数错误提供恢复指引。保留自然批注追问、用户确认修改及原生撤销。锁定 DSH `0.2.1-alpha.1` 和 Excalidraw `0.18.1`；尚未正式发布或提交比赛。改动与验证边界见 [0.5.0 说明](docs/release-v0.5.0.md)及 [双 Agent 协作记录](docs/agent-led-development-v0.5.0.md)；前一版见 [0.4.1 说明](docs/release-v0.4.1.md)。
 
 本版收敛范围、官方/社区复用与兼容边界见 [0.3.2 实现说明](docs/submission-v0.3.2.md)。下一轮使用 [Windows 全量验收与比赛演示清单](docs/windows-acceptance-v0.3.2.md)，包含安装、恢复、真实模型、修改授权和 5–7 分钟演示流程。
 
@@ -21,7 +21,7 @@ npm install -g @deepseek-ai/dsh@0.2.1-alpha.1
 # 先运行一次，初始化官方 web profile
 dsh web
 # 退出宿主后，从下载的 tgz 安装
-dsh plugin --profile web add /绝对路径/dsh-sketch-reference-0.4.1.tgz
+dsh plugin --profile web add /绝对路径/dsh-sketch-reference-0.5.0.tgz
 dsh web
 ```
 

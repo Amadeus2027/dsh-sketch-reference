@@ -1,3 +1,13 @@
+# 验证记录索引
+
+以下保留历史实验的原始时间与范围，不能把早期计划或 mock 测试当成后续真实模型验收。
+
+- [v0.5.0 真实双 Agent 研发及复审](agent-led-development-v0.5.0.md)
+- [v0.5.0 Windows 实装、原生布局 A/B 与真实交互验证](windows-validation-v0.5.0-20261010.md)
+- [v0.4.1 Windows 实测](windows-validation-v0.4.1-20261010.md)
+- [v0.4.0 Windows 实测](windows-validation-v0.4.0-20261010.md)
+- [v0.3.2 DS30 实测](windows-validation-v0.3.2-ds30-20261009.md)
+
 # 0.1.0 初版验证记录
 
 日期：2026-10-08。环境：Linux、Node.js 24.19.0、pnpm 11.19.0、系统 Chromium、DSH 0.2.1-alpha.1。使用独立临时 Web profile，测试工作区是本项目；目录选择自动化使用官方 browse-picker 测试覆盖层。没有配置 DS 凭据，没有发送真实模型请求。

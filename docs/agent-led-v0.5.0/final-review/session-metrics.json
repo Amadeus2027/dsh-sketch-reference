@@ -1,0 +1,68 @@
+{
+  "exportedUtc": "2026-10-10T09:04:03.998Z",
+  "usageScope": "Usage reported in durable assistant/message events; failed assistant/attempt streams may not carry usage. Not billing totals or token savings.",
+  "sessions": [
+    {
+      "sessionId": "session-81de30b0-e09f-4773-b976-6d93d007e7d8",
+      "delegationDepth": 0,
+      "cwd": "R:\\snapshot-3539f3fc670c",
+      "modelSteps": 40,
+      "reads": 22,
+      "usage": {
+        "inputTokens": 66228,
+        "outputTokens": 21148,
+        "cacheReadTokens": 2393600,
+        "cacheWriteTokens": 0,
+        "totalTokens": 2480976
+      },
+      "completed": [
+        {
+          "turn": 1,
+          "reason": {
+            "kind": "completed"
+          }
+        },
+        {
+          "turn": 2,
+          "reason": {
+            "kind": "error",
+            "error": {
+              "message": "DeepSeek Messages stream: tool input is invalid JSON",
+              "code": "MALFORMED_RESPONSE"
+            }
+          }
+        },
+        {
+          "turn": 3,
+          "reason": {
+            "kind": "completed"
+          }
+        },
+        {
+          "turn": 4,
+          "reason": {
+            "kind": "completed"
+          }
+        },
+        {
+          "turn": 5,
+          "reason": {
+            "kind": "completed"
+          }
+        },
+        {
+          "turn": 6,
+          "reason": {
+            "kind": "completed"
+          }
+        },
+        {
+          "turn": 7,
+          "reason": {
+            "kind": "completed"
+          }
+        }
+      ]
+    }
+  ]
+}

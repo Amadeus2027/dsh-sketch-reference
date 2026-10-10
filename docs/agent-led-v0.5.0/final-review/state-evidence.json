@@ -1,0 +1,864 @@
+{
+  "capturedBy": "Codex reading only dedicated test-session plugin storage and gateway counters; user-side UI actions, not DeepSeek observations",
+  "assertionsPassed": true,
+  "note": "Element geometry/text restored; native undo advances revision and may retain deleted tombstones, so entire serialized scene need not match. PNG export invocation counts were not instrumented; unchanged cache metadata is not a claim of zero low-level export calls.",
+  "states": [
+    {
+      "phase": "final-initial",
+      "at": "2026-10-10T08:53:04.509Z",
+      "sessionId": "session-81de30b0-e09f-4773-b976-6d93d007e7d8",
+      "drawing": {
+        "revision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+        "contentDigest": "a04d704aaa88e1db1b2dc4f137dd8df89d4a526bef91f122519e8fa2a60a1bcb",
+        "sceneSha256": "4958c811d7acf498cb989a5283f490392e8ecf1afb3502bc2fa955d748d67f59",
+        "elements": [
+          {
+            "id": "E7B_iZmJCvGPA9Qdse-lD",
+            "type": "rectangle",
+            "x": 67,
+            "y": 70.5,
+            "width": 150,
+            "height": 70
+          },
+          {
+            "id": "5EMIuJw7YyqvieU-ObD_z",
+            "type": "rectangle",
+            "x": 327,
+            "y": 70.5,
+            "width": 150,
+            "height": 70
+          },
+          {
+            "id": "eMZ83msMBMcxkdQap1f6s",
+            "type": "arrow",
+            "x": 222,
+            "y": 105.5,
+            "width": 100,
+            "height": 0
+          },
+          {
+            "id": "fABnqNOzBNkqUIJJ_kcwL",
+            "type": "ellipse",
+            "x": 67,
+            "y": 220.5,
+            "width": 130,
+            "height": 75
+          },
+          {
+            "id": "8dxMJvpdiLCV6Ze8OhnO_",
+            "type": "diamond",
+            "x": 317,
+            "y": 205.5,
+            "width": 120,
+            "height": 100
+          },
+          {
+            "id": "-2APZAs12Boc5UXgbq289",
+            "type": "text",
+            "x": 327,
+            "y": 240.5,
+            "width": 100,
+            "height": 25,
+            "text": "确认订单"
+          },
+          {
+            "id": "Kr6GFMcB7gUempPhw9d2e",
+            "type": "text",
+            "x": 67,
+            "y": 330.5,
+            "width": 360,
+            "height": 50,
+            "text": "订单流程草图\nCodex 准备的研究素材"
+          },
+          {
+            "id": "aSc_hBoZtKrqkW2_Z0l2G",
+            "type": "freedraw",
+            "x": 247,
+            "y": 225.5,
+            "width": 40,
+            "height": 60
+          },
+          {
+            "id": "9hIwL53ACpKd2eQ0oSW3G",
+            "type": "rectangle",
+            "x": 407,
+            "y": 350.5,
+            "width": 55,
+            "height": 35
+          }
+        ]
+      },
+      "proposal": null,
+      "comments": {
+        "id": "8d5d66c6-e306-4ef6-b84e-eec50fc17405",
+        "count": 1
+      },
+      "visual": [
+        {
+          "revision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+          "scope": "all",
+          "elementIds": [],
+          "attachmentId": "sha256:8aad7fc73d49bb19ae16861c13b0e195b22c48c15090def32a00d71074021c4b",
+          "createdAt": "2026-10-10T08:46:38.748Z"
+        },
+        {
+          "revision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+          "scope": "focus",
+          "elementIds": [
+            "E7B_iZmJCvGPA9Qdse-lD"
+          ],
+          "attachmentId": "sha256:374c6a4aef0d83f6cdd5d76f8c1cdcbc577c92df3017cbe114a2665e91254881",
+          "createdAt": "2026-10-10T08:50:35.375Z"
+        }
+      ],
+      "officialRequests": 180
+    },
+    {
+      "phase": "final-ui-draft",
+      "at": "2026-10-10T08:54:03.980Z",
+      "sessionId": "session-81de30b0-e09f-4773-b976-6d93d007e7d8",
+      "drawing": {
+        "revision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+        "contentDigest": "a04d704aaa88e1db1b2dc4f137dd8df89d4a526bef91f122519e8fa2a60a1bcb",
+        "sceneSha256": "4958c811d7acf498cb989a5283f490392e8ecf1afb3502bc2fa955d748d67f59",
+        "elements": [
+          {
+            "id": "E7B_iZmJCvGPA9Qdse-lD",
+            "type": "rectangle",
+            "x": 67,
+            "y": 70.5,
+            "width": 150,
+            "height": 70
+          },
+          {
+            "id": "5EMIuJw7YyqvieU-ObD_z",
+            "type": "rectangle",
+            "x": 327,
+            "y": 70.5,
+            "width": 150,
+            "height": 70
+          },
+          {
+            "id": "eMZ83msMBMcxkdQap1f6s",
+            "type": "arrow",
+            "x": 222,
+            "y": 105.5,
+            "width": 100,
+            "height": 0
+          },
+          {
+            "id": "fABnqNOzBNkqUIJJ_kcwL",
+            "type": "ellipse",
+            "x": 67,
+            "y": 220.5,
+            "width": 130,
+            "height": 75
+          },
+          {
+            "id": "8dxMJvpdiLCV6Ze8OhnO_",
+            "type": "diamond",
+            "x": 317,
+            "y": 205.5,
+            "width": 120,
+            "height": 100
+          },
+          {
+            "id": "-2APZAs12Boc5UXgbq289",
+            "type": "text",
+            "x": 327,
+            "y": 240.5,
+            "width": 100,
+            "height": 25,
+            "text": "确认订单"
+          },
+          {
+            "id": "Kr6GFMcB7gUempPhw9d2e",
+            "type": "text",
+            "x": 67,
+            "y": 330.5,
+            "width": 360,
+            "height": 50,
+            "text": "订单流程草图\nCodex 准备的研究素材"
+          },
+          {
+            "id": "aSc_hBoZtKrqkW2_Z0l2G",
+            "type": "freedraw",
+            "x": 247,
+            "y": 225.5,
+            "width": 40,
+            "height": 60
+          },
+          {
+            "id": "9hIwL53ACpKd2eQ0oSW3G",
+            "type": "rectangle",
+            "x": 407,
+            "y": 350.5,
+            "width": 55,
+            "height": 35
+          }
+        ]
+      },
+      "proposal": null,
+      "comments": {
+        "id": "8d5d66c6-e306-4ef6-b84e-eec50fc17405",
+        "count": 1
+      },
+      "visual": [
+        {
+          "revision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+          "scope": "all",
+          "elementIds": [],
+          "attachmentId": "sha256:8aad7fc73d49bb19ae16861c13b0e195b22c48c15090def32a00d71074021c4b",
+          "createdAt": "2026-10-10T08:46:38.748Z"
+        },
+        {
+          "revision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+          "scope": "focus",
+          "elementIds": [
+            "E7B_iZmJCvGPA9Qdse-lD"
+          ],
+          "attachmentId": "sha256:374c6a4aef0d83f6cdd5d76f8c1cdcbc577c92df3017cbe114a2665e91254881",
+          "createdAt": "2026-10-10T08:50:35.375Z"
+        }
+      ],
+      "officialRequests": 180
+    },
+    {
+      "phase": "final-before-preview",
+      "at": "2026-10-10T09:00:28.932Z",
+      "sessionId": "session-81de30b0-e09f-4773-b976-6d93d007e7d8",
+      "drawing": {
+        "revision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+        "contentDigest": "a04d704aaa88e1db1b2dc4f137dd8df89d4a526bef91f122519e8fa2a60a1bcb",
+        "sceneSha256": "4958c811d7acf498cb989a5283f490392e8ecf1afb3502bc2fa955d748d67f59",
+        "elements": [
+          {
+            "id": "E7B_iZmJCvGPA9Qdse-lD",
+            "type": "rectangle",
+            "x": 67,
+            "y": 70.5,
+            "width": 150,
+            "height": 70
+          },
+          {
+            "id": "5EMIuJw7YyqvieU-ObD_z",
+            "type": "rectangle",
+            "x": 327,
+            "y": 70.5,
+            "width": 150,
+            "height": 70
+          },
+          {
+            "id": "eMZ83msMBMcxkdQap1f6s",
+            "type": "arrow",
+            "x": 222,
+            "y": 105.5,
+            "width": 100,
+            "height": 0
+          },
+          {
+            "id": "fABnqNOzBNkqUIJJ_kcwL",
+            "type": "ellipse",
+            "x": 67,
+            "y": 220.5,
+            "width": 130,
+            "height": 75
+          },
+          {
+            "id": "8dxMJvpdiLCV6Ze8OhnO_",
+            "type": "diamond",
+            "x": 317,
+            "y": 205.5,
+            "width": 120,
+            "height": 100
+          },
+          {
+            "id": "-2APZAs12Boc5UXgbq289",
+            "type": "text",
+            "x": 327,
+            "y": 240.5,
+            "width": 100,
+            "height": 25,
+            "text": "确认订单"
+          },
+          {
+            "id": "Kr6GFMcB7gUempPhw9d2e",
+            "type": "text",
+            "x": 67,
+            "y": 330.5,
+            "width": 360,
+            "height": 50,
+            "text": "订单流程草图\nCodex 准备的研究素材"
+          },
+          {
+            "id": "aSc_hBoZtKrqkW2_Z0l2G",
+            "type": "freedraw",
+            "x": 247,
+            "y": 225.5,
+            "width": 40,
+            "height": 60
+          },
+          {
+            "id": "9hIwL53ACpKd2eQ0oSW3G",
+            "type": "rectangle",
+            "x": 407,
+            "y": 350.5,
+            "width": 55,
+            "height": 35
+          }
+        ]
+      },
+      "proposal": {
+        "id": "0d6d9154-ceba-4ec3-a909-a46fe4eaa939",
+        "status": "pending",
+        "baseRevision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+        "operations": [
+          {
+            "op": "create",
+            "type": "text",
+            "x": 102,
+            "y": 93,
+            "width": 90,
+            "height": 25,
+            "text": "订单输入"
+          }
+        ]
+      },
+      "comments": {
+        "id": "ea5790c0-51ad-40b2-9618-cf97fffb0526",
+        "count": 1
+      },
+      "visual": [
+        {
+          "revision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+          "scope": "all",
+          "elementIds": [],
+          "attachmentId": "sha256:8aad7fc73d49bb19ae16861c13b0e195b22c48c15090def32a00d71074021c4b",
+          "createdAt": "2026-10-10T08:46:38.748Z"
+        },
+        {
+          "revision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+          "scope": "focus",
+          "elementIds": [
+            "E7B_iZmJCvGPA9Qdse-lD"
+          ],
+          "attachmentId": "sha256:374c6a4aef0d83f6cdd5d76f8c1cdcbc577c92df3017cbe114a2665e91254881",
+          "createdAt": "2026-10-10T08:50:35.375Z"
+        }
+      ],
+      "officialRequests": 192
+    },
+    {
+      "phase": "final-previewed",
+      "at": "2026-10-10T09:00:40.633Z",
+      "sessionId": "session-81de30b0-e09f-4773-b976-6d93d007e7d8",
+      "drawing": {
+        "revision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+        "contentDigest": "a04d704aaa88e1db1b2dc4f137dd8df89d4a526bef91f122519e8fa2a60a1bcb",
+        "sceneSha256": "4958c811d7acf498cb989a5283f490392e8ecf1afb3502bc2fa955d748d67f59",
+        "elements": [
+          {
+            "id": "E7B_iZmJCvGPA9Qdse-lD",
+            "type": "rectangle",
+            "x": 67,
+            "y": 70.5,
+            "width": 150,
+            "height": 70
+          },
+          {
+            "id": "5EMIuJw7YyqvieU-ObD_z",
+            "type": "rectangle",
+            "x": 327,
+            "y": 70.5,
+            "width": 150,
+            "height": 70
+          },
+          {
+            "id": "eMZ83msMBMcxkdQap1f6s",
+            "type": "arrow",
+            "x": 222,
+            "y": 105.5,
+            "width": 100,
+            "height": 0
+          },
+          {
+            "id": "fABnqNOzBNkqUIJJ_kcwL",
+            "type": "ellipse",
+            "x": 67,
+            "y": 220.5,
+            "width": 130,
+            "height": 75
+          },
+          {
+            "id": "8dxMJvpdiLCV6Ze8OhnO_",
+            "type": "diamond",
+            "x": 317,
+            "y": 205.5,
+            "width": 120,
+            "height": 100
+          },
+          {
+            "id": "-2APZAs12Boc5UXgbq289",
+            "type": "text",
+            "x": 327,
+            "y": 240.5,
+            "width": 100,
+            "height": 25,
+            "text": "确认订单"
+          },
+          {
+            "id": "Kr6GFMcB7gUempPhw9d2e",
+            "type": "text",
+            "x": 67,
+            "y": 330.5,
+            "width": 360,
+            "height": 50,
+            "text": "订单流程草图\nCodex 准备的研究素材"
+          },
+          {
+            "id": "aSc_hBoZtKrqkW2_Z0l2G",
+            "type": "freedraw",
+            "x": 247,
+            "y": 225.5,
+            "width": 40,
+            "height": 60
+          },
+          {
+            "id": "9hIwL53ACpKd2eQ0oSW3G",
+            "type": "rectangle",
+            "x": 407,
+            "y": 350.5,
+            "width": 55,
+            "height": 35
+          }
+        ]
+      },
+      "proposal": {
+        "id": "0d6d9154-ceba-4ec3-a909-a46fe4eaa939",
+        "status": "pending",
+        "baseRevision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+        "operations": [
+          {
+            "op": "create",
+            "type": "text",
+            "x": 102,
+            "y": 93,
+            "width": 90,
+            "height": 25,
+            "text": "订单输入"
+          }
+        ]
+      },
+      "comments": {
+        "id": "ea5790c0-51ad-40b2-9618-cf97fffb0526",
+        "count": 1
+      },
+      "visual": [
+        {
+          "revision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+          "scope": "all",
+          "elementIds": [],
+          "attachmentId": "sha256:8aad7fc73d49bb19ae16861c13b0e195b22c48c15090def32a00d71074021c4b",
+          "createdAt": "2026-10-10T08:46:38.748Z"
+        },
+        {
+          "revision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+          "scope": "focus",
+          "elementIds": [
+            "E7B_iZmJCvGPA9Qdse-lD"
+          ],
+          "attachmentId": "sha256:374c6a4aef0d83f6cdd5d76f8c1cdcbc577c92df3017cbe114a2665e91254881",
+          "createdAt": "2026-10-10T08:50:35.375Z"
+        }
+      ],
+      "officialRequests": 192
+    },
+    {
+      "phase": "final-applied",
+      "at": "2026-10-10T09:00:56.280Z",
+      "sessionId": "session-81de30b0-e09f-4773-b976-6d93d007e7d8",
+      "drawing": {
+        "revision": "ba29a861-93d7-43a4-b21d-e7fb7dc4fd80",
+        "contentDigest": "8022caa2abaca71fe60801022582cb9efa9217c1e32c91ac132fc610f50de7fc",
+        "sceneSha256": "5241c6bacddd6f6629ed200df3e4ed67a9b8c00799a9acae8fd1c32ac5316ceb",
+        "elements": [
+          {
+            "id": "E7B_iZmJCvGPA9Qdse-lD",
+            "type": "rectangle",
+            "x": 67,
+            "y": 70.5,
+            "width": 150,
+            "height": 70
+          },
+          {
+            "id": "5EMIuJw7YyqvieU-ObD_z",
+            "type": "rectangle",
+            "x": 327,
+            "y": 70.5,
+            "width": 150,
+            "height": 70
+          },
+          {
+            "id": "eMZ83msMBMcxkdQap1f6s",
+            "type": "arrow",
+            "x": 222,
+            "y": 105.5,
+            "width": 100,
+            "height": 0
+          },
+          {
+            "id": "fABnqNOzBNkqUIJJ_kcwL",
+            "type": "ellipse",
+            "x": 67,
+            "y": 220.5,
+            "width": 130,
+            "height": 75
+          },
+          {
+            "id": "8dxMJvpdiLCV6Ze8OhnO_",
+            "type": "diamond",
+            "x": 317,
+            "y": 205.5,
+            "width": 120,
+            "height": 100
+          },
+          {
+            "id": "-2APZAs12Boc5UXgbq289",
+            "type": "text",
+            "x": 327,
+            "y": 240.5,
+            "width": 100,
+            "height": 25,
+            "text": "确认订单"
+          },
+          {
+            "id": "Kr6GFMcB7gUempPhw9d2e",
+            "type": "text",
+            "x": 67,
+            "y": 330.5,
+            "width": 360,
+            "height": 50,
+            "text": "订单流程草图\nCodex 准备的研究素材"
+          },
+          {
+            "id": "aSc_hBoZtKrqkW2_Z0l2G",
+            "type": "freedraw",
+            "x": 247,
+            "y": 225.5,
+            "width": 40,
+            "height": 60
+          },
+          {
+            "id": "9hIwL53ACpKd2eQ0oSW3G",
+            "type": "rectangle",
+            "x": 407,
+            "y": 350.5,
+            "width": 55,
+            "height": 35
+          },
+          {
+            "id": "sketch-edit-0d6d9154-ceba-4ec3-a909-a46fe4eaa939-0",
+            "type": "text",
+            "x": 102,
+            "y": 93,
+            "width": 80,
+            "height": 25,
+            "text": "订单输入"
+          }
+        ]
+      },
+      "proposal": {
+        "id": "0d6d9154-ceba-4ec3-a909-a46fe4eaa939",
+        "status": "applied",
+        "baseRevision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+        "resultRevision": "ba29a861-93d7-43a4-b21d-e7fb7dc4fd80",
+        "operations": [
+          {
+            "op": "create",
+            "type": "text",
+            "x": 102,
+            "y": 93,
+            "width": 90,
+            "height": 25,
+            "text": "订单输入"
+          }
+        ]
+      },
+      "comments": {
+        "id": "ea5790c0-51ad-40b2-9618-cf97fffb0526",
+        "count": 1
+      },
+      "visual": [
+        {
+          "revision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+          "scope": "all",
+          "elementIds": [],
+          "attachmentId": "sha256:8aad7fc73d49bb19ae16861c13b0e195b22c48c15090def32a00d71074021c4b",
+          "createdAt": "2026-10-10T08:46:38.748Z"
+        },
+        {
+          "revision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+          "scope": "focus",
+          "elementIds": [
+            "E7B_iZmJCvGPA9Qdse-lD"
+          ],
+          "attachmentId": "sha256:374c6a4aef0d83f6cdd5d76f8c1cdcbc577c92df3017cbe114a2665e91254881",
+          "createdAt": "2026-10-10T08:50:35.375Z"
+        }
+      ],
+      "officialRequests": 192
+    },
+    {
+      "phase": "final-undone",
+      "at": "2026-10-10T09:01:07.409Z",
+      "sessionId": "session-81de30b0-e09f-4773-b976-6d93d007e7d8",
+      "drawing": {
+        "revision": "a0832ecc-1482-420c-a6ae-3c12b0b784b7",
+        "contentDigest": "a04d704aaa88e1db1b2dc4f137dd8df89d4a526bef91f122519e8fa2a60a1bcb",
+        "sceneSha256": "4958c811d7acf498cb989a5283f490392e8ecf1afb3502bc2fa955d748d67f59",
+        "elements": [
+          {
+            "id": "E7B_iZmJCvGPA9Qdse-lD",
+            "type": "rectangle",
+            "x": 67,
+            "y": 70.5,
+            "width": 150,
+            "height": 70
+          },
+          {
+            "id": "5EMIuJw7YyqvieU-ObD_z",
+            "type": "rectangle",
+            "x": 327,
+            "y": 70.5,
+            "width": 150,
+            "height": 70
+          },
+          {
+            "id": "eMZ83msMBMcxkdQap1f6s",
+            "type": "arrow",
+            "x": 222,
+            "y": 105.5,
+            "width": 100,
+            "height": 0
+          },
+          {
+            "id": "fABnqNOzBNkqUIJJ_kcwL",
+            "type": "ellipse",
+            "x": 67,
+            "y": 220.5,
+            "width": 130,
+            "height": 75
+          },
+          {
+            "id": "8dxMJvpdiLCV6Ze8OhnO_",
+            "type": "diamond",
+            "x": 317,
+            "y": 205.5,
+            "width": 120,
+            "height": 100
+          },
+          {
+            "id": "-2APZAs12Boc5UXgbq289",
+            "type": "text",
+            "x": 327,
+            "y": 240.5,
+            "width": 100,
+            "height": 25,
+            "text": "确认订单"
+          },
+          {
+            "id": "Kr6GFMcB7gUempPhw9d2e",
+            "type": "text",
+            "x": 67,
+            "y": 330.5,
+            "width": 360,
+            "height": 50,
+            "text": "订单流程草图\nCodex 准备的研究素材"
+          },
+          {
+            "id": "aSc_hBoZtKrqkW2_Z0l2G",
+            "type": "freedraw",
+            "x": 247,
+            "y": 225.5,
+            "width": 40,
+            "height": 60
+          },
+          {
+            "id": "9hIwL53ACpKd2eQ0oSW3G",
+            "type": "rectangle",
+            "x": 407,
+            "y": 350.5,
+            "width": 55,
+            "height": 35
+          }
+        ]
+      },
+      "proposal": {
+        "id": "0d6d9154-ceba-4ec3-a909-a46fe4eaa939",
+        "status": "applied",
+        "baseRevision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+        "resultRevision": "ba29a861-93d7-43a4-b21d-e7fb7dc4fd80",
+        "operations": [
+          {
+            "op": "create",
+            "type": "text",
+            "x": 102,
+            "y": 93,
+            "width": 90,
+            "height": 25,
+            "text": "订单输入"
+          }
+        ]
+      },
+      "comments": {
+        "id": "ea5790c0-51ad-40b2-9618-cf97fffb0526",
+        "count": 1
+      },
+      "visual": [
+        {
+          "revision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+          "scope": "all",
+          "elementIds": [],
+          "attachmentId": "sha256:8aad7fc73d49bb19ae16861c13b0e195b22c48c15090def32a00d71074021c4b",
+          "createdAt": "2026-10-10T08:46:38.748Z"
+        },
+        {
+          "revision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+          "scope": "focus",
+          "elementIds": [
+            "E7B_iZmJCvGPA9Qdse-lD"
+          ],
+          "attachmentId": "sha256:374c6a4aef0d83f6cdd5d76f8c1cdcbc577c92df3017cbe114a2665e91254881",
+          "createdAt": "2026-10-10T08:50:35.375Z"
+        }
+      ],
+      "officialRequests": 192
+    },
+    {
+      "phase": "final-refocused",
+      "at": "2026-10-10T09:03:15.378Z",
+      "sessionId": "session-81de30b0-e09f-4773-b976-6d93d007e7d8",
+      "drawing": {
+        "revision": "a0832ecc-1482-420c-a6ae-3c12b0b784b7",
+        "contentDigest": "a04d704aaa88e1db1b2dc4f137dd8df89d4a526bef91f122519e8fa2a60a1bcb",
+        "sceneSha256": "4958c811d7acf498cb989a5283f490392e8ecf1afb3502bc2fa955d748d67f59",
+        "elements": [
+          {
+            "id": "E7B_iZmJCvGPA9Qdse-lD",
+            "type": "rectangle",
+            "x": 67,
+            "y": 70.5,
+            "width": 150,
+            "height": 70
+          },
+          {
+            "id": "5EMIuJw7YyqvieU-ObD_z",
+            "type": "rectangle",
+            "x": 327,
+            "y": 70.5,
+            "width": 150,
+            "height": 70
+          },
+          {
+            "id": "eMZ83msMBMcxkdQap1f6s",
+            "type": "arrow",
+            "x": 222,
+            "y": 105.5,
+            "width": 100,
+            "height": 0
+          },
+          {
+            "id": "fABnqNOzBNkqUIJJ_kcwL",
+            "type": "ellipse",
+            "x": 67,
+            "y": 220.5,
+            "width": 130,
+            "height": 75
+          },
+          {
+            "id": "8dxMJvpdiLCV6Ze8OhnO_",
+            "type": "diamond",
+            "x": 317,
+            "y": 205.5,
+            "width": 120,
+            "height": 100
+          },
+          {
+            "id": "-2APZAs12Boc5UXgbq289",
+            "type": "text",
+            "x": 327,
+            "y": 240.5,
+            "width": 100,
+            "height": 25,
+            "text": "确认订单"
+          },
+          {
+            "id": "Kr6GFMcB7gUempPhw9d2e",
+            "type": "text",
+            "x": 67,
+            "y": 330.5,
+            "width": 360,
+            "height": 50,
+            "text": "订单流程草图\nCodex 准备的研究素材"
+          },
+          {
+            "id": "aSc_hBoZtKrqkW2_Z0l2G",
+            "type": "freedraw",
+            "x": 247,
+            "y": 225.5,
+            "width": 40,
+            "height": 60
+          },
+          {
+            "id": "9hIwL53ACpKd2eQ0oSW3G",
+            "type": "rectangle",
+            "x": 407,
+            "y": 350.5,
+            "width": 55,
+            "height": 35
+          }
+        ]
+      },
+      "proposal": {
+        "id": "0d6d9154-ceba-4ec3-a909-a46fe4eaa939",
+        "status": "applied",
+        "baseRevision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+        "resultRevision": "ba29a861-93d7-43a4-b21d-e7fb7dc4fd80",
+        "operations": [
+          {
+            "op": "create",
+            "type": "text",
+            "x": 102,
+            "y": 93,
+            "width": 90,
+            "height": 25,
+            "text": "订单输入"
+          }
+        ]
+      },
+      "comments": {
+        "id": "ea5790c0-51ad-40b2-9618-cf97fffb0526",
+        "count": 1
+      },
+      "visual": [
+        {
+          "revision": "fb4251d0-de52-484f-9a06-1c807f4385ec",
+          "scope": "all",
+          "elementIds": [],
+          "attachmentId": "sha256:8aad7fc73d49bb19ae16861c13b0e195b22c48c15090def32a00d71074021c4b",
+          "createdAt": "2026-10-10T08:46:38.748Z"
+        },
+        {
+          "revision": "a0832ecc-1482-420c-a6ae-3c12b0b784b7",
+          "scope": "focus",
+          "elementIds": [
+            "E7B_iZmJCvGPA9Qdse-lD"
+          ],
+          "attachmentId": "sha256:374c6a4aef0d83f6cdd5d76f8c1cdcbc577c92df3017cbe114a2665e91254881",
+          "createdAt": "2026-10-10T09:03:09.484Z"
+        }
+      ],
+      "officialRequests": 195
+    }
+  ]
+}

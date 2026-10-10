@@ -1,0 +1,21 @@
+[
+  {
+    "command": "pnpm run typecheck",
+    "exitCode": 0,
+    "elapsedSeconds": 3.91
+  },
+  {
+    "command": "pnpm test",
+    "exitCode": 0,
+    "elapsedSeconds": 2.73
+  },
+  {
+    "command": "pnpm run bundle",
+    "exitCode": 0,
+    "elapsedSeconds": 24.11
+  },
+  {
+    "command": "pnpm pack",
+    "exitCode": 0
+  }
+]

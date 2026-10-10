@@ -40,6 +40,12 @@ export function editRestrictions(scene:Drawing['scene']){
  return result;
 }
 
+/** A capability list derived from the same admission rules, not a permission grant. */
+export function allowedOperations(element:Drawing['scene']['elements'][number],restriction?:EditRestriction):('move'|'resize'|'delete')[]{
+ if(restriction||element.isDeleted)return [];
+ return ['rectangle','ellipse','diamond'].includes(element.type)?['move','resize','delete']:['move','delete'];
+}
+
 /** Admission only; geometry/rendering is delegated to public Excalidraw APIs. */
 export function validateOperations(scene:Drawing['scene'],operations:EditOperation[]){
  const live=new Map(scene.elements.filter(e=>!e.isDeleted).map(e=>[e.id,e]));
@@ -50,7 +56,7 @@ export function validateOperations(scene:Drawing['scene'],operations:EditOperati
   const e=live.get(op.elementId);
   if(!e)throw new SketchError('ELEMENT_NOT_FOUND','目标不存在或已删除，请重新读取草图',409);
   if(restrictions.has(e.id))throw new SketchError('UNSUPPORTED_EDIT','首版不修改锁定、绑定或分组元素，请手动调整',409);
-  if(op.op==='resize'&&!['rectangle','ellipse','diamond'].includes(e.type))throw new SketchError('UNSUPPORTED_EDIT','首版仅调整独立矩形、椭圆和菱形尺寸，请手动调整其他图形',409);
+  if(!allowedOperations(e,restrictions.get(e.id)).includes(op.op))throw new SketchError('UNSUPPORTED_EDIT','首版仅调整独立矩形、椭圆和菱形尺寸，请手动调整其他图形',409);
   if(op.op==='delete')live.delete(e.id);
  }
  if(live.size+additions>SCENE_LIMITS.maxSceneElements)throw new SketchError('EDIT_LIMIT','修改后图形数量超过场景上限，请减少新增图形',413);

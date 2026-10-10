@@ -1,0 +1,67 @@
+{
+  "board": {
+    "composer": [
+      {
+        "rect": {
+          "bottom": 715,
+          "height": 36,
+          "left": 72,
+          "right": 162.59375,
+          "top": 679,
+          "width": 90.59375,
+          "x": 72,
+          "y": 679
+        }
+      }
+    ],
+    "document": {
+      "scrollHeight": 844,
+      "scrollTop": 0,
+      "scrollWidth": 390
+    },
+    "iframes": [
+      {
+        "rect": {
+          "bottom": 844,
+          "height": 844,
+          "left": 56,
+          "right": 390,
+          "top": 0,
+          "width": 334,
+          "x": 56,
+          "y": 0
+        },
+        "src": "/sketch-reference-assets/index.html?sessionId=session-81de30b0-e09f-4773-b976-6d93d007e7d8&nonce=2bbd7db4-9374-4472-9e09-106e6bb2b9ad&theme=light"
+      }
+    ],
+    "viewport": {
+      "height": 844,
+      "width": 390
+    }
+  },
+  "chat": {
+    "composer": [
+      {
+        "rect": {
+          "bottom": 760,
+          "height": 36,
+          "left": 72,
+          "right": 363,
+          "top": 724,
+          "width": 291,
+          "x": 72,
+          "y": 724
+        }
+      }
+    ],
+    "document": {
+      "scrollHeight": 844,
+      "scrollTop": 0,
+      "scrollWidth": 390
+    },
+    "viewport": {
+      "height": 844,
+      "width": 390
+    }
+  }
+}

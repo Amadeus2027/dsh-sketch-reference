@@ -1,0 +1,6 @@
+{
+  "pid": 34380,
+  "actualProgram": "icacls.exe",
+  "status": 5,
+  "sourceWriteAfterAttempt": "EPERM"
+}

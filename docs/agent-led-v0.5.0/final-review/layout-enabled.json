@@ -1,0 +1,53 @@
+{
+  "before": {
+    "at": "2026-10-10T09:03:45.540Z",
+    "composer": [
+      {
+        "label": "发消息或创建任务, / 调用指令, @ 文件或对话",
+        "rect": "{\"bottom\":636,\"height\":36,\"left\":420.5,\"right\":1128.5,\"top\":600,\"width\":708,\"x\":420.5,\"y\":600}"
+      }
+    ],
+    "document": {
+      "scrollHeight": 720,
+      "scrollTop": 0,
+      "scrollWidth": 1280
+    },
+    "scrollRegions": [
+      {
+        "className": "wSkVaW_scrollBody",
+        "clientHeight": 644,
+        "rect": "{\"bottom\":720,\"height\":644,\"left\":280,\"right\":1278,\"top\":76,\"width\":998,\"x\":280,\"y\":76}",
+        "scrollHeight": 9357,
+        "scrollTop": 8713,
+        "tag": "DIV"
+      }
+    ],
+    "viewport": {
+      "height": 720,
+      "width": 1280
+    }
+  },
+  "after": {
+    "at": "2026-10-10T09:03:56.334Z",
+    "composer": [
+      {
+        "rect": "{\"bottom\":636,\"height\":36,\"left\":420.5,\"right\":1128.5,\"top\":600,\"width\":708,\"x\":420.5,\"y\":600}"
+      }
+    ],
+    "document": {
+      "scrollHeight": 720,
+      "scrollTop": 0,
+      "scrollWidth": 1280
+    },
+    "scrollRegions": [
+      {
+        "className": "wSkVaW_scrollBody",
+        "clientHeight": 644,
+        "rect": "{\"bottom\":720,\"height\":644,\"left\":280,\"right\":1278,\"top\":76,\"width\":998,\"x\":280,\"y\":76}",
+        "scrollHeight": 9357,
+        "scrollTop": 7273,
+        "tag": "DIV"
+      }
+    ]
+  }
+}

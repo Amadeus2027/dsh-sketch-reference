@@ -1,0 +1,56 @@
+[
+  {
+    "name": "read fixed source",
+    "result": "allowed",
+    "expect": "allowed"
+  },
+  {
+    "name": "create source file",
+    "result": "denied",
+    "code": "EPERM",
+    "expect": "denied"
+  },
+  {
+    "name": "overwrite source canary",
+    "result": "denied",
+    "code": "EPERM",
+    "expect": "denied"
+  },
+  {
+    "name": "delete source canary",
+    "result": "denied",
+    "code": "EPERM",
+    "expect": "denied"
+  },
+  {
+    "name": "rename source canary",
+    "result": "denied",
+    "code": "EPERM",
+    "expect": "denied"
+  },
+  {
+    "name": "write formal repository",
+    "result": "denied",
+    "code": "EPERM",
+    "expect": "denied"
+  },
+  {
+    "name": "read unrelated private canary",
+    "result": "denied",
+    "code": "EPERM",
+    "expect": "denied"
+  },
+  {
+    "name": "write isolated test state",
+    "result": "allowed",
+    "expect": "allowed"
+  },
+  {
+    "name": "inherited child isolation",
+    "status": 0,
+    "report": {
+      "pid": 40792,
+      "formalWrite": "EPERM"
+    }
+  }
+]

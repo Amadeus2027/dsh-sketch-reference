@@ -1,0 +1,48 @@
+{
+  "before": {
+    "at": "2026-10-10T09:08:59.615Z",
+    "composer": [
+      {
+        "rect": "{\"bottom\":636,\"height\":36,\"left\":296,\"right\":693,\"top\":600,\"width\":397,\"x\":296,\"y\":600}"
+      }
+    ],
+    "document": {
+      "scrollHeight": 720,
+      "scrollTop": 0,
+      "scrollWidth": 1280
+    },
+    "scrollRegions": [
+      {
+        "clientHeight": 644,
+        "scrollHeight": 13434,
+        "scrollTop": 12790
+      }
+    ],
+    "separator": [
+      {
+        "name": "调整聊天和画板宽度",
+        "value": "44"
+      }
+    ]
+  },
+  "after": {
+    "at": "2026-10-10T09:09:00.055Z",
+    "composer": [
+      {
+        "rect": "{\"bottom\":636,\"height\":36,\"left\":296,\"right\":693,\"top\":600,\"width\":397,\"x\":296,\"y\":600}"
+      }
+    ],
+    "document": {
+      "scrollHeight": 720,
+      "scrollTop": 0,
+      "scrollWidth": 1280
+    },
+    "scrollRegions": [
+      {
+        "clientHeight": 644,
+        "scrollHeight": 13434,
+        "scrollTop": 12070
+      }
+    ]
+  }
+}

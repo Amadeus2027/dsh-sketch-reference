@@ -1,0 +1,150 @@
+{
+  "exportedUtc": "2026-10-10T08:44:43.249Z",
+  "usageScope": "Usage reported in durable assistant/message events; failed assistant/attempt streams may not carry usage. Not billing totals or token savings.",
+  "sessions": [
+    {
+      "sessionId": "1afcd46f-f4e4-4be1-b81c-97c34568f663",
+      "delegationDepth": 1,
+      "cwd": "R:\\snapshot-7737cfe2b239",
+      "modelSteps": 18,
+      "reads": 31,
+      "usage": {
+        "inputTokens": 83657,
+        "outputTokens": 25583,
+        "cacheReadTokens": 1058048,
+        "cacheWriteTokens": 0,
+        "totalTokens": 1167288
+      },
+      "completed": [
+        {
+          "turn": 1,
+          "reason": {
+            "kind": "completed"
+          }
+        }
+      ]
+    },
+    {
+      "sessionId": "1b785a14-36c4-4437-9df0-7b7c48ee238e",
+      "delegationDepth": 1,
+      "cwd": "R:\\snapshot-7737cfe2b239",
+      "modelSteps": 14,
+      "reads": 28,
+      "usage": {
+        "inputTokens": 54916,
+        "outputTokens": 9948,
+        "cacheReadTokens": 531200,
+        "cacheWriteTokens": 0,
+        "totalTokens": 596064
+      },
+      "completed": [
+        {
+          "turn": 1,
+          "reason": {
+            "kind": "completed"
+          }
+        }
+      ]
+    },
+    {
+      "sessionId": "8cfab9e8-1116-4e4f-b508-fed60382e8d2",
+      "delegationDepth": 1,
+      "cwd": "R:\\snapshot-7737cfe2b239",
+      "modelSteps": 35,
+      "reads": 61,
+      "usage": {
+        "inputTokens": 161337,
+        "outputTokens": 27685,
+        "cacheReadTokens": 3708288,
+        "cacheWriteTokens": 0,
+        "totalTokens": 3897310
+      },
+      "completed": [
+        {
+          "turn": 1,
+          "reason": {
+            "kind": "completed"
+          }
+        }
+      ]
+    },
+    {
+      "sessionId": "9905e694-ab4c-4b76-909b-57cda58d5146",
+      "delegationDepth": 1,
+      "cwd": "R:\\snapshot-7737cfe2b239",
+      "modelSteps": 13,
+      "reads": 38,
+      "usage": {
+        "inputTokens": 47936,
+        "outputTokens": 18092,
+        "cacheReadTokens": 506624,
+        "cacheWriteTokens": 0,
+        "totalTokens": 572652
+      },
+      "completed": [
+        {
+          "turn": 1,
+          "reason": {
+            "kind": "completed"
+          }
+        }
+      ]
+    },
+    {
+      "sessionId": "session-afa4ba0f-29b0-403c-bda8-dde504e693d2",
+      "delegationDepth": 0,
+      "cwd": "R:\\snapshot-7737cfe2b239",
+      "modelSteps": 57,
+      "reads": 52,
+      "usage": {
+        "inputTokens": 171899,
+        "outputTokens": 54369,
+        "cacheReadTokens": 6487424,
+        "cacheWriteTokens": 0,
+        "totalTokens": 6713692
+      },
+      "completed": [
+        {
+          "turn": 1,
+          "reason": {
+            "kind": "completed"
+          }
+        },
+        {
+          "turn": 2,
+          "reason": {
+            "kind": "completed"
+          }
+        },
+        {
+          "turn": 3,
+          "reason": {
+            "kind": "completed"
+          }
+        },
+        {
+          "turn": 4,
+          "reason": {
+            "kind": "error",
+            "error": {
+              "message": "DeepSeek Messages stream: tool input is invalid JSON",
+              "code": "MALFORMED_RESPONSE"
+            }
+          }
+        },
+        {
+          "turn": 5,
+          "reason": {
+            "kind": "completed"
+          }
+        },
+        {
+          "turn": 6,
+          "reason": {
+            "kind": "completed"
+          }
+        }
+      ]
+    }
+  ]
+}
