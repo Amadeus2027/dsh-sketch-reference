@@ -36,7 +36,7 @@ export function CommentList({batch,selected,stale,saving,showIgnored,actions,mis
    onFocus={()=>actions.hover(c.id)} onBlur={e=>{if(!e.currentTarget.contains(e.relatedTarget as Node|null))actions.hover(null);}}
    onClick={e=>{if(!(e.target as Element).closest('button,a,input,textarea,select'))actions.select(expanded?'':c.id,true);}}>
    <h2><button className="commentHeading" aria-expanded={expanded} onClick={()=>actions.select(expanded?'':c.id,true)}>{commentNumbers[c.suggestionIndex]} {suggestion.title}</button></h2>
-   <small>{c.status==='resolved'?'已解决 · ':c.status==='ignored'?'已忽略 · ':''}{suggestion.anchor?(missing.has(c.id)?'失去锚点':stale?'较早版本的元素批注':'元素批注'):'全局建议'}</small>
+   <small>{c.status==='resolved'?'已解决 · ':c.status==='ignored'?'已忽略 · ':''}{missing.has(c.id)?'对应图形已删除':stale?'批注已失效，请刷新':suggestion.anchor?'元素批注':'全局建议'}</small>
    {expanded&&<Detail batch={batch} id={c.id} stale={stale||missing.has(c.id)} saving={saving} actions={actions}/>}
   </article>;
  })}

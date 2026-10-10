@@ -21,6 +21,12 @@ export const proposalSchema=z.object({id:z.uuid(),owner:ownerSchema,baseRevision
  createdAt:z.iso.datetime(),status:z.enum(['pending','applied','dismissed']),resultRevision:z.uuid().optional(),applicationDigest:z.string().regex(/^[a-f0-9]{64}$/).optional(),toolCallKey:z.string().regex(/^[a-f0-9]{64}$/),toolInputDigest:z.string().regex(/^[a-f0-9]{64}$/),
 }).strict().superRefine((v,ctx)=>{if(v.status==='applied'&&(!v.resultRevision||!v.applicationDigest))ctx.addIssue({code:'custom',message:'应用记录缺少保存确认'});});
 export type EditProposal=z.infer<typeof proposalSchema>;
+/** Applied is a receipt, not a claim about the current canvas after undo/edit. */
+export function proposalLabel(proposal:EditProposal,currentRevision:string|null,dirty:boolean,previewed:boolean){
+ if(proposal.status==='dismissed')return '已忽略';
+ if(proposal.status==='applied')return dirty||proposal.resultRevision!==currentRevision?'曾应用 · 画板已变化':'已应用（历史记录）';
+ return dirty||proposal.baseRevision!==currentRevision?'需重新提议':previewed?'已预览 · 待确认':'待预览';
+}
 export const proposalActionSchema=z.object({proposalId:z.uuid()}).strict();
 export const proposalReadSchema=z.object({knownId:z.uuid(),knownStatus:z.enum(['pending','applied','dismissed'])}).strict();
 export const applyEditSchema=z.object({proposalId:z.uuid(),scene:sceneSchema}).strict();
