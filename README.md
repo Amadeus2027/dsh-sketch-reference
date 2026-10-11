@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![DSH baseline](https://img.shields.io/badge/DSH-0.2.1--alpha.1-536DFE)](https://github.com/deepseek-ai/deepseek-harness)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Amadeus2027/dsh-sketch-reference)
+[![Ask DeepWiki](https://img.shields.io/badge/DeepWiki-Ask-20B8A5.svg)](https://deepwiki.com/Amadeus2027/dsh-sketch-reference)
 
 在 DeepSeek Harness 中画图、讨论，再确认修改。
 
