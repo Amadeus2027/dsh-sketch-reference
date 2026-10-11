@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {IMAGE_LIMITS} from './limits.ts';
+import {imageRefSchema} from './image.ts';
 import { createSceneSchema, scenePolicy } from './scene.ts';
 export const ASSETS = '/sketch-reference-assets';
 export const RPC = '/sketch-reference-rpc/v1';
@@ -21,7 +22,7 @@ export const commentUpdateSchema=z.object({batchId:z.uuid(),expectedRevision:z.u
 export type CommentUpdate=z.infer<typeof commentUpdateSchema>;
 export const analysisModeSchema=z.enum(['image','structure','hybrid']);
 export type AnalysisMode=z.infer<typeof analysisModeSchema>;
-export const batchSchema = z.object({id:z.uuid(),owner:ownerSchema,contentDigest:z.string(),goal:text(2000),route:routeSchema,advice:adviceSchema,createdAt:z.string(),analysisRevision:z.uuid().optional(),inputMode:analysisModeSchema.optional(),commentRevision:z.uuid().optional(),comments:z.array(commentSchema).min(1).max(3).optional(),commentMutation:commentUpdateSchema.optional()}).strict().superRefine((batch,ctx)=>{
+export const batchSchema = z.object({id:z.uuid(),owner:ownerSchema,contentDigest:z.string(),goal:text(2000),route:routeSchema,advice:adviceSchema,createdAt:z.string(),analysisRevision:z.uuid().optional(),inputMode:analysisModeSchema.optional(),analysisImage:imageRefSchema.optional(),commentRevision:z.uuid().optional(),comments:z.array(commentSchema).min(1).max(3).optional(),commentMutation:commentUpdateSchema.optional()}).strict().superRefine((batch,ctx)=>{
  if(!!batch.comments!==!!batch.commentRevision || (batch.commentMutation&&!batch.comments))ctx.addIssue({code:'custom',message:'Incomplete comment metadata'});
  if(batch.comments && (batch.comments.length!==batch.advice.suggestions.length || new Set(batch.comments.map(c=>c.id)).size!==batch.comments.length || new Set(batch.comments.map(c=>c.suggestionIndex)).size!==batch.comments.length || batch.comments.some(c=>c.suggestionIndex>=batch.advice.suggestions.length)))ctx.addIssue({code:'custom',message:'Comments must match suggestions'});
 });
@@ -31,7 +32,9 @@ export type Drawing = z.infer<typeof drawingSchema>;
 export const envelopeSchema = z.object({protocolVersion:z.literal(1),requestId:z.uuid(),owner:ownerSchema.nullable(),payload:z.unknown()}).strict();
 export const saveSchema = z.object({expectedRevision:z.uuid().nullable(),mutationId:z.uuid(),scene:sceneSchema,goal:text(2000)}).strict();
 export type Save = z.infer<typeof saveSchema>;
-export const generateSchema = z.object({revision:z.uuid(),pngBase64:z.string().max(IMAGE_LIMITS.maxBase64Chars),route:routeSchema,inputMode:analysisModeSchema.default('hybrid')}).strict();
+export const generateSchema = z.object({revision:z.uuid(),pngBase64:z.string().max(IMAGE_LIMITS.maxBase64Chars),route:routeSchema,inputMode:analysisModeSchema.default('hybrid')}).strict().superRefine((input,ctx)=>{
+ if(input.inputMode==='structure'&&input.pngBase64!=='')ctx.addIssue({code:'custom',path:['pngBase64'],message:'纯结构分析不接受图片，请使用空字符串'});
+});
 export const modelSchema = routeSchema;
 export const loadSchema = z.object({owner:ownerSchema,drawing:drawingSchema.nullable(),latestAdvice:batchSchema.nullable(),routes:z.array(routeSchema)}).strict();
 export const resultSchema = z.discriminatedUnion('ok',[

@@ -1,0 +1,264 @@
+{
+  "baseline": "ac2e843c8b9f3bf053891c7897d1d59136371df5",
+  "model": "scripted fixtures; zero real DeepSeek requests",
+  "quota": {
+    "node": "v24.14.1",
+    "records": 100,
+    "baseline": {
+      "samples": 40,
+      "bytes": 89102900,
+      "p50Ms": 71.10059999999999,
+      "p95Ms": 72.85539999999992
+    },
+    "cached": {
+      "samples": 40,
+      "bytes": 89102900,
+      "p50Ms": 0.014800000000377622,
+      "p95Ms": 0.03499999999985448
+    },
+    "cold": {
+      "bytes": 89102900,
+      "ms": 87.18520000000001
+    },
+    "scope": "quota calculation only; excludes digest, disk serialization and save transport"
+  },
+  "attachment": {
+    "calls": 24,
+    "uniqueReferences": 1,
+    "files": 1,
+    "totalBytes": 99387,
+    "sourceBytes": 99387,
+    "p50Ms": 9.888800000000003,
+    "p95Ms": 11.429299999999984,
+    "scope": "fixed DSH local saveImageFile, identical PNG, no model"
+  },
+  "saveOperations": {
+    "count": 22,
+    "p50Ms": 47.3295999999973,
+    "p95Ms": 124.85430000000633,
+    "scope": "mixed UI saves including 250 and 1950 elements; host operation only, no browser export/transport"
+  },
+  "restartedDrawings": [
+    {
+      "goal": "rc2 显式恢复成功",
+      "visibleElements": 506,
+      "revision": "f4bd06c6-9326-43b6-9ff8-4bd1ed19aefb"
+    },
+    {
+      "goal": "rc2 压力 1950",
+      "visibleElements": 1950,
+      "revision": "ab4494de-77f7-46ba-a9db-3714651d8ac3"
+    }
+  ],
+  "snapshots": {
+    "repeated-analysis-before.json": {
+      "at": "2026-10-11T01:38:15.269Z",
+      "eventClients": 1,
+      "memory": {
+        "rss": 218025984,
+        "heapTotal": 119922688,
+        "heapUsed": 78570696,
+        "external": 23840680,
+        "arrayBuffers": 15589887
+      },
+      "agentSteps": 12,
+      "imageSaves": 8,
+      "analysisCalls": 2,
+      "operations": {
+        "drawing/get": 6,
+        "agent/get": 10,
+        "visual/get": 20,
+        "proposal/get": 11,
+        "drawing/save": 14,
+        "visual/prepare": 7,
+        "advice/generate": 2,
+        "agent/focus": 2,
+        "proposal/apply": 1
+      }
+    },
+    "repeated-analysis-after.json": {
+      "at": "2026-10-11T01:38:59.011Z",
+      "eventClients": 1,
+      "memory": {
+        "rss": 219676672,
+        "heapTotal": 84787200,
+        "heapUsed": 77685536,
+        "external": 19522788,
+        "arrayBuffers": 15470395
+      },
+      "agentSteps": 12,
+      "imageSaves": 11,
+      "analysisCalls": 5,
+      "operations": {
+        "drawing/get": 6,
+        "agent/get": 10,
+        "visual/get": 20,
+        "proposal/get": 11,
+        "drawing/save": 14,
+        "visual/prepare": 7,
+        "advice/generate": 5,
+        "agent/focus": 2,
+        "proposal/apply": 1
+      }
+    },
+    "disconnected-metrics.json": {
+      "at": "2026-10-11T01:38:59.132Z",
+      "eventClients": 0,
+      "memory": {
+        "rss": 219717632,
+        "heapTotal": 84787200,
+        "heapUsed": 78002576,
+        "external": 19593519,
+        "arrayBuffers": 15541126
+      },
+      "agentSteps": 12,
+      "imageSaves": 11,
+      "analysisCalls": 5,
+      "operations": {
+        "drawing/get": 6,
+        "agent/get": 10,
+        "visual/get": 20,
+        "proposal/get": 11,
+        "drawing/save": 14,
+        "visual/prepare": 7,
+        "advice/generate": 5,
+        "agent/focus": 2,
+        "proposal/apply": 1
+      }
+    },
+    "reconnected-metrics.json": {
+      "at": "2026-10-11T01:39:19.793Z",
+      "eventClients": 1,
+      "memory": {
+        "rss": 219787264,
+        "heapTotal": 84787200,
+        "heapUsed": 77836232,
+        "external": 19678514,
+        "arrayBuffers": 15626121
+      },
+      "agentSteps": 12,
+      "imageSaves": 11,
+      "analysisCalls": 5,
+      "operations": {
+        "drawing/get": 6,
+        "agent/get": 12,
+        "visual/get": 20,
+        "proposal/get": 12,
+        "drawing/save": 14,
+        "visual/prepare": 7,
+        "advice/generate": 5,
+        "agent/focus": 2,
+        "proposal/apply": 1
+      }
+    },
+    "closed-pressure-metrics.json": {
+      "at": "2026-10-11T01:43:22.843Z",
+      "eventClients": 0,
+      "memory": {
+        "rss": 231104512,
+        "heapTotal": 119402496,
+        "heapUsed": 79285880,
+        "external": 20598450,
+        "arrayBuffers": 16546057
+      },
+      "agentSteps": 12,
+      "imageSaves": 21,
+      "analysisCalls": 9,
+      "operations": {
+        "drawing/get": 8,
+        "agent/get": 14,
+        "visual/get": 29,
+        "proposal/get": 14,
+        "drawing/save": 21,
+        "visual/prepare": 13,
+        "advice/generate": 9,
+        "agent/focus": 2,
+        "proposal/apply": 1
+      }
+    },
+    "cycles-5-metrics.json": {
+      "at": "2026-10-11T01:43:53.590Z",
+      "eventClients": 0,
+      "memory": {
+        "rss": 234348544,
+        "heapTotal": 121319424,
+        "heapUsed": 85970880,
+        "external": 22793732,
+        "arrayBuffers": 18741339
+      },
+      "agentSteps": 12,
+      "imageSaves": 21,
+      "analysisCalls": 9,
+      "operations": {
+        "drawing/get": 13,
+        "agent/get": 24,
+        "visual/get": 44,
+        "proposal/get": 24,
+        "drawing/save": 21,
+        "visual/prepare": 13,
+        "advice/generate": 9,
+        "agent/focus": 2,
+        "proposal/apply": 1
+      }
+    },
+    "final-enabled-metrics.json": {
+      "at": "2026-10-11T01:47:56.263Z",
+      "eventClients": 0,
+      "memory": {
+        "rss": 198651904,
+        "heapTotal": 102670336,
+        "heapUsed": 86121144,
+        "external": 26952137,
+        "arrayBuffers": 18701344
+      },
+      "agentSteps": 12,
+      "imageSaves": 22,
+      "analysisCalls": 9,
+      "operations": {
+        "drawing/get": 18,
+        "agent/get": 34,
+        "visual/get": 59,
+        "proposal/get": 34,
+        "drawing/save": 22,
+        "visual/prepare": 14,
+        "advice/generate": 9,
+        "agent/focus": 2,
+        "proposal/apply": 1
+      }
+    },
+    "restarted-metrics.json": {
+      "at": "2026-10-11T01:49:24.657Z",
+      "eventClients": 1,
+      "memory": {
+        "rss": 172642304,
+        "heapTotal": 87433216,
+        "heapUsed": 77995576,
+        "external": 17336973,
+        "arrayBuffers": 13313177
+      },
+      "agentSteps": 0,
+      "imageSaves": 0,
+      "analysisCalls": 0,
+      "operations": {
+        "drawing/get": 1,
+        "visual/get": 2,
+        "proposal/get": 2,
+        "agent/get": 2
+      }
+    }
+  },
+  "storageFiles": [
+    {
+      "name": "sketch_edits.json",
+      "bytes": 488630
+    },
+    {
+      "name": "sketch_reference.json",
+      "bytes": 2389533
+    },
+    {
+      "name": "sketch_visual.json",
+      "bytes": 3363
+    }
+  ]
+}

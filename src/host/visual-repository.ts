@@ -1,4 +1,5 @@
 import type {KvTable} from '@deepseek-ai/dsh-storage-domain';
+import {RecordBytes} from './record-bytes.ts';
 import type {AttachmentStore} from '@deepseek-ai/dsh-attachment';
 import {imageReference,imageValue} from './image-reference.ts';
 import {canonical,ownerKey,sameOwner,SketchError,type Owner,type Drawing} from '../core/contracts.ts';
@@ -8,6 +9,7 @@ import {VISUAL_LIMITS,imageRefSchema,visualRecordSchema,type VisualRecord} from 
 /** Board-prepared exports only. Pixels belong to DSH's immutable attachment store. */
 export class VisualRepository {
  private tail:Promise<unknown>=Promise.resolve();
+ private bytes=new RecordBytes<VisualRecord>();
  constructor(private table:KvTable<string,VisualRecord>,private attachments:Pick<AttachmentStore,'saveImage'|'readImage'>){}
  private key(owner:Owner,scope:'all'|'focus'){return `${ownerKey(owner)}:${scope}`;}
  private get(owner:Owner,scope:'all'|'focus'){const value=this.table.get(this.key(owner,scope));return value&&sameOwner(value.owner,owner)?value:null;}
@@ -31,7 +33,7 @@ export class VisualRepository {
    if(!previous&&this.table.size>=VISUAL_LIMITS.records)throw new SketchError('STORAGE_FULL','视觉参考记录已满，仍可通过原生附件发送 PNG',413);
    const image=imageRefSchema.parse(await this.attachments.saveImage({data:png,mediaType:'image/png',name:scope==='focus'?'sketch-focus.png':'sketch-reference.png'}));
    const value=visualRecordSchema.parse({owner,revision:drawing.revision,sceneDigest:drawing.sceneDigest,scope,elementIds:ids,image,createdAt:new Date().toISOString()});
-   const bytes=Array.from(this.table.entries()).reduce((sum,[k,v])=>sum+(k===key?0:Buffer.byteLength(JSON.stringify(v))),0)+Buffer.byteLength(JSON.stringify(value));
+   const bytes=this.bytes.replacing(this.table,key,value);
    if(bytes>VISUAL_LIMITS.metadataBytes)throw new SketchError('STORAGE_FULL','视觉参考元数据已满，仍可通过原生附件发送 PNG',413);
    await check();await this.table.put(key,value);return value;
   });this.tail=run.catch(()=>{});return run;
