@@ -8,7 +8,7 @@ import { SessionId,type SessionHeader } from '@deepseek-ai/dsh-session';
 import type {} from '@deepseek-ai/dsh-session-persistence';
 import type {} from '@deepseek-ai/dsh-host-webserver';
 import type {} from '@deepseek-ai/dsh-client-connection';
-import { ASSETS,RPC,MAX_PNG,SketchError,drawingSchema,batchSchema,saveSchema,generateSchema,routeSchema,commentUpdateSchema,ownerKey,sameOwner,type Owner,type Drawing,type Batch,type Route,envelopeSchema } from '../core/contracts.ts';
+import { ASSETS,RPC,MAX_PNG,SketchError,drawingSchema,batchSchema,saveSchema,generateSchema,routeSchema,routeOptionSchema,commentUpdateSchema,ownerKey,sameOwner,type Owner,type Drawing,type Batch,type RouteOption,envelopeSchema } from '../core/contracts.ts';
 import { Repository } from './repository.ts';
 import {CommentRepository} from './comment-repository.ts';
 import { handler } from './http.ts';
@@ -120,13 +120,16 @@ export class SketchService extends Service {
   if(!result || (header && !live && header.createdAt!==result.createdAt))throw new SketchError('SESSION_CHANGED','会话不存在或已变化',404);
   return {sessionId:String(result.id),createdAt:String(result.createdAt),cwd:result.cwd??''};
  }
- private async routes():Promise<Route[]> {
-  const providers=this.ctx.llm.listProviders().map(p=>p.id);
-  const routes:Route[]=[];
-  for(const provider of ['deepseek-account','deepseek-official'] as const){
-   if(!providers.includes(provider))continue;
-   try{const models=await this.ctx.llm.listModels(provider);if(models.some(m=>m.id==='deepseek-flash'))routes.push({provider,model:'deepseek-flash'});}
-   catch(error){this.ctx.logger.warn('手绘参考板：官方 DS 路线暂不可用：%s',provider);}
+ private async routes():Promise<RouteOption[]> {
+  const routes:RouteOption[]=[];
+  for(const provider of this.ctx.llm.listProviders()){
+   if(provider.id!=='deepseek-account'&&provider.id!=='deepseek-official')continue;
+   try{
+    for(const model of await this.ctx.llm.listModels(provider.id)){
+     const option=routeOptionSchema.safeParse({provider:provider.id,model:model.id,name:model.name,providerName:provider.name});
+     if(option.success&&!routes.some(r=>r.provider===option.data.provider&&r.model===option.data.model))routes.push(option.data);
+    }
+   }catch(error){this.ctx.logger.warn('手绘参考板：官方 DS 路线暂不可用：%s',provider.id);}
   }
   return routes;
  }

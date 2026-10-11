@@ -73,7 +73,7 @@ export function SketchFrame({ctx,props,onClose,appearance,subscribeClose}:{ctx:C
      if(loaded.drawing?.sceneDigest!==message.digest)throw new Error('草图已变化，请重新加入参考图');
      const chosen=live.current.selection;
      const route=routeSchema.safeParse(chosen&&{provider:chosen.provider,model:chosen.model});
-     if(!route.success)throw new Error('请先在左侧选择支持图片的官方 DeepSeek Flash 模型');
+      if(!route.success)throw new Error('请先在左侧选择支持图片的官方 DeepSeek 模型');
      const existing=staged.get(message.digest);
      if(existing && (live.current.ids??[]).some(id=>id===existing)){reply(true,'这张参考图已经在输入框中');return;}
      await rpc('model/check',message.owner,route.data,signal);

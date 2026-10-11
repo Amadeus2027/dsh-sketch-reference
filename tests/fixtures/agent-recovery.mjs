@@ -60,7 +60,7 @@ export async function verifyAgentRecovery(page,frame,call,owner,batch){
   };
   await page.route('**/agent/get',read);
   try{
-   await frame.getByRole('button',{name:'刷新批注',exact:true}).click();await within(oldSeen);
+   await frame.getByRole('button',{name:'更多操作',exact:true}).click();await frame.getByRole('button',{name:'同步批注',exact:true}).click();await within(oldSeen);
    await commentAction(frame,'标记已解决');await frame.locator('.commentCard.resolved').waitFor();
    releaseOld();await within(newSeen);
    assert((await card.getAttribute('class')).includes('resolved'),'A delayed old read must not replace a confirmed state write');

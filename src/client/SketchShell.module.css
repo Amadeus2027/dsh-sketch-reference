@@ -5,7 +5,9 @@
 .divider{width:6px;flex:none;cursor:col-resize;touch-action:none;background:var(--dsw-alias-border-l3,#ddd)}
 .divider:hover,.divider:focus{background:var(--dsw-alias-brand-primary)}
 .button{display:inline-flex;gap:5px;align-items:center}
-.button[aria-pressed=true]{background:var(--dsw-alias-button-ghost-active-fill);color:var(--dsw-alias-brand-primary)}
+.button[aria-pressed]{background:var(--dsw-alias-button-info-fill,#4176e6);color:#fff}
+.button[aria-pressed]:hover{background:var(--dsw-alias-button-info-hover,#7aaaff);color:#fff}
+.button[aria-pressed=true]{box-shadow:inset 0 0 0 1px #ffffff50}
 @container sketch-shell (max-width:800px){.panel{position:absolute;inset:0;z-index:40;min-width:0}.divider{display:none}.chat{min-width:0}}
 
 .chat[data-phase=hero] :global([data-conversation-scroll]){justify-content:center;overflow-y:auto}
