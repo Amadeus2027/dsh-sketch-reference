@@ -1,0 +1,133 @@
+// Real installed DSH + Excalidraw. Dedicated no-credentials profile with fixed
+// model responses only; this verifies UI/contracts, not real model judgment.
+import {chromium} from '@playwright/test';
+import assert from 'node:assert/strict';
+import {mkdir,writeFile} from 'node:fs/promises';
+import {prepareHost,hostContext,editorFrame,installEditorInspection,openCommentMenu,commentAction} from './fixtures/browser-session.mjs';
+const url=process.env.DSH_SMOKE_URL;if(!url)throw Error('Dedicated authenticated DSH URL required');
+const out=process.env.DSH_TEST_OUTPUT??'test-results/comment-polish';await mkdir(out,{recursive:true});
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH??'/usr/bin/chromium',args:['--no-sandbox']});
+const report={realModel:false,viewports:[],actions:[],errors:[]};let page;
+try{
+ const context=await browser.newContext({viewport:{width:1280,height:720},acceptDownloads:true});await context.addInitScript(installEditorInspection);
+ page=await context.newPage();page.setDefaultTimeout(15000);page.on('pageerror',e=>report.errors.push(e.message));
+ await prepareHost(page,url);await hostContext(page,'create',process.env.DSH_TEST_WORKSPACE??process.cwd());
+ const board=page.getByRole('button',{name:'打开手绘参考板'}),input=page.locator('[contenteditable=true]');
+ await input.fill('保留这段原生草稿。');await board.click();let frame=await editorFrame(page);
+ const ready=async()=>{if(await frame.evaluate(()=>typeof window.__sketchEditor!=='function'))await frame.evaluate(installEditorInspection);await frame.waitForFunction(()=>{try{return !!window.__sketchEditor();}catch{return false;}});};await ready();
+ const call=(method,owner,payload)=>frame.evaluate(async({method,owner,payload})=>{
+  const body=await (await fetch(`/sketch-reference-rpc/v1/${method}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({protocolVersion:1,requestId:crypto.randomUUID(),owner,payload})})).json();
+  if(!body.ok)throw Error(body.error.code);return body.value;
+ },{method,owner,payload});
+ const load=()=>call('drawing/get',null,{sessionId:new URL(frame.url()).searchParams.get('sessionId')});
+ const stats=()=>page.evaluate(async()=>{
+  const read=async path=>{const r=await fetch(path);if(!r.ok)throw Error('Missing isolated fixture');return r.json();};
+  return {host:await read('/sketch-reference-test-hardening'),analysis:await read('/sketch-reference-test-model-stats'),agent:await read('/sketch-reference-test-agent-stats')};
+ });
+ const count=(s,method)=>s.host.metrics.filter(m=>m.method===method).length;
+ await frame.evaluate(()=>{const base={angle:0,strokeColor:'#1e1e1e',backgroundColor:'transparent',fillStyle:'solid',strokeWidth:1,strokeStyle:'solid',roughness:1,opacity:100,groupIds:[],frameId:null,roundness:null,seed:1,isDeleted:false,boundElements:null,updated:1,link:null,locked:false,version:1,versionNonce:1};window.__sketchEditor().updateScene({elements:[{...base,id:'polish-nav',type:'rectangle',x:120,y:120,width:280,height:70},{...base,id:'polish-main',type:'rectangle',x:120,y:215,width:170,height:180},{...base,id:'polish-side',type:'rectangle',x:310,y:215,width:90,height:180}]});});
+ await frame.getByLabel('这张图准备用来做什么？').fill('网页布局回归');await frame.getByRole('status').filter({hasText:'已保存'}).waitFor();
+ const before=await load();
+ await frame.getByRole('button',{name:'AI 分析草图',exact:true}).click();await frame.getByRole('button',{name:'展开建议与批注',exact:true}).waitFor();
+ await frame.getByRole('button',{name:'展开建议与批注',exact:true}).click();await frame.locator('.commentCard').first().waitFor();
+ const toolbar=()=>frame.locator('.commentActions');
+ const title=i=>frame.locator('.commentHeading').nth(i);
+ assert.equal(await frame.locator('.analysisSummary').count(),0);
+ assert.equal(await frame.locator('.commentCard p').count(),0);
+ assert.equal(await frame.getByText('让导航内容更清晰。',{exact:true}).count(),1);
+ assert.equal(await frame.locator('.advice .commentActions').count(),0,'Upper title area must not duplicate actions');
+ assert.equal(await frame.locator('.commentPopover .commentActions').count(),1,'Actions belong to the canvas card');
+ assert.equal(await toolbar().count(),1);assert.equal(await toolbar().isVisible(),false);assert.equal(await frame.getByRole('button',{name:'追问',exact:true}).count(),0);
+ assert.equal(await frame.locator('.commentMarker').count(),3,'Every non-ignored suggestion needs a canvas entry');
+ assert.equal(await frame.locator('.commentMarker[data-kind=global]').count(),2,'Global advice must not invent element anchors');
+ assert.equal(await frame.locator('.commentPage').count(),0,'Three suggestions do not need paging buttons');
+ const settled=await stats();const rasterBefore=await frame.evaluate(()=>window.__sketchMetrics.rasterizations);
+ for(const size of [{width:1280,height:720},{width:1920,height:1080}]){
+  await page.setViewportSize(size);await page.waitForTimeout(250);
+  await title(1).click();await frame.getByText('保持布局节奏一致。',{exact:true}).waitFor();
+  assert.equal(await frame.getByText('保持布局节奏一致。',{exact:true}).count(),1,'Global comment must remain readable on canvas');
+  await title(0).click();await title(0).hover();assert.equal(await frame.locator('.commentHighlight').count(),1);
+  const selectedStyle=await frame.locator('.commentCard.active').evaluate(n=>{const s=getComputedStyle(n);return {outline:s.outlineStyle,shadow:s.boxShadow,border:s.borderTopColor};});
+  assert.equal(selectedStyle.outline,'none');assert(selectedStyle.shadow.includes('inset'),'Selection should stay inside the card');
+  const layout=await frame.locator('.commentPopover').evaluate(n=>{const r=n.getBoundingClientRect();return {height:r.height,width:r.width};});
+  assert(layout.width<=320);assert(layout.height<110,'Collapsed actions should not enlarge the comment card');
+  const trigger=await frame.getByRole('button',{name:'批注操作',exact:true}).evaluate(n=>{const r=n.getBoundingClientRect(),s=getComputedStyle(n);return {width:r.width,height:r.height,font:s.fontSize,whiteSpace:s.whiteSpace};});
+  assert(trigger.width>=24&&trigger.width<=28&&trigger.height<=28);assert.equal(await frame.locator('.commentMenuTrigger svg circle').count(),3);assert.equal(await frame.locator('.commentMenuTrigger').innerText(),'');
+  assert.equal(await toolbar().isVisible(),false);
+  const disclosure=await frame.locator('.adviceDisclosure').evaluate(n=>{const s=getComputedStyle(n);return {border:s.borderTopStyle,background:s.backgroundColor};});assert.notEqual(disclosure.border,'none');
+  const header=await frame.locator('.adviceTitle').evaluate(n=>{const a=n.querySelector('.adviceDisclosure').getBoundingClientRect(),b=n.querySelector('.commentHeaderTools').getBoundingClientRect();return {disclosureTop:a.top,refreshTop:b.top,right:b.right,headerRight:n.getBoundingClientRect().right};});
+  assert(Math.abs(header.disclosureTop-header.refreshTop)<5,'Refresh must share the header row');assert(Math.abs(header.right-header.headerRight)<2,'Refresh belongs at the right edge');
+  const marker=await frame.locator('.commentMarker').first().evaluate(n=>{const s=getComputedStyle(n);return {text:n.textContent,fontStyle:s.fontStyle,font:s.fontFamily,width:n.getBoundingClientRect().width};});
+  assert.equal(marker.text,'1');assert.equal(marker.fontStyle,'normal');assert(marker.font.includes('system-ui'));
+  const markerColors=await frame.locator('.commentMarker').evaluateAll(nodes=>nodes.map(n=>({active:n.classList.contains('active'),background:getComputedStyle(n).backgroundColor,color:getComputedStyle(n).color})));
+  assert.equal(markerColors.filter(m=>m.active).length,1);assert.notEqual(markerColors[0].background,markerColors[1].background);assert.notEqual(markerColors[0].color,markerColors[1].color);
+  report.viewports.push({...size,card:layout,selectedStyle,trigger,marker,markerColors,disclosure,header});await page.screenshot({path:`${out}/pc-${size.width}.png`});
+  await openCommentMenu(frame);assert.equal(await frame.getByRole('button',{name:'追问',exact:true}).count(),1);await page.screenshot({path:`${out}/menu-${size.width}.png`});
+  await frame.getByRole('button',{name:'追问',exact:true}).press('Escape');await toolbar().waitFor({state:'hidden'});
+  await openCommentMenu(frame);await frame.getByRole('button',{name:'批注操作',exact:true}).click();await toolbar().waitFor({state:'hidden'});
+  await openCommentMenu(frame);await frame.getByLabel('这张图准备用来做什么？').click();await toolbar().waitFor({state:'hidden'});
+ }
+ await frame.getByRole('button',{name:'批注②',exact:true}).click();await frame.getByRole('dialog',{name:'批注详情②'}).waitFor();assert.equal(await title(1).getAttribute('aria-expanded'),'true');
+ await frame.evaluate(()=>window.__sketchEditor().updateScene({appState:{scrollX:-3000,scrollY:-3000}}));
+ await frame.locator('.commentMarker[data-outside=true]').waitFor();assert.equal(await frame.locator('.commentMarker').count(),3);
+ await frame.getByRole('button',{name:'批注①',exact:true}).click();await frame.locator('.commentMarker[data-kind=element][data-outside=false]').waitFor();
+ assert.equal((await load()).drawing.revision,before.drawing.revision);report.allMarkersAndOffscreenLocation=true;
+ await title(0).press('Enter');assert.equal(await toolbar().count(),0);await title(0).press('Space');await frame.getByRole('button',{name:'批注操作',exact:true}).waitFor();
+ await frame.getByRole('button',{name:'隐藏图中标记',exact:true}).click();assert.equal(await frame.locator('.commentMarker').count(),0);assert.equal(await frame.locator('.commentPopover').count(),0);
+ await frame.getByRole('button',{name:'显示图中标记',exact:true}).click();await frame.locator('.commentMarker').first().click();await title(0).click();
+ const afterUI=await stats();assert.equal(count(afterUI,'drawing/save'),count(settled,'drawing/save'));
+ assert.equal(afterUI.analysis.calls.length,settled.analysis.calls.length);assert.equal(afterUI.agent.calls.length,settled.agent.calls.length);
+ assert.equal(await frame.evaluate(()=>window.__sketchMetrics.rasterizations),rasterBefore,'Pure annotation UI must not re-export PNG');
+ assert.equal((await load()).drawing.revision,before.drawing.revision);
+ await commentAction(frame,'标记已解决');await frame.locator('.commentCard.resolved').waitFor();
+ await commentAction(frame,'重新打开');await frame.locator('.commentCard.open.active').waitFor();
+ await commentAction(frame,'忽略批注');await frame.getByRole('button',{name:'显示已忽略',exact:true}).click();
+ await title(0).click();await commentAction(frame,'重新打开');await frame.locator('.commentMarker').first().waitFor();
+ // Stage an actual PNG using the public bridge; subsequent comment inserts
+ // must retain it and the user's text, and must not submit any model request.
+ await frame.getByRole('button',{name:'作为参考发送',exact:true}).click();await frame.getByRole('alert').filter({hasText:'参考图已加入'}).waitFor();
+ const attachments=await page.getByRole('img',{name:'sketch-reference.png',exact:true}).count();assert(attachments>0);
+ const nativeCalls=(await stats()).agent.calls.length;
+ for(const action of ['追问','纠正','修改这里']){
+  const expand=frame.getByRole('button',{name:'展开建议与批注',exact:true});if(await expand.isVisible())await expand.click();
+  if(!await toolbar().count())await title(0).click();
+  await commentAction(frame,action);await page.locator('iframe[title="手绘参考板"]').waitFor({state:'detached'});
+  const draft=await input.innerText();assert(draft.includes('保留这段原生草稿。'));assert(/分析批注·[a-f0-9]{12}/.test(draft));
+  assert.equal(await page.getByRole('img',{name:'sketch-reference.png',exact:true}).count(),attachments);
+  report.actions.push({action,draftPreserved:true,attachmentPreserved:true,autoSent:false});
+  await board.click();frame=await editorFrame(page);await ready();assert.equal((await stats()).agent.calls.length,nativeCalls);
+ }
+ await frame.getByRole('button',{name:'展开建议与批注',exact:true}).click();
+ await frame.getByLabel('这张图准备用来做什么？').fill('多批注分页');await frame.getByRole('status').filter({hasText:'已保存'}).waitFor();
+ await frame.getByRole('button',{name:'重新分析草图',exact:true}).click();await frame.getByRole('button',{name:'下一组批注',exact:true}).waitFor();
+ assert.equal(await frame.locator('.commentMarker').count(),5);assert.equal(await frame.locator('.commentCard').count(),3);assert.equal(await frame.getByRole('button',{name:'上一组批注',exact:true}).isDisabled(),true);
+ const pagingStats=await stats(),pagingRevision=(await load()).drawing.revision;
+ await frame.getByRole('button',{name:'下一组批注',exact:true}).click();assert.equal(await frame.locator('.commentCard').count(),2);
+ await frame.getByRole('button',{name:'⑤ 核对区域5',exact:true}).click();await frame.getByRole('dialog',{name:'批注详情⑤'}).waitFor();
+ await page.screenshot({path:`${out}/five-comments.png`});
+ await frame.getByRole('button',{name:'批注①',exact:true}).click();await frame.getByRole('button',{name:'① 增加导航留白',exact:true}).waitFor();assert.equal(await frame.locator('.commentCard').count(),3);
+ assert.equal(count(await stats(),'drawing/save'),count(pagingStats,'drawing/save'));assert.equal((await stats()).analysis.calls.length,pagingStats.analysis.calls.length);assert.equal((await load()).drawing.revision,pagingRevision);
+ report.paging={total:5,firstPage:3,lastPage:2,markerSelectsCorrectPage:true,noSaveOrModel:true};
+ await frame.evaluate(()=>{const api=window.__sketchEditor();api.updateScene({elements:api.getSceneElements().map(e=>e.id==='polish-nav'?{...e,isDeleted:true,version:e.version+1}:e)});});
+ await frame.getByText('对应图形已删除',{exact:true}).waitFor();await openCommentMenu(frame);assert.equal(await toolbar().getByRole('button',{name:'追问',exact:true}).isDisabled(),true);await toolbar().locator('button:not(:disabled)').first().press('Escape');
+ await frame.getByRole('status').filter({hasText:'已保存'}).waitFor();
+ await frame.getByLabel('这张图准备用来做什么？').fill('完整草图无建议');await frame.getByRole('status').filter({hasText:'已保存'}).waitFor();const intact=(await load()).drawing;
+ await frame.getByRole('button',{name:'重新分析草图',exact:true}).click();await frame.getByText('草图已完整表达布局，暂无需要补充的建议。',{exact:true}).waitFor();
+ assert.equal(await frame.locator('.commentCard').count(),0);assert.equal(await toolbar().count(),0);assert.equal(await frame.locator('.commentMarker').count(),0);
+ assert.equal((await load()).drawing.revision,intact.revision);assert.deepEqual((await load()).latestAdvice.advice.suggestions,[]);
+ const beforeView=await stats(),viewRaster=await frame.evaluate(()=>window.__sketchMetrics.rasterizations);
+ const view={zoom:{value:.65},scrollX:37,scrollY:-89};await frame.evaluate(view=>window.__sketchEditor().updateScene({appState:view}),view);await page.waitForTimeout(1000);
+ assert.equal(count(await stats(),'drawing/save'),count(beforeView,'drawing/save'));assert.equal(await frame.evaluate(()=>window.__sketchMetrics.rasterizations),viewRaster);
+ await frame.getByRole('button',{name:'返回聊天 ×',exact:true}).click();await page.locator('iframe[title="手绘参考板"]').waitFor({state:'detached'});await board.click();frame=await editorFrame(page);await ready();await frame.getByRole('button',{name:'展开建议与批注',exact:true}).click();
+ const restored=await frame.evaluate(()=>{const s=window.__sketchEditor().getAppState();return {zoom:{value:s.zoom.value},scrollX:s.scrollX,scrollY:s.scrollY};});assert.deepEqual(restored,view);
+ const originalOwner=(await load()).owner;await hostContext(page,'create',process.env.DSH_TEST_WORKSPACE??process.cwd());await page.locator('iframe[title="手绘参考板"]').waitFor({state:'detached'});await board.click();frame=await editorFrame(page);await ready();assert.equal(await frame.evaluate(()=>window.__sketchEditor().getAppState().zoom.value),1);
+ await hostContext(page,'open',originalOwner.sessionId);frame=await editorFrame(page);await ready();assert.equal(await frame.evaluate(()=>window.__sketchEditor().getAppState().zoom.value),view.zoom.value);await frame.getByRole('button',{name:'展开建议与批注',exact:true}).click();
+ report.viewRestored=restored;report.viewSessionIsolated=true;
+ await frame.getByText('草图已完整表达布局，暂无需要补充的建议。',{exact:true}).waitFor();
+ await hostContext(page,'theme','dark');await page.waitForTimeout(250);await page.screenshot({path:`${out}/dark-empty.png`});
+ await hostContext(page,'theme','light');await frame.getByRole('button',{name:'返回聊天 ×',exact:true}).click();await page.locator('iframe[title="手绘参考板"]').waitFor({state:'detached'});
+ await page.waitForFunction(async()=>{const s=await (await fetch('/sketch-reference-test-agent-stats')).json();return s.eventClients===0;});
+ const final=await stats();assert.equal(final.analysis.calls.length-settled.analysis.calls.length,2);assert.equal(final.agent.calls.length,nativeCalls);
+ assert.equal(final.agent.eventClients,0);report.uiNoSaveOrModelOrExport=true;report.zeroSuggestionsPersisted=true;report.deletedAnchorRejected=true;report.closedEventClients=final.agent.eventClients;
+ assert.deepEqual(report.errors,[]);await writeFile(`${out}/report.json`,JSON.stringify(report,null,2));console.log('PASS: comment density, compact native popover actions, global/anchored detail, upright markers, 2 PC viewports, keyboard, status lifecycle, draft+PNG preservation, three native discussion actions, zero-suggestion persistence, no background model/export/save, and event cleanup. No real model judgment tested.');
+}catch(error){if(page){await page.screenshot({path:`${out}/failure.png`}).catch(()=>{});await writeFile(`${out}/failure.json`,JSON.stringify({error:String(error),pageErrors:report.errors,frames:await Promise.all(page.frames().map(f=>f.evaluate(()=>({path:location.pathname,hasInspector:typeof window.__sketchEditor==='function',hasBoard:!!document.querySelector('main.board')})).catch(()=>null)))},null,2));}throw error;}finally{await browser.close();}

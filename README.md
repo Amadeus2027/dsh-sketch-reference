@@ -1,10 +1,14 @@
 # DSH Sketch Reference
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![DSH baseline](https://img.shields.io/badge/DSH-0.2.1--alpha.1-536DFE)](https://github.com/deepseek-ai/deepseek-harness)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Amadeus2027/dsh-sketch-reference)
+
 在 DeepSeek Harness 中画图、讨论，再确认修改。
 
 Sketch Reference 将可编辑的 Excalidraw 画板接入 DSH 原生会话。用草图表达网页布局、流程和视觉需求，让 Agent 按需查看图形与图片，围绕具体位置继续追问和纠正。
 
-**当前开发版本：0.6.1。** 正式安装包以 [GitHub Releases](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) 为准。验证环境：Windows PC、DSH `0.2.1-alpha.1`、Excalidraw `0.18.1`。
+**当前开发版本：0.6.2。** 正式安装包以 [GitHub Releases](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) 为准。验证环境：Windows PC、DSH `0.2.1-alpha.1`、Excalidraw `0.18.1`。
 
 ## 能做什么
 
@@ -48,7 +52,7 @@ dsh web
 - 草稿和图片保存在本地 DSH 存储；模型读取时，相关内容发送至所配置的模型服务。宿主附件历史尚无插件自动回收机制。
 - 同步断线时可刷新批注或重开画板。跨刷新撤销历史、其他宿主版本、其他平台和移动端不作兼容承诺。
 
-见 [0.6.1 更新说明](docs/release-v0.6.1.md)。反馈问题请提供版本、复现步骤与脱敏截图，勿上传密钥和私人会话。
+见 [0.6.2 更新说明](docs/release-v0.6.2.md)。反馈问题请提供版本、复现步骤与脱敏截图，勿上传密钥和私人会话。
 
 ## 开发与许可
 

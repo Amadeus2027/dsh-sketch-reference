@@ -21,7 +21,7 @@ export async function hostContext(page,operation,arg){
   const ui=ctx.get('uiWorkspace');
   if(operation==='create'){
    const workspace=ui.workspaces.list.getSnapshot().items.find(w=>w.path===arg);
-   if(!workspace)throw new Error('Fixture workspace missing');
+   if(!workspace)throw new Error('Fixture workspace missing: '+JSON.stringify(ui.workspaces.list.getSnapshot().items.map(w=>({path:w.path,workspaceId:w.workspaceId}))));
    const id=await ui.sessions.create({workspaceId:workspace.workspaceId});ui.openSession(id);return id;
   }
   if(operation==='createAt'){const id=await ui.sessions.create({cwd:arg});ui.openSession(id);return id;}
@@ -31,7 +31,13 @@ export async function hostContext(page,operation,arg){
   throw new Error('Unknown fixture operation');
  },{operation,arg});
 }
-export async function editorFrame(page){return (await page.locator('iframe[title="手绘参考板"]').elementHandle()).contentFrame();}
+export async function editorFrame(page){const frame=await (await page.locator('iframe[title="手绘参考板"]').elementHandle()).contentFrame();await frame.waitForURL(/index\.html\?sessionId=/);return frame;}
+export async function openCommentMenu(frame){
+ const menu=frame.locator('.commentActions');
+ if(!await menu.isVisible())await frame.getByRole('button',{name:'批注操作',exact:true}).click();
+ await menu.waitFor();return menu;
+}
+export async function commentAction(frame,name){const menu=await openCommentMenu(frame);await menu.getByRole('button',{name,exact:true}).click();}
 export function installEditorInspection(){
  // Chromium may run an iframe init script while its URL is still about:blank.
  // Install test inspection in every document; callers only use editor frames.

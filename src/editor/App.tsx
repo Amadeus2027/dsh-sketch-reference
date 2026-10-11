@@ -16,6 +16,7 @@ import {useVisualReference} from './visual-reference.ts';
 import {rpc} from './rpc.ts';
 import {Autosave} from './autosave.ts';
 import {SceneUpdates} from './scene-updates.ts';
+import {captureView,readView,writeView} from './view-state.ts';
 import {useAppearance} from './appearance.ts';
 import {RPC_LIMITS} from '../core/limits.ts';
 import {writePending,clearPending,consumePending,recoverPending} from './pending.ts';
@@ -39,6 +40,7 @@ export function SketchApp({sessionId}:{sessionId:string}) {
 }
 function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner:Owner;initial:Drawing|null;latestAdvice:Batch|null;routes:Route[];onReload:()=>void;registerClose:(handler:(()=>void)|null)=>void}) {
  const appearance=useAppearance();
+ const [initialView]=useState(()=>readView(owner)),lastView=useRef(initialView);
  const [exportScene]=useState(()=>createSceneExport(pngExport));
  const [adviceOpen,setAdviceOpen]=useState(false),[moreOpen,setMoreOpen]=useState(false),[exporting,setExporting]=useState(false);
  const closeAction=useRef<()=>void>(()=>{});
@@ -97,15 +99,15 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   mounted.current=true;
   let closing=false;
   const shutdown=()=>{
-   if(closing)return;closing=true;mounted.current=false;updates.dispose();active.current?.abort();
+   if(closing)return;closing=true;writeView(owner,lastView.current);mounted.current=false;updates.dispose();active.current?.abort();
    const deadline=setTimeout(()=>lifecycle.current.abort(),RPC_LIMITS.ordinaryTimeoutMs);
    void queue.shutdown().catch(()=>{}).finally(()=>{clearTimeout(deadline);lifecycle.current.abort();});
    document.removeEventListener('visibilitychange',hide);window.removeEventListener('pagehide',shutdown);
   };
-  const hide=()=>{if(document.visibilityState==='hidden'){updates.flush();void queue.settle().catch(()=>{});}};
+  const hide=()=>{if(document.visibilityState==='hidden'){writeView(owner,lastView.current);updates.flush();void queue.settle().catch(()=>{});}};
   document.addEventListener('visibilitychange',hide);window.addEventListener('pagehide',shutdown);
   return shutdown;
- },[queue,updates]);
+ },[queue,updates,owner]);
  useEffect(()=>{
   const dirty=canonical(queue.current())!==canonical({scene:initial?.scene??{elements:[],appState:{viewBackgroundColor:'#ffffff'},files:{}},goal:initial?.goal??''});
   if(pending && !dirty && canonical({scene:pending.draft.scene,goal:pending.draft.goal})===canonical(queue.current())){
@@ -123,7 +125,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   try{const scene=normalize(elements,state,queue.current().scene);sceneError.current=null;if(queue.update({scene,goal:goalRef.current}))updateStale(scene,goalRef.current);}
   catch(error){sceneError.current=error instanceof Error?error.message:'草图超出限制';if(mounted.current)setMessage(sceneError.current);}
  };
- const updated=(elements:readonly ExcalidrawElement[],appState:AppState)=>{if(!pending)updates.accept(elements,appState as unknown as Record<string,unknown>);};
+ const updated=(elements:readonly ExcalidrawElement[],appState:AppState)=>{lastView.current=captureView(appState);if(!pending)updates.accept(elements,appState as unknown as Record<string,unknown>);};
  const capture=()=>{
   if(!api.current)throw new Error('画板尚未就绪');updates.accept(api.current.getSceneElements(),api.current.getAppState() as unknown as Record<string,unknown>);updates.flush();
   if(sceneError.current)throw new Error(sceneError.current);return queue.current().scene;
@@ -241,18 +243,27 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   else{recoveredPending.current=pending;}
   api.current.updateScene({elements:scene.elements as unknown as ExcalidrawElement[]});queue.update({scene,goal:restored});setPending(null);
  };
- const initialData={elements:(initial?.scene.elements??[]) as unknown as ExcalidrawElement[],appState:{...(initial?.scene.appState??{}),viewBackgroundColor:'#ffffff',currentItemFontFamily:1} as Partial<AppState>};
+ const initialData={elements:(initial?.scene.elements??[]) as unknown as ExcalidrawElement[],appState:{...(initial?.scene.appState??{}),...initialView,viewBackgroundColor:'#ffffff',currentItemFontFamily:1} as Partial<AppState>};
  return <main className="board">
   <header><div><h1>手绘参考板</h1><span className={`save ${queue.state}`} role="status" title={labels[queue.state]}>{labels[queue.state]}</span>{exporting&&<span role="status">正在导出…</span>}</div><button onClick={close}>返回聊天 ×</button></header>
   <section className="intent"><label className="srOnly" htmlFor="goal">这张图准备用来做什么？</label><input id="goal" maxLength={2000} value={goal} disabled={preparing||!!pending} placeholder="用途：例如识别物品、解释几何图形或讨论流程" onChange={e=>{const value=e.target.value;void run(async()=>{const scene=api.current?capture():queue.current().scene;setGoal(value);goalRef.current=value;queue.update({scene,goal:value});updateStale(scene,value);});}} />
   </section>
   {(batch||agent.batch||busy)&&<section className="advice" aria-label="AI 建议与批注">
-   <div className="adviceTitle"><button aria-expanded={adviceOpen} aria-label={adviceOpen?'收起建议与批注':'展开建议与批注'} onClick={()=>{setAdviceOpen(v=>!v);setHovered(null);}}>建议与批注{displayBatch?` · ${displayBatch.advice.suggestions.length}`:''} {adviceOpen?'⌃':'⌄'}</button>{displayStale&&!busy&&<small>较早版本</small>}{comments&&<button className="markerToggle" aria-pressed={showComments} onClick={()=>setShowComments(v=>!v)}>{showComments?'隐藏图中标记':'显示图中标记'}</button>}{busy&&<button onClick={()=>{active.current?.abort();setMessage('分析已取消，草图保留');}}>取消</button>}</div>
-   <p className="analysisSummary">{busy?'正在分析草图…':displayBatch?.advice.summary}</p>
-   <div className="adviceDetails" hidden={!adviceOpen}>
+   <div className="adviceTitle">
+    <button className="adviceDisclosure" aria-controls="comment-details" aria-expanded={adviceOpen} aria-label={adviceOpen?'收起建议与批注':'展开建议与批注'} onClick={()=>{setAdviceOpen(v=>!v);setHovered(null);}}>建议与批注{displayBatch&&<span className="commentCount">{displayBatch.advice.suggestions.length}</span>}<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" style={{transform:adviceOpen?'rotate(180deg)':undefined}}><path d="m4 6 4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+    {displayStale&&!busy&&<small>较早版本</small>}
+    {busy&&<><span role="status">正在分析草图…</span><button onClick={()=>{active.current?.abort();setMessage('分析已取消，草图保留');}}>取消</button></>}
+    {comments&&<div className="commentHeaderTools">
+     {comments.comments.some(c=>c.status==='ignored')&&<button aria-pressed={showIgnored} onClick={()=>setShowIgnored(v=>!v)}>{showIgnored?'隐藏已忽略':'显示已忽略'}</button>}
+     {comments.comments.length>0&&<button className="markerToggle" aria-pressed={showComments} onClick={()=>setShowComments(v=>!v)}>{showComments?'隐藏图中标记':'显示图中标记'}</button>}
+     <button onClick={refreshComments} disabled={savingComments}>刷新批注</button>
+    </div>}
+   </div>
+   <div id="comment-details" className="adviceDetails" hidden={!adviceOpen}>
    {batch&&agent.batch&&<div className="commentTools" role="group" aria-label="批注来源"><button aria-pressed={source==='analysis'} onClick={()=>{setSource('analysis');setSelected(null);setCopy('');}}>AI 分析建议</button><button aria-pressed={source==='agent'} onClick={()=>{setSource('agent');setSelected(null);setCopy('');}}>Agent 批注</button></div>}
-   {comments&&<><div className="commentTools"><span title={new Date(comments.createdAt).toLocaleString('zh-CN')}>{displayStale?'草图或用途已修改，批注基于较早版本':source==='agent'?'原生聊天 Agent 批注':'本次分析'}</span><button onClick={refreshComments} disabled={savingComments}>刷新批注</button>{comments.comments.some(c=>c.status==='ignored')&&<button aria-pressed={showIgnored} onClick={()=>setShowIgnored(v=>!v)}>{showIgnored?'隐藏已忽略':'显示已忽略'}</button>}</div>
-    <CommentList batch={comments} selected={selected} stale={displayStale||!!pending} saving={savingComments||busy||preparing} showIgnored={showIgnored} actions={actions} missing={missing}/></>}
+   {comments&&<>
+    {comments.comments.length===0&&<p className="commentEmpty" role="status">{comments.advice.summary}</p>}
+    <CommentList batch={comments} selected={selected} stale={displayStale||!!pending} showIgnored={showIgnored} actions={actions} missing={missing}/></>}
    {copy&&<div className="copy"><textarea readOnly aria-label="建议指令" value={copy}/><button onClick={()=>void run(async()=>{await navigator.clipboard.writeText(copy);setMessage('指令已复制');})}>复制</button><button onClick={()=>setCopy('')}>收起</button></div>}
    </div>
   </section>}
@@ -266,7 +277,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   {(message||queue.error)&&<div className="notice" role="alert">{message||queue.error}{queue.state==='error'&&<button onClick={()=>void run(async()=>{await settle();})}>重试保存</button>}{queue.state==='conflict'&&<><button onClick={()=>void run(async()=>{downloadScene(capture());})}>下载我的草稿</button><button onClick={onReload}>载入服务器版本</button></>}</div>}
   <div ref={canvas} className="canvas" data-preparing={preparing||!!pending}>
    <Excalidraw theme={appearance.theme} langCode="zh-CN" initialData={initialData} excalidrawAPI={ready} onChange={updated} UIOptions={{canvasActions:{loadScene:false,saveToActiveFile:false,export:false,saveAsImage:false,toggleTheme:false},tools:{image:false}}} />
-   {comments&&<CommentOverlay api={editor} batch={comments} selected={selected} hovered={hovered} stale={displayStale} saving={savingComments||busy} shown={showComments} disabled={!!pending||preparing} actions={actions} onMissing={reportMissing}/>}
+   {comments&&<CommentOverlay api={editor} batch={comments} selected={selected} hovered={hovered} stale={displayStale} saving={savingComments||busy||preparing} shown={showComments} showIgnored={showIgnored} missing={missing} disabled={!!pending||preparing} actions={actions} onMissing={reportMissing}/>}
    {(preparing||!!pending)&&<div className="freeze" role="status">{pending?'请先选择是否恢复本地草稿':discussing?'正在打开聊天…':'正在保存并生成参考图…'}</div>}
   </div>
   <footer>

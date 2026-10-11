@@ -18,6 +18,30 @@ function store(){
 function change(value:Batch,status:CommentUpdate['status']='resolved'):CommentUpdate{const current=withComments(value);return {batchId:current.id,commentId:current.comments[0]!.id,expectedRevision:current.commentRevision,mutationId:crypto.randomUUID(),status};}
 
 describe('model anchors and bounded scene input',()=>{
+ it('restores longer batches with unique valid UUIDs while retaining legacy short-batch IDs',async()=>{
+  const s=store(),original=batch(),suggestions=Array.from({length:32},(_,i)=>({...advice.suggestions[0]!,title:`区域${i}`,actionPrompt:`区域${i}`}));
+  const extended={...original,advice:{...advice,suggestions}},view=withComments(extended);
+  expect(view.comments.slice(0,3).map(c=>c.id)).toEqual([0,1,2].map(i=>original.id.slice(0,-1)+i));
+  expect(new Set(view.comments.map(c=>c.id)).size).toBe(32);expect(batchSchema.parse(view).comments).toHaveLength(32);
+  const saved=await s.repo.put(extended,async()=>{});expect(s.repo.get(owner)?.comments).toEqual(saved.comments);
+  expect(()=>batchSchema.parse({...view,comments:view.comments.map((c,i)=>i===31?{...c,suggestionIndex:32}:c)})).toThrow();
+ });
+ it('replaces previous analysis with an empty batch, survives reload, and refuses old status writes',async()=>{
+  const s=store(),previous=await s.repo.put(batch(),async()=>{}),oldChange=change(previous);
+  const empty=await s.repo.put({...batch(),advice:{summary:'当前没有需要修改的地方。',suggestions:[]}},async()=>{});
+  expect(batchSchema.parse(empty).comments).toEqual([]);expect(withComments(empty).comments).toEqual([]);
+  const reopened=new CommentRepository({get:(key:string)=>s.rows.get(key)} as unknown as KvTable<string,Batch>);
+  expect(reopened.get(owner)?.advice.suggestions).toEqual([]);
+  await expect(s.repo.update(owner,oldChange,async()=>{})).rejects.toMatchObject({code:'BATCH_CHANGED'});
+  await expect(s.repo.update(owner,{...oldChange,batchId:empty.id,expectedRevision:empty.commentRevision},async()=>{})).rejects.toMatchObject({code:'COMMENT_NOT_FOUND'});
+  expect(s.writes()).toBe(2);
+ });
+ it('keeps comment metadata consistent when zero suggestions are allowed',()=>{
+  const existing=withComments(batch());
+  expect(()=>batchSchema.parse({...existing,advice:{summary:'没有问题',suggestions:[]}})).toThrow();
+  expect(()=>batchSchema.parse({...existing,comments:[]})).toThrow();
+  expect(()=>batchSchema.parse({...batch(),advice:{summary:'没有问题',suggestions:[]},comments:[]})).toThrow();
+ });
  it('preserves signed Excalidraw path points so a closed triangle is not reduced to three ambiguous bounding boxes',()=>{
   const triangle={...scene,elements:[{id:'left',type:'line' as const,x:100,y:0,width:100,height:100,points:[[0,0],[-100,100]] as [number,number][]},{id:'right',type:'line' as const,x:100,y:0,width:100,height:100,points:[[0,0],[100,100]] as [number,number][]},{id:'base',type:'line' as const,x:0,y:100,width:200,height:0,points:[[0,0],[200,0]] as [number,number][]}]};
   const result=describeScene(triangle);

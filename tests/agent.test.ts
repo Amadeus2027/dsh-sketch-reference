@@ -61,6 +61,14 @@ it('resolves an exact short comment reference in the existing read tool without 
  s.agent.setFocus(owner,{revision:s.drawing().revision,elementIds:[]},s.drawing());s.setDrawing({...s.drawing(),revision:randomUUID()});
  await expect(s.agent.read(session,{commentReference:reference},s.signal)).rejects.toMatchObject({code:'COMMENT_UNAVAILABLE'});
 });
+it('persists more than three similar Agent comments and resolves a later target precisely',async()=>{
+ const s=await setup(),before=canonical(s.drawing());
+ const comments=Array.from({length:5},(_,i)=>({title:'相同标题',reason:`不同问题${i+1}`,anchor:{type:'element' as const,elementId:i===4?'text':'rect'}}));
+ await expect(s.agent.annotate(session,{...s.input(),comments},'five',s.signal)).resolves.toMatchObject({count:5});
+ const batch=agentBatchSchema.parse(s.agent.comments.get(owner)),reference=await commentReference(s.drawing(),batch,'agent',batch.comments[4]!.id);
+ expect(await s.agent.read(session,{commentReference:reference},s.signal)).toMatchObject({discussion:{elementId:'text',title:'相同标题',reason:'不同问题5'}});
+ expect(canonical(s.drawing())).toBe(before);
+});
 it('also resolves legacy analysis comments independently of Agent annotations',async()=>{
  let analysis:Batch|null=null;const s=await setup(undefined,()=>analysis);
  analysis={id:randomUUID(),owner,createdAt:new Date().toISOString(),contentDigest:s.drawing().contentDigest,goal:s.drawing().goal,route:{provider:'deepseek-official',model:'deepseek-flash'},advice:{summary:'分析',suggestions:[{kind:'clarify',title:'相同标题',reason:'来自分析入口',actionPrompt:'说明',anchor:{type:'element',elementId:'text'}}]}};

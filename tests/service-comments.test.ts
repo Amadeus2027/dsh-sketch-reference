@@ -23,6 +23,12 @@ async function setup(mode:'normal'|'changed'|'unavailable'|'waiting'='normal'){
 it('binds the result to the saved analysis revision and defaults to hybrid input',async()=>{
  const s=await setup();await expect(s.call()).resolves.toMatchObject({analysisRevision:s.drawing.revision,contentDigest:s.drawing.contentDigest,inputMode:'hybrid'});expect(s.read().calls).toBe(1);
 });
+it('persists a zero-suggestion analysis without a second model request or changing the drawing',async()=>{
+ const s=await setup();let calls=0;
+ s.carrier.ctx.llm.stream=async function*(){calls++;yield {type:'text-delta',index:0,text:JSON.stringify({summary:'布局已清楚，无需补画。',suggestions:[]})};yield {type:'finish',reason:{kind:'stop'}};};
+ const result=batchSchema.parse(await s.call());expect(result.advice.suggestions).toEqual([]);expect(result.analysisRevision).toBe(s.drawing.revision);
+ expect(s.read().stored).toEqual(result);expect(s.read().current).toEqual(s.drawing);expect(s.carrier.busy.size).toBe(0);expect(calls).toBe(1);
+});
 it('accepts structure analysis without a PNG while rejecting an empty PNG in image mode',async()=>{
  const s=await setup();s.carrier.ctx.llm.resolveModelInfo=async()=>({inputModalities:['text']});
  s.carrier.ctx.attachments.saveImage=async()=>{throw new Error('structure mode must not register images');};

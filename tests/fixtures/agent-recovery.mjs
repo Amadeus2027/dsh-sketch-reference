@@ -1,3 +1,4 @@
+import {commentAction} from './browser-session.mjs';
 import assert from 'node:assert/strict';
 
 /** Browser-only transport faults; the installed host and storage remain real. */
@@ -14,7 +15,7 @@ export async function verifyAgentRecovery(page,frame,call,owner,batch){
   };
   const read=route=>fail(route,'模拟批注读取故障');
   await page.route('**/agent/update',write);
-  await card.getByRole('button',{name:'标记已解决'}).click();
+  await commentAction(frame,'标记已解决');
   await frame.getByRole('button',{name:'重试 Agent 批注保存'}).waitFor();
   await page.route('**/agent/get',read);
   await frame.getByRole('button',{name:'刷新 Agent 批注',exact:true}).click();
@@ -39,7 +40,7 @@ export async function verifyAgentRecovery(page,frame,call,owner,batch){
   await frame.locator('.commentCard.resolved').waitFor();
   assert.equal(attempts.length,2);assert.deepEqual(attempts[1].payload,attempts[0].payload,'Retry must reuse mutation ID and CAS input');
   await page.unroute('**/agent/update',write);
-  await card.getByRole('button',{name:'重新打开'}).click();await card.getByRole('button',{name:'标记已解决'}).waitFor();
+  await commentAction(frame,'重新打开');await frame.locator('.commentActions button[aria-label="标记已解决"]').waitFor({state:'attached'});
   }
  }
  if(mode!=='refresh'){
@@ -60,13 +61,13 @@ export async function verifyAgentRecovery(page,frame,call,owner,batch){
   await page.route('**/agent/get',read);
   try{
    await frame.getByRole('button',{name:'刷新批注',exact:true}).click();await within(oldSeen);
-   await card.getByRole('button',{name:'标记已解决'}).click();await frame.locator('.commentCard.resolved').waitFor();
+   await commentAction(frame,'标记已解决');await frame.locator('.commentCard.resolved').waitFor();
    releaseOld();await within(newSeen);
    assert((await card.getAttribute('class')).includes('resolved'),'A delayed old read must not replace a confirmed state write');
    releaseNew();await frame.locator('.commentCard.resolved').waitFor();
   }finally{releaseOld();releaseNew();await Promise.all(jobs);await page.unroute('**/agent/get',read);}
   assert.equal((await call('agent/get',owner,null)).batch.id,batch.id);
-  await card.getByRole('button',{name:'重新打开'}).click();await card.getByRole('button',{name:'标记已解决'}).waitFor();
+  await commentAction(frame,'重新打开');await frame.locator('.commentActions button[aria-label="标记已解决"]').waitFor({state:'attached'});
  }
  if(mode==='all')for(let reconnect=0;reconnect<3;reconnect++){
   await page.waitForFunction(async()=>{const value=await (await fetch('/sketch-reference-test-agent-stats')).json();return value.eventClients===1;});

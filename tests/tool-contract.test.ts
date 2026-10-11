@@ -35,13 +35,12 @@ it('advertises disjoint exact shapes for create/text/move/resize/delete',()=>{
  }
  expect(validateJsonSchemaValue(tool.parameters,{...base(),operations:[valid[4]],expectedBatchId:null})).not.toEqual([]);
 });
-it('turns the real four-comment rejection into actionable feedback without an input echo or write',async()=>{
+it('accepts four comments and returns actionable feedback for empty, oversized or invalid annotation input',async()=>{
  const {tools,exec}=fixture(),tool=tools.find(t=>t.name==='sketch_annotate')!;
  const input={revision:randomUUID(),expectedBatchId:null,summary:'摘要',comments:Array.from({length:4},()=>({title:'测试',reason:'说明'}))};
- await expect(tool.execute(input,exec)).rejects.toMatchObject({code:'INVALID_ARGUMENTS',message:expect.stringContaining('1–3')});
- await expect(tool.execute(input,exec)).rejects.toMatchObject({message:expect.not.stringContaining('不接受额外字段')});
- // A valid corrected call still goes through the existing validator, not a permissive fallback.
- await expect(tool.execute({...input,comments:input.comments.slice(0,3)},exec)).resolves.toHaveProperty('batchId');
+ await expect(tool.execute({...input,comments:[]},exec)).rejects.toMatchObject({code:'INVALID_ARGUMENTS',message:expect.stringContaining('至少一条')});
+ await expect(tool.execute({...input,comments:Array.from({length:64},()=>({title:'区域',reason:'中'.repeat(1000)}))},exec)).rejects.toMatchObject({code:'INVALID_ARGUMENTS',message:expect.not.stringContaining('不接受额外字段')});
+ await expect(tool.execute(input,exec)).resolves.toHaveProperty('batchId');
  const bad={...input,comments:[{title:'😀'.repeat(61),reason:'说明'}]};
  await expect(tool.execute(bad,exec)).rejects.toMatchObject({code:'INVALID_ARGUMENTS',message:expect.not.stringContaining('😀')});
 });
