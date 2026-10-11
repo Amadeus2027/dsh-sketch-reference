@@ -1,11 +1,33 @@
 import {it,expect} from 'vitest';
 import {randomUUID} from 'node:crypto';
 import {SketchService} from '../src/host/service.ts';
-import {batchSchema,contentDigest,type Drawing,type Owner} from '../src/core/contracts.ts';
+import {batchSchema,contentDigest,routeSchema,routeOptionSchema,type Drawing,type Owner} from '../src/core/contracts.ts';
 const owner:Owner={sessionId:'session',createdAt:'123',cwd:'/workspace'};
 const scene={elements:[{id:'rect',type:'rectangle' as const,x:0,y:0,width:100,height:40}],appState:{viewBackgroundColor:'#ffffff'},files:{}};
 const advice={summary:'布局',suggestions:[{kind:'improve',title:'留白',reason:'提升可读性',actionPrompt:'根据所附手绘参考图增加留白。',anchor:{type:'element',elementId:'rect'}}]};
 const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=';
+it('uses native provider/model names and all official catalog entries without model calls',async()=>{
+ const visited:string[]=[],carrier={ctx:{llm:{
+  listProviders:()=>[{id:'deepseek-official',name:'DeepSeek API'},{id:'other',name:'Other'},{id:'deepseek-account',name:'DeepSeek Account'}],
+  listModels:async(provider:string)=>{visited.push(provider);return [{id:'deepseek-flash',name:'DeepSeek-V4-Flash'},{id:'deepseek-pro',name:'DeepSeek-V4-Pro'},{id:'deepseek-pro',name:'Duplicate'},{id:'',name:'Invalid'}];},
+ },logger:{warn:()=>{}}}};
+ const routes=await (SketchService.prototype as unknown as {routes:()=>Promise<unknown[]>}).routes.call(carrier);
+ expect(visited).toEqual(['deepseek-official','deepseek-account']);
+ expect(routes).toEqual(['deepseek-official','deepseek-account'].flatMap(provider=>['flash','pro'].map(model=>({provider,model:'deepseek-'+model,name:'DeepSeek-V4-'+(model==='flash'?'Flash':'Pro'),providerName:provider==='deepseek-official'?'DeepSeek API':'DeepSeek Account'}))));
+});
+it('retains available model entries if another official catalog fails',async()=>{
+ const carrier={ctx:{llm:{listProviders:()=>[{id:'deepseek-account',name:'Account'},{id:'deepseek-official',name:'API'}],listModels:async(provider:string)=>{if(provider==='deepseek-account')throw Error('offline');return [{id:'deepseek-flash',name:'Native Flash'}];}},logger:{warn:()=>{}}}};
+ const routes=await (SketchService.prototype as unknown as {routes:()=>Promise<unknown[]>}).routes.call(carrier);
+ expect(routes).toEqual([{provider:'deepseek-official',model:'deepseek-flash',name:'Native Flash',providerName:'API'}]);
+});
+it('keeps model display metadata out of strict generation routes and preserves official provider boundaries',()=>{
+ const route={provider:'deepseek-official',model:'deepseek-pro'};
+ expect(routeSchema.parse(route)).toEqual(route);
+ expect(routeOptionSchema.parse({...route,name:'DeepSeek-V4-Pro',providerName:'DeepSeek API'}).name).toBe('DeepSeek-V4-Pro');
+ expect(routeSchema.safeParse({...route,name:'DeepSeek-V4-Pro'}).success).toBe(false);
+ expect(routeSchema.safeParse({...route,provider:'other'}).success).toBe(false);
+ for(const model of ['', 'x'.repeat(201),'invalid\0model'])expect(routeSchema.safeParse({...route,model}).success).toBe(false);
+});
 async function setup(mode:'normal'|'changed'|'unavailable'|'waiting'='normal'){
  const drawing:Drawing={formatVersion:1,owner,revision:randomUUID(),mutationId:randomUUID(),sceneDigest:'full',contentDigest:await contentDigest(scene),scene,goal:'首页',updatedAt:new Date().toISOString()};
  let current=drawing,stored:unknown=null,calls=0;

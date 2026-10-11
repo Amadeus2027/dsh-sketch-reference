@@ -60,7 +60,7 @@ export function apply(ctx){
  };
  const stream=ctx.llm.stream;
  class ScriptedAdapter extends LlmAdapter {
-  async listModels(provider){return [{provider,id:'deepseek-flash',name:'Flash (scripted fixture)',inputModalities:['text','image']}];}
+  async listModels(provider){return [{provider,id:'deepseek-flash',name:'Flash (scripted fixture)',inputModalities:['text','image']},{provider,id:'deepseek-pro',name:'Pro (scripted fixture)',inputModalities:['text','image']}];}
   async resolveModel(provider,model){return {provider,id:model,name:model,inputModalities:['text','image']};}
   stream(request){return stream(request);}
  }

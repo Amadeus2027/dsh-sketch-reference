@@ -65,11 +65,12 @@ export function useAgentComments(owner:Owner,scene:()=>Drawing['scene'],goal:()=
   },
   retry:()=>{if(pendingRef.current&&!savingRef.current)void save(pendingRef.current);},
   refresh:async()=>{
-   if(savingRef.current)return;const selected=pendingRef.current;
+   if(savingRef.current)return false;const selected=pendingRef.current;
    const confirmed=await refresh();
    // Failed reads and mutations started during a refresh retain close protection.
-   if(!confirmed||!mounted.current||savingRef.current||pendingRef.current!==selected)return;
+   if(!confirmed||!mounted.current||savingRef.current||pendingRef.current!==selected)return false;
    pendingRef.current=null;setPending(null);setError('');if(disconnected)setConnectionEpoch(v=>v+1);
+   return true;
   },
  };
 }

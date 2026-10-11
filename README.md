@@ -8,7 +8,7 @@
 
 Sketch Reference 将可编辑的 Excalidraw 画板接入 DSH 原生会话。用草图表达网页布局、流程和视觉需求，让 Agent 按需查看图形与图片，围绕具体位置继续追问和纠正。
 
-**当前开发版本：0.6.2。** 正式安装包以 [GitHub Releases](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) 为准。验证环境：Windows PC、DSH `0.2.1-alpha.1`、Excalidraw `0.18.1`。
+**当前开发版本：0.6.3。** 正式安装包以 [GitHub Releases](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) 为准。验证环境：Windows PC、DSH `0.2.1-alpha.1`、Excalidraw `0.18.1`。
 
 ## 能做什么
 
@@ -50,9 +50,9 @@ dsh web
 - 重点绑定草图版本，变化后需重新设置；当前读取边界不会清除已有聊天记录或附件。
 - 修改仅支持现有基础图形白名单，不能任意修改锁定、绑定或成组元素。未确认提议不会改变画板。
 - 草稿和图片保存在本地 DSH 存储；模型读取时，相关内容发送至所配置的模型服务。宿主附件历史尚无插件自动回收机制。
-- 同步断线时可刷新批注或重开画板。跨刷新撤销历史、其他宿主版本、其他平台和移动端不作兼容承诺。
+- 同步断线时可通过底部「⋯ → 同步批注」或重开画板恢复。跨刷新撤销历史、其他宿主版本、其他平台和移动端不作兼容承诺。
 
-见 [0.6.2 更新说明](docs/release-v0.6.2.md)。反馈问题请提供版本、复现步骤与脱敏截图，勿上传密钥和私人会话。
+见 [0.6.3 更新说明](docs/release-v0.6.3.md)。反馈问题请提供版本、复现步骤与脱敏截图，勿上传密钥和私人会话。
 
 ## 开发与许可
 

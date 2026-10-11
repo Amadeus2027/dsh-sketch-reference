@@ -9,8 +9,11 @@ export const sceneSchema = createSceneSchema(scenePolicy);
 const text = (max: number) => z.string().refine(v => Array.from(v).length <= max && !v.includes('\0'));
 export const ownerSchema = z.object({sessionId: z.string().min(1).max(200), createdAt: z.string().min(1).max(100), cwd: z.string().max(4096)}).strict();
 export type Owner = z.infer<typeof ownerSchema>;
-export const routeSchema = z.object({provider: z.enum(['deepseek-official','deepseek-account']), model: z.literal('deepseek-flash')}).strict();
+export const routeSchema = z.object({provider: z.enum(['deepseek-official','deepseek-account']), model: z.string().trim().min(1).max(200).refine(v=>!/[\u0000-\u001f]/.test(v))}).strict();
 export type Route = z.infer<typeof routeSchema>;
+// Display metadata stays out of model requests and persisted analysis routes.
+export const routeOptionSchema=routeSchema.extend({name:z.string().min(1).max(500),providerName:z.string().min(1).max(500)});
+export type RouteOption=z.infer<typeof routeOptionSchema>;
 export const anchorSchema=z.object({type:z.literal('element'),elementId:z.string().min(1).max(256)}).strict();
 export type Anchor=z.infer<typeof anchorSchema>;
 export const adviceSchema = z.object({summary: text(120).refine(v => !!v.trim()), suggestions: z.array(z.object({kind:z.enum(['clarify','improve','create']),title:text(24).refine(v => !!v.trim()),reason:text(100).refine(v => !!v.trim()),actionPrompt:text(500).refine(v => !!v.trim()),anchor:anchorSchema.optional()}).strict())}).strict();
@@ -36,7 +39,7 @@ export const generateSchema = z.object({revision:z.uuid(),pngBase64:z.string().m
  if(input.inputMode==='structure'&&input.pngBase64!=='')ctx.addIssue({code:'custom',path:['pngBase64'],message:'纯结构分析不接受图片，请使用空字符串'});
 });
 export const modelSchema = routeSchema;
-export const loadSchema = z.object({owner:ownerSchema,drawing:drawingSchema.nullable(),latestAdvice:batchSchema.nullable(),routes:z.array(routeSchema)}).strict();
+export const loadSchema = z.object({owner:ownerSchema,drawing:drawingSchema.nullable(),latestAdvice:batchSchema.nullable(),routes:z.array(routeOptionSchema)}).strict();
 export const resultSchema = z.discriminatedUnion('ok',[
  z.object({ok:z.literal(true),requestId:z.uuid(),value:z.unknown()}).strict(),
  z.object({ok:z.literal(false),requestId:z.string(),error:z.object({code:z.string(),message:z.string()}).strict()}).strict()

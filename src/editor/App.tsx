@@ -1,8 +1,8 @@
 import {useCallback,useEffect,useLayoutEffect,useMemo,useRef,useState} from 'react';
-import {Excalidraw,CaptureUpdateAction} from '@excalidraw/excalidraw';
+import {Excalidraw,MainMenu,CaptureUpdateAction} from '@excalidraw/excalidraw';
 import type {ExcalidrawImperativeAPI,AppState} from '@excalidraw/excalidraw/types';
 import type {ExcalidrawElement} from '@excalidraw/excalidraw/element/types';
-import {loadSchema,drawingSchema,batchSchema,analysisModeSchema,canonical,contentDigest,digest,type Owner,type Drawing,type Batch,type Route,type CommentStatus,type CommentUpdate,type AnalysisMode} from '../core/contracts.ts';
+import {loadSchema,drawingSchema,batchSchema,analysisModeSchema,canonical,contentDigest,digest,type Owner,type Drawing,type Batch,type RouteOption,type CommentStatus,type CommentUpdate,type AnalysisMode} from '../core/contracts.ts';
 import {withComments,anchorTarget,adviceIsStale} from '../core/comments.ts';
 import {CommentList,CommentOverlay,type CommentActions} from './comments.tsx';
 import {normalize} from './scene.ts';
@@ -38,11 +38,12 @@ export function SketchApp({sessionId}:{sessionId:string}) {
  if(!loaded)return <main className="loading"><h1>手绘参考板</h1><p role="status">{error||'正在载入会话草图…'}</p>{error&&<button onClick={()=>setReload(v=>v+1)}>重试</button>}<button onClick={()=>void closeBoard()}>返回聊天</button></main>;
  return <Board key={reload} owner={loaded.owner} initial={loaded.drawing} latestAdvice={loaded.latestAdvice} routes={loaded.routes} registerClose={registerClose} onReload={()=>setReload(v=>v+1)} />;
 }
-function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner:Owner;initial:Drawing|null;latestAdvice:Batch|null;routes:Route[];onReload:()=>void;registerClose:(handler:(()=>void)|null)=>void}) {
+function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner:Owner;initial:Drawing|null;latestAdvice:Batch|null;routes:RouteOption[];onReload:()=>void;registerClose:(handler:(()=>void)|null)=>void}) {
  const appearance=useAppearance();
  const [initialView]=useState(()=>readView(owner)),lastView=useRef(initialView);
  const [exportScene]=useState(()=>createSceneExport(pngExport));
  const [adviceOpen,setAdviceOpen]=useState(false),[moreOpen,setMoreOpen]=useState(false),[exporting,setExporting]=useState(false);
+ const [messageInfo,setMessageInfo]=useState(false),[syncingComments,setSyncingComments]=useState(false),syncing=useRef(false);
  const closeAction=useRef<()=>void>(()=>{});
  useEffect(()=>{registerClose(()=>closeAction.current());return()=>registerClose(null);},[registerClose]);
  const [recovery]=useState(()=>recoverPending(owner));
@@ -123,7 +124,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
  };
  applyScene.current=(elements,state)=>{
   try{const scene=normalize(elements,state,queue.current().scene);sceneError.current=null;if(queue.update({scene,goal:goalRef.current}))updateStale(scene,goalRef.current);}
-  catch(error){sceneError.current=error instanceof Error?error.message:'草图超出限制';if(mounted.current)setMessage(sceneError.current);}
+  catch(error){sceneError.current=error instanceof Error?error.message:'草图超出限制';if(mounted.current){setMessageInfo(false);setMessage(sceneError.current);}}
  };
  const updated=(elements:readonly ExcalidrawElement[],appState:AppState)=>{lastView.current=captureView(appState);if(!pending)updates.accept(elements,appState as unknown as Record<string,unknown>);};
  const capture=()=>{
@@ -163,7 +164,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
    await settle();if(!mounted.current)return;if(!queue.revision)throw new Error('请先绘制并保存草图');
    const result=focusResultSchema.parse(await rpc('agent/focus',owner,{revision:queue.revision,elementIds:ids},lifecycle.current.signal));
    await visual.refresh();
-   if(mounted.current)setMessage(`${result.message}${result.count?` 共 ${result.count} 个元素。Agent 的结构和图像读取仅限此重点；需要全图时请先清除重点。`:''}`);
+   if(mounted.current){setMessageInfo(true);setMessage(`${result.message}${result.count?` 共 ${result.count} 个元素。Agent 的结构和图像读取仅限此重点；需要全图时请先清除重点。`:''}`);}
   }finally{if(mounted.current)setPreparing(false);}
  });
  const prepareVisual=(scope:'all'|'focus')=>void run(async()=>{
@@ -176,7 +177,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
    if(mounted.current)setMessage(scope==='focus'?'重点视觉参考已更新；Agent 可按需读取，尚未发送消息或调用模型。':'视觉参考已更新；关闭画板后 Agent 仍可按需读取，尚未调用模型。');
   }finally{if(mounted.current)setPreparing(false);}
  });
- const run=async(task:()=>Promise<void>)=>{setMessage('');try{await task();}catch(e){if(mounted.current)setMessage(e instanceof Error?e.message:'操作失败');}};
+ const run=async(task:()=>Promise<void>)=>{setMessage('');setMessageInfo(false);try{await task();}catch(e){if(mounted.current){setMessageInfo(false);setMessage(e instanceof Error?e.message:'操作失败');}}};
  const saveComment=async(input:CommentUpdate)=>{
   setCommentSaving(true);setCommentError(null);
   try{
@@ -191,16 +192,24 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   const input:CommentUpdate={batchId:comments.id,expectedRevision:comments.commentRevision,mutationId:crypto.randomUUID(),commentId,status};
   pendingComment.current=input;void saveComment(input);
  };
- const refreshAnalysis=()=>void run(async()=>{
-  if(commentSaving)return;
+ const refreshAnalysis=async()=>{
+  if(commentSaving)return false;
   const result=await rpc('advice/get',owner,null,lifecycle.current.signal),next=result===null?null:batchSchema.parse(result);
-  if(!mounted.current)return;
+  if(!mounted.current)return false;
   pendingComment.current=null;setCommentError(null);setBatch(next);setSelected(null);
   const currentGoal=goalRef.current,generation=++digestGeneration.current;
   setStale(!!next);
   if(next){const value=await contentDigest(capture());if(mounted.current&&generation===digestGeneration.current&&goalRef.current===currentGoal)setStale(adviceIsStale(next,value,currentGoal));}
+  return true;
+ };
+ const refreshComments=()=>void run(async()=>{
+  if(syncing.current)return;
+  syncing.current=true;setSyncingComments(true);setMoreOpen(false);
+  try{
+   const confirmed=source==='agent'?await agent.refresh():await refreshAnalysis();
+   if(confirmed&&mounted.current){setMessageInfo(true);setMessage('批注已同步，未调用模型。');}
+  }finally{syncing.current=false;if(mounted.current)setSyncingComments(false);}
  });
- const refreshComments=()=>source==='agent'?void agent.refresh():refreshAnalysis();
  const selectComment=(id:string,locate:boolean)=>{
   setSelected(id||null);setHovered(null);if(id)setAdviceOpen(true);if(!id||!comments||!api.current)return;
   const comment=comments.comments.find(c=>c.id===id),target=anchorTarget(comment?comments.advice.suggestions[comment.suggestionIndex]?.anchor:undefined,api.current.getSceneElements());
@@ -226,7 +235,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
    if(!queue.revision)throw new Error('草图尚未保存');
    const revision=queue.revision,pngBase64=inputMode==='structure'?'':await base64(await exportScene(scene));
    abort.signal.throwIfAborted();setPreparing(false);
-   const result=batchSchema.parse(await rpc('advice/generate',owner,{revision,pngBase64,route,inputMode},abort.signal));
+   const result=batchSchema.parse(await rpc('advice/generate',owner,{revision,pngBase64,route:{provider:route.provider,model:route.model},inputMode},abort.signal));
    if(mounted.current){const generation=++digestGeneration.current;setBatch(result);setSource('analysis');setSelected(withComments(result).comments[0]?.id??null);setShowComments(true);setCopy('');setStale(true);const currentGoal=goalRef.current,value=await contentDigest(capture());if(mounted.current&&generation===digestGeneration.current&&currentGoal===goalRef.current)setStale(adviceIsStale(result,value,currentGoal));}
   }catch(e){if(abort.signal.aborted)throw new Error('分析已取消，草图保留');throw e;
   }finally{if(mounted.current){setBusy(false);setPreparing(false);}active.current=null;}
@@ -256,7 +265,6 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
     {comments&&<div className="commentHeaderTools">
      {comments.comments.some(c=>c.status==='ignored')&&<button aria-pressed={showIgnored} onClick={()=>setShowIgnored(v=>!v)}>{showIgnored?'隐藏已忽略':'显示已忽略'}</button>}
      {comments.comments.length>0&&<button className="markerToggle" aria-pressed={showComments} onClick={()=>setShowComments(v=>!v)}>{showComments?'隐藏图中标记':'显示图中标记'}</button>}
-     <button onClick={refreshComments} disabled={savingComments}>刷新批注</button>
     </div>}
    </div>
    <div id="comment-details" className="adviceDetails" hidden={!adviceOpen}>
@@ -273,10 +281,20 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   {agent.disconnected&&<div className="notice" role="status">批注实时同步已断开，绘图和保存仍可使用。<button onClick={()=>void agent.refresh()}>刷新 Agent 批注</button></div>}
   {backupUnavailable&&<div className="notice" role="status">浏览器恢复存储不可用或空间不足，无法保证本地恢复副本；自动保存仍会尝试写入服务器。请及时下载草稿备份。</div>}
   {pending&&<div className="notice">发现未保存的恢复副本。<button onClick={recover}>恢复本地草稿</button><button onClick={()=>{downloadScene(pending.draft.scene);}}>下载恢复副本</button><button onClick={()=>setPending(null)}>暂不恢复</button></div>}
-  {commentError&&<div className="notice" role="alert">批注状态未确认保存：{commentError.message}{!commentError.conflict&&<button disabled={commentSaving} onClick={()=>{if(pendingComment.current)void saveComment(pendingComment.current);}}>重试批注保存</button>}<button disabled={commentSaving} onClick={refreshAnalysis}>刷新批注</button></div>}
-  {(message||queue.error)&&<div className="notice" role="alert">{message||queue.error}{queue.state==='error'&&<button onClick={()=>void run(async()=>{await settle();})}>重试保存</button>}{queue.state==='conflict'&&<><button onClick={()=>void run(async()=>{downloadScene(capture());})}>下载我的草稿</button><button onClick={onReload}>载入服务器版本</button></>}</div>}
+  {commentError&&<div className="notice" role="alert">批注状态未确认保存：{commentError.message}{!commentError.conflict&&<button disabled={commentSaving} onClick={()=>{if(pendingComment.current)void saveComment(pendingComment.current);}}>重试批注保存</button>}<button disabled={commentSaving||syncingComments} onClick={refreshComments}>刷新批注</button></div>}
+  {(message||queue.error)&&<div className={`notice${messageInfo&&!queue.error?' info':''}`} role={messageInfo&&!queue.error?'status':'alert'}>{queue.error||message}{queue.state==='error'&&<button onClick={()=>void run(async()=>{await settle();})}>重试保存</button>}{queue.state==='conflict'&&<><button onClick={()=>void run(async()=>{downloadScene(capture());})}>下载我的草稿</button><button onClick={onReload}>载入服务器版本</button></>}</div>}
   <div ref={canvas} className="canvas" data-preparing={preparing||!!pending}>
-   <Excalidraw theme={appearance.theme} langCode="zh-CN" initialData={initialData} excalidrawAPI={ready} onChange={updated} UIOptions={{canvasActions:{loadScene:false,saveToActiveFile:false,export:false,saveAsImage:false,toggleTheme:false},tools:{image:false}}} />
+   <Excalidraw theme={appearance.theme} langCode="zh-CN" initialData={initialData} excalidrawAPI={ready} onChange={updated} UIOptions={{canvasActions:{loadScene:false,saveToActiveFile:false,export:false,saveAsImage:false,toggleTheme:false},tools:{image:false}}}>
+    <MainMenu>
+     <MainMenu.Item shortcut="Ctrl+F" onSelect={()=>editor?.toggleSidebar({name:'default',tab:'search',force:true})} icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="1.5"/><path d="m16 16 5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>}>在画布中查找</MainMenu.Item>
+     <MainMenu.DefaultItems.Help/>
+     <MainMenu.DefaultItems.ClearCanvas/>
+     <MainMenu.Separator/>
+     <MainMenu.Group title="Excalidraw 链接"><MainMenu.DefaultItems.Socials/></MainMenu.Group>
+     <MainMenu.Separator/>
+     <MainMenu.DefaultItems.ChangeCanvasBackground/>
+    </MainMenu>
+   </Excalidraw>
    {comments&&<CommentOverlay api={editor} batch={comments} selected={selected} hovered={hovered} stale={displayStale} saving={savingComments||busy||preparing} shown={showComments} showIgnored={showIgnored} missing={missing} disabled={!!pending||preparing} actions={actions} onMissing={reportMissing}/>}
    {(preparing||!!pending)&&<div className="freeze" role="status">{pending?'请先选择是否恢复本地草稿':discussing?'正在打开聊天…':'正在保存并生成参考图…'}</div>}
   </div>
@@ -285,13 +303,14 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
    <button disabled={!editor||!!pending||busy||preparing||queue.state==='conflict'||commentSaving} onClick={analyze}>{batch?'重新分析草图':'AI 分析草图'}</button>
    <button className="primary" disabled={!editor||!!pending||preparing} title="加入原生输入框，由你确认发送" onClick={()=>void run(async()=>{setPreparing(true);try{const scene=capture();queue.update({scene,goal:goalRef.current});await settle();const png=await exportScene(scene);const result=await stageImage(owner,png,await digest(scene));setMessage(stale&&batch?'参考图已更新；输入框中若有旧建议，请重新获取后替换。'+result:result);}finally{if(mounted.current)setPreparing(false);}})}>作为参考发送</button>
    <div className="more"><button aria-expanded={moreOpen} aria-label="更多操作" onClick={()=>setMoreOpen(v=>!v)}>···</button>{moreOpen&&<div className="moreMenu" role="group" aria-label="导出与模型选项">
+    <button disabled={commentSaving||agent.saving||syncingComments} title="重新读取已保存批注，不调用模型" onClick={refreshComments}>{syncingComments?'正在同步批注…':'同步批注'}</button>
     {agent.available&&<><button disabled={!editor||!!pending||preparing} onClick={()=>focusSelection()}>选区作为重点</button><button disabled={!editor||!!pending||preparing} onClick={()=>focusSelection(true)}>清除选区重点</button></>}
     {agent.available&&<button disabled={preparing} onClick={()=>void run(async()=>{setMoreOpen(false);await visual.refresh();await edits.refresh();setMessage('协作状态已刷新');})}>刷新协作状态</button>}
     {visual.state?.available&&<><button disabled={!editor||!!pending||preparing} onClick={()=>prepareVisual('all')}>更新视觉参考</button><button disabled={!editor||!!pending||preparing||!visual.state.selection||visual.state.selection.stale} onClick={()=>prepareVisual('focus')}>更新重点视觉参考</button></>}
     <button disabled={!editor||!!pending||preparing||exporting} onClick={()=>{setMoreOpen(false);void run(async()=>{setExporting(true);try{download(await exportScene(capture()),'sketch-reference.png');}finally{if(mounted.current)setExporting(false);}});}}>导出 PNG</button>
     <button onClick={()=>{setMoreOpen(false);void run(async()=>{downloadScene(capture());});}}>草稿备份</button>
     <label className="route">分析内容 <select aria-label="分析内容" disabled={busy||preparing} value={inputMode} onChange={e=>setInputMode(analysisModeSchema.parse(e.target.value))}><option value="hybrid">图片与结构（推荐）</option><option value="image">仅图片</option><option value="structure">仅结构（不发送图片）</option></select></label>
-    <label className="route">建议模型 <select aria-label="建议模型" disabled={busy} value={routeIndex} onChange={e=>setRouteIndex(Number(e.target.value))}>{!routes.length&&<option>尚未配置官方 DS</option>}{routes.map((r,i)=><option key={r.provider} value={i}>{r.provider==='deepseek-account'?'DS 账户':'DS API'} · Flash</option>)}</select></label>
+    <label className="route">建议模型 <select aria-label="建议模型" disabled={busy||!routes.length} value={routeIndex} onChange={e=>setRouteIndex(Number(e.target.value))}>{!routes.length&&<option>尚未配置官方 DS</option>}{[...new Set(routes.map(r=>r.provider))].map(provider=><optgroup key={provider} label={routes.find(r=>r.provider===provider)!.providerName}>{routes.map((r,i)=>r.provider===provider&&<option key={r.model} value={i}>{r.name}</option>)}</optgroup>)}</select></label>
     <small>AI 分析可选，会产生模型用量。纯结构适用于文字、形状和连线，不识别自由笔迹内容。参考图先加入聊天输入框，由你发送；批注不进入导出图。</small>
    </div>}</div>
   </div></footer>

@@ -11,8 +11,11 @@ const report={realModel:false,viewports:[],actions:[],errors:[]};let page;
 try{
  const context=await browser.newContext({viewport:{width:1280,height:720},acceptDownloads:true});await context.addInitScript(installEditorInspection);
  page=await context.newPage();page.setDefaultTimeout(15000);page.on('pageerror',e=>report.errors.push(e.message));
- await prepareHost(page,url);await hostContext(page,'create',process.env.DSH_TEST_WORKSPACE??process.cwd());
+ await prepareHost(page,url);await hostContext(page,'theme','light');await hostContext(page,'create',process.env.DSH_TEST_WORKSPACE??process.cwd());
  const board=page.getByRole('button',{name:'打开手绘参考板'}),input=page.locator('[contenteditable=true]');
+ const referenceStyle=async()=>board.evaluate(n=>{const s=getComputedStyle(n);return {color:s.color,background:s.backgroundColor};});
+ assert.deepEqual(await referenceStyle(),{color:'rgb(255, 255, 255)',background:'rgb(65, 118, 230)'},'Closed reference button must already be blue');
+ await board.hover();assert.deepEqual(await referenceStyle(),{color:'rgb(255, 255, 255)',background:'rgb(122, 170, 255)'},'Hover must use the native send-button blue, never toolbar gray');
  await input.fill('保留这段原生草稿。');await board.click();let frame=await editorFrame(page);
  const ready=async()=>{if(await frame.evaluate(()=>typeof window.__sketchEditor!=='function'))await frame.evaluate(installEditorInspection);await frame.waitForFunction(()=>{try{return !!window.__sketchEditor();}catch{return false;}});};await ready();
  const call=(method,owner,payload)=>frame.evaluate(async({method,owner,payload})=>{
@@ -41,6 +44,41 @@ try{
  assert.equal(await frame.locator('.commentMarker').count(),3,'Every non-ignored suggestion needs a canvas entry');
  assert.equal(await frame.locator('.commentMarker[data-kind=global]').count(),2,'Global advice must not invent element anchors');
  assert.equal(await frame.locator('.commentPage').count(),0,'Three suggestions do not need paging buttons');
+ // v0.6.3: recovery is tucked into the bottom menu; native public APIs retain search.
+ const topMenu=frame.getByRole('button',{name:'更多操作',exact:true});
+ await topMenu.click();
+ const catalog=(await load()).routes;
+ assert.equal(await frame.locator('select[aria-label="建议模型"] option').count(),catalog.length);
+ assert.deepEqual(await frame.locator('select[aria-label="建议模型"] option').allTextContents(),catalog.map(r=>r.name));
+ assert(catalog.some(r=>r.model==='deepseek-pro'),'Catalog must not be hardcoded to Flash');
+ await frame.getByLabel('建议模型',{exact:true}).selectOption({label:'Pro (scripted fixture)'});
+ const syncBefore=await stats(),syncRaster=await frame.evaluate(()=>window.__sketchMetrics.rasterizations);
+ await frame.getByRole('button',{name:'同步批注',exact:true}).click();
+ await frame.locator('.notice.info').filter({hasText:'批注已同步，未调用模型。'}).waitFor();
+ assert.equal((await stats()).analysis.calls.length,syncBefore.analysis.calls.length);
+ assert.equal((await stats()).agent.calls.length,syncBefore.agent.calls.length);
+ assert.equal(count(await stats(),'drawing/save'),count(syncBefore,'drawing/save'));
+ assert.equal(await frame.evaluate(()=>window.__sketchMetrics.rasterizations),syncRaster);
+ await topMenu.click();await frame.getByRole('button',{name:'清除选区重点',exact:true}).click();
+ const notice=frame.locator('.notice.info').filter({hasText:'选区重点已清除。'});await notice.waitFor();
+ const blue=await notice.evaluate(n=>({color:getComputedStyle(n).color,blue:getComputedStyle(document.documentElement).getPropertyValue('--sketch-blue').trim(),background:getComputedStyle(n).backgroundColor}));
+ assert.equal(blue.blue,'#4176e6');assert.equal(blue.color,'rgb(65, 118, 230)');
+ await topMenu.click();await frame.getByRole('button',{name:'选区作为重点',exact:true}).click();
+ await frame.locator('.notice:not(.info)[role=alert]').filter({hasText:'请先使用画板原生选择或框选工具选中图形'}).waitFor();
+ await topMenu.click();await frame.getByRole('button',{name:'清除选区重点',exact:true}).click();await notice.waitFor();
+ const refBlue=await referenceStyle();assert.deepEqual(refBlue,{color:'rgb(255, 255, 255)',background:'rgb(65, 118, 230)'},'Open reference button remains blue');
+ const baseline=await frame.locator('header>div').evaluate(n=>getComputedStyle(n).alignItems);assert.equal(baseline,'baseline');
+ await frame.getByTestId('main-menu-trigger').click();assert.equal(await frame.getByText('Find on canvas',{exact:true}).count(),0);
+ await frame.getByRole('button',{name:/在画布中查找/}).click();
+ await frame.locator('.default-sidebar').waitFor();
+ assert.equal(await frame.evaluate(()=>window.__sketchEditor().getAppState().openSidebar.tab),'search');
+ await frame.evaluate(()=>window.__sketchEditor().toggleSidebar({name:'default',force:false}));
+ await page.screenshot({path:out+'/v063-light.png'});
+ await hostContext(page,'theme','dark');await frame.waitForFunction(()=>document.documentElement.dataset.theme==='dark');
+ const nativeDarkBlue=await page.evaluate(()=>{const hex=getComputedStyle(document.body).getPropertyValue('--dsw-alias-button-info-fill').trim();return `rgb(${[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)).join(', ')})`;});
+ assert(await notice.isVisible());assert.deepEqual(await referenceStyle(),{color:'rgb(255, 255, 255)',background:nativeDarkBlue});await page.screenshot({path:out+'/v063-dark.png'});
+ await hostContext(page,'theme','light');await frame.waitForFunction(()=>document.documentElement.dataset.theme==='light');
+ report.v063={catalog,syncWithoutModelSaveOrExport:true,blue,referenceButton:refBlue,baseline,nativeSearch:true};
  const settled=await stats();const rasterBefore=await frame.evaluate(()=>window.__sketchMetrics.rasterizations);
  for(const size of [{width:1280,height:720},{width:1920,height:1080}]){
   await page.setViewportSize(size);await page.waitForTimeout(250);
@@ -55,8 +93,9 @@ try{
   assert(trigger.width>=24&&trigger.width<=28&&trigger.height<=28);assert.equal(await frame.locator('.commentMenuTrigger svg circle').count(),3);assert.equal(await frame.locator('.commentMenuTrigger').innerText(),'');
   assert.equal(await toolbar().isVisible(),false);
   const disclosure=await frame.locator('.adviceDisclosure').evaluate(n=>{const s=getComputedStyle(n);return {border:s.borderTopStyle,background:s.backgroundColor};});assert.notEqual(disclosure.border,'none');
-  const header=await frame.locator('.adviceTitle').evaluate(n=>{const a=n.querySelector('.adviceDisclosure').getBoundingClientRect(),b=n.querySelector('.commentHeaderTools').getBoundingClientRect();return {disclosureTop:a.top,refreshTop:b.top,right:b.right,headerRight:n.getBoundingClientRect().right};});
-  assert(Math.abs(header.disclosureTop-header.refreshTop)<5,'Refresh must share the header row');assert(Math.abs(header.right-header.headerRight)<2,'Refresh belongs at the right edge');
+  const header=await frame.locator('.adviceTitle').evaluate(n=>{const a=n.querySelector('.adviceDisclosure').getBoundingClientRect(),b=n.querySelector('.markerToggle').getBoundingClientRect();return {disclosureTop:a.top,markerTop:b.top,right:b.right,headerRight:n.getBoundingClientRect().right,last:n.querySelector('.commentHeaderTools').lastElementChild.className};});
+  assert(Math.abs(header.disclosureTop-header.markerTop)<5,'Marker toggle must share the header row');assert(Math.abs(header.right-header.headerRight)<2,'Marker toggle belongs at the right edge');assert.equal(header.last,'markerToggle');
+  assert.equal(await frame.getByRole('button',{name:'刷新批注',exact:true}).count(),0);
   const marker=await frame.locator('.commentMarker').first().evaluate(n=>{const s=getComputedStyle(n);return {text:n.textContent,fontStyle:s.fontStyle,font:s.fontFamily,width:n.getBoundingClientRect().width};});
   assert.equal(marker.text,'1');assert.equal(marker.fontStyle,'normal');assert(marker.font.includes('system-ui'));
   const markerColors=await frame.locator('.commentMarker').evaluateAll(nodes=>nodes.map(n=>({active:n.classList.contains('active'),background:getComputedStyle(n).backgroundColor,color:getComputedStyle(n).color})));
