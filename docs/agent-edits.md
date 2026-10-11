@@ -10,7 +10,7 @@
 
 编辑器仅调用 Excalidraw 公开 `convertToExcalidrawElements`、`newElementWith`、`restoreElements`、`updateScene`、`CaptureUpdateAction.IMMEDIATELY` 和现有导出能力。构造器负责原生创建与不可变更新，公开恢复器仅提供合并场景的有效排序索引，保留原有几何与绑定，正式应用一次捕获历史；不调用内部绑定函数，不实现绘图、拖动、缩放或渲染引擎。`history` 公开接口只有 clear，未伪造 undo 方法或清空历史，撤销通过原生交互完成。
 
-首版创建矩形、椭圆、菱形、文字与向右下的直箭头；移动独立元素；仅缩放独立矩形/椭圆/菱形；删除独立元素。锁定、分组和绑定目标（包括其他元素对目标的绑定）被明确拒绝，用户仍可手工调整。文字尺寸交给原生字体测量，未开放任意字体/样式、绑定操作、场景 JSON 或代码输入给模型。
+首版创建矩形、椭圆、菱形、文字与任意方向的独立两点直箭头；移动独立元素；仅缩放独立矩形/椭圆/菱形；删除独立元素。锁定、分组和绑定目标（包括其他元素对目标的绑定）被明确拒绝，用户仍可手工调整。文字尺寸交给原生字体测量，未开放任意字体/样式、绑定操作、场景 JSON 或代码输入给模型。
 
 元素细节附加紧凑 editRestriction（none/locked/grouped/bound），与操作准入复用同一判断；重点读取仍以完整场景检查外部绑定。模型能在提议前看到限制，不需要靠反复失败发现目标不可修改。这是程序权限信息，不是重算绑定几何。
 
@@ -81,3 +81,6 @@ Renderer heap 开板前约 47.7MB，开板并五次重开后约 94.7MB；包含�
 - `src/editor/edit-scene.ts`、`edit-proposals.tsx`、`App.tsx`、`autosave.ts`、`agent-comments.ts`、`index.css`：公开图形 API、用户预览/确认、原生撤销、静默通知合并、轻量界面与重点入口。
 - `tests/edits.test.ts`、`agent.test.ts`、`browser-edits.mjs`、`browser-focus.mjs`、`browser-persistence.mjs` 及原生脚本模型夹具：新增权限、并发、恢复、稳定 revision 与实际浏览器回归。
 - `package.json`、README、CONTRIBUTING、REUSE 与相关文档：候选版本、命令和证据更新。锁文件、固定依赖及第三方许可保留。
+
+
+v0.6.0：箭头 x/y 为箭尾，width/height 为绝对跨度；可选 points=[[0,0],[dx,dy]] 决定方向，末点为箭头端，省略时仍兼容右下方向。水平/竖直允许一个零跨度，每个非零跨度必须大于1（固定转换器的半像素内缩会使更小跨度塌缩或反向）。样式修改仍需手工，不删除重建模拟样式。文字 width/height 是兼容占位，最终尺寸由原生测量。

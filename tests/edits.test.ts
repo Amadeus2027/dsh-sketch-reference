@@ -101,3 +101,38 @@ it('rejects text requiring private normalization before proposal admission, reta
  const s=await setup();for(const text of ['a\tb','a\r\nb']){const args=s.input([{op:'create',type:'text',x:0,y:0,width:100,height:30,text}]);expect(proposeEditSchema.safeParse(args).success).toBe(true);await expect(s.edits.propose(owner,args,'text',s.check)).rejects.toMatchObject({code:'UNSUPPORTED_EDIT'});}
  expect(s.edits.get(owner)).toBeNull();expect(s.drawings.get(owner)).toEqual(s.drawing);
 });
+
+it('admits signed two-point arrows including axes while refusing malformed spans and unrelated fields',async()=>{
+ const s=await setup();
+ for(const [dx,dy] of [[80,60],[-80,60],[80,-60],[-80,-60],[80,0],[-80,0],[0,60],[0,-60]]){
+  const op={op:'create',type:'arrow',x:300,y:200,width:Math.abs(dx!),height:Math.abs(dy!),points:[[0,0],[dx,dy]]};
+  expect(proposeEditSchema.safeParse(s.input([op] as EditOperation[])).success).toBe(true);
+ }
+ const arrow={op:'create',type:'arrow',x:300,y:200,width:80,height:60,points:[[0,0],[-80,-60]]};
+ for(const op of [{...arrow,points:[[1,0],[-80,-60]]},{...arrow,points:[[0,0],[-79,-60]]},{...arrow,points:[[0,0],[-80,-60],[0,0]]},{...arrow,width:0,height:0,points:[[0,0],[0,0]]},{...arrow,x:-100000},{...arrow,type:'rectangle'},{...arrow,width:-80}])expect(proposeEditSchema.safeParse(s.input([op] as EditOperation[])).success).toBe(false);
+});
+
+it('checks the declared arrow direction, position, spans and bindings against the confirmed proposal',async()=>{
+ const s=await setup(),op:EditOperation={op:'create',type:'arrow',x:300,y:200,width:80,height:60,points:[[0,0],[-80,-60]]};
+ const p=await s.edits.propose(owner,s.input([op]),'reverse-arrow',s.check);
+ const scene:Drawing['scene']={...p.before,elements:[...p.before.elements,{id:createdElementId(p.id,0),type:'arrow',x:300,y:200,width:80,height:60,points:[[-0.5,-0.5],[-79.5,-59.5]],startBinding:null,endBinding:null,startArrowhead:null,endArrowhead:'arrow'}]};
+ expect(()=>validateEditScene(p,scene)).not.toThrow();
+ for(const extra of [{points:[[0.5,0.5],[79.5,59.5]]},{x:301},{width:81},{startBinding:{elementId:'r'}}]){
+  const forged=structuredClone(scene);Object.assign(forged.elements.at(-1)!,extra);expect(()=>validateEditScene(p,forged)).toThrow();
+ }
+ const horizontal=await s.edits.propose(owner,{...s.input([{op:'create',type:'arrow',x:300,y:200,width:80,height:0,points:[[0,0],[-80,0]]}]),expectedProposalId:p.id},'horizontal-arrow',s.check);
+ const shifted:Drawing['scene']={...horizontal.before,elements:[...horizontal.before.elements,{id:createdElementId(horizontal.id,0),type:'arrow',x:300,y:200,width:80,height:0,points:[[0,0.1],[-80,0.1]],startArrowhead:null,endArrowhead:'arrow'}]};
+ expect(()=>validateEditScene(horizontal,shifted)).toThrow('箭头');
+});
+
+it('rejects native-collapsing arrow spans before storing, while keeping legacy records readable',async()=>{
+ const s=await setup();
+ for(const width of [0.5,1]){
+  const args=s.input([{op:'create',type:'arrow',x:0,y:0,width,height:0}]);
+  expect(proposeEditSchema.safeParse(args).success).toBe(true);
+  await expect(s.edits.propose(owner,args,'small-'+width,s.check)).rejects.toMatchObject({code:'UNSUPPORTED_EDIT',message:expect.stringContaining('大于 1')});
+ }
+ expect(s.edits.get(owner)).toBeNull();expect(s.drawings.get(owner)).toEqual(s.drawing);
+ const p=await s.edits.propose(owner,s.input([{op:'create',type:'arrow',x:0,y:0,width:1.5,height:0}]),'native-safe',s.check);
+ expect(proposalSchema.safeParse({...p,operations:[{op:'create',type:'arrow',x:0,y:0,width:0.5,height:0}]}).success).toBe(true);
+});

@@ -1,0 +1,60 @@
+[
+  {
+    "id": "session-04ea6d32-fe6e-4334-935a-516b096da15c",
+    "steps": 10,
+    "toolCounts": {
+      "pwsh": 5,
+      "read_image": 1,
+      "write": 4,
+      "present": 1,
+      "edit": 2
+    },
+    "lastType": "turn/end"
+  },
+  {
+    "id": "session-285597b3-1d97-44c7-be70-0cd065dff26d",
+    "steps": 22,
+    "toolCounts": {
+      "sketch_read": 1,
+      "pwsh": 6,
+      "sketch_read_image": 1,
+      "todo_write": 2,
+      "write": 5,
+      "edit": 5,
+      "present": 1,
+      "read": 5
+    },
+    "lastType": "turn/end"
+  },
+  {
+    "id": "session-51b43cba-4f16-4115-adc6-7a3a6adb3feb",
+    "steps": 0,
+    "toolCounts": {}
+  },
+  {
+    "id": "session-cb588c7e-653c-4f9b-90f7-704c6d6edeba",
+    "steps": 15,
+    "toolCounts": {
+      "sketch_read": 5,
+      "sketch_read_image": 1,
+      "sketch_annotate": 2,
+      "grep": 2,
+      "ask_user_question": 1,
+      "sketch_propose_edit": 2
+    },
+    "lastType": "turn/end"
+  },
+  {
+    "id": "session-d2c96167-62d9-4a74-bd82-ee7c531b1153",
+    "steps": 25,
+    "toolCounts": {
+      "sketch_read": 2,
+      "pwsh": 14,
+      "write": 1,
+      "edit": 4,
+      "read": 4,
+      "present": 1
+    },
+    "lastType": "turn/end"
+  }
+]

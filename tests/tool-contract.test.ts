@@ -45,6 +45,17 @@ it('turns the real four-comment rejection into actionable feedback without an in
  const bad={...input,comments:[{title:'😀'.repeat(61),reason:'说明'}]};
  await expect(tool.execute(bad,exec)).rejects.toMatchObject({code:'INVALID_ARGUMENTS',message:expect.not.stringContaining('😀')});
 });
+
+it('advertises arrow points only for arrows and returns recoverable feedback for invalid endpoint spans',async()=>{
+ const {tools,exec}=fixture(),tool=tools.find(t=>t.name==='sketch_propose_edit')!;
+ const arrow={op:'create',type:'arrow',x:300,y:200,width:80,height:0,points:[[0,0],[-80,0]]};
+ const input={...base(),operations:[arrow]};
+ expect(validateJsonSchemaValue(tool.parameters,input)).toEqual([]);
+ await expect(tool.execute(input,exec)).resolves.toHaveProperty('proposalId');
+ expect(validateJsonSchemaValue(tool.parameters,{...input,operations:[{...arrow,type:'rectangle'}]})).not.toEqual([]);
+ await expect(tool.execute({...input,operations:[{...arrow,width:81}]},exec)).rejects.toMatchObject({code:'INVALID_ARGUMENTS',message:expect.stringContaining('points')});
+ expect(tool.description).toContain('Appearance/style changes are unsupported');
+});
 it('executes the same closed parameter root advertised to the host before calling the service',async()=>{
  const {tools,exec,read}=fixture(),tool=tools[0]!;
  await expect(tool.execute({PRIVATE_FIELD:'private'},exec)).rejects.toMatchObject({code:'INVALID_ARGUMENTS',message:expect.not.stringContaining('PRIVATE_FIELD')});
