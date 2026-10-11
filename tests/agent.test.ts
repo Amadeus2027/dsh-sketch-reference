@@ -39,6 +39,17 @@ it('describes an applied proposal as history when the current drawing has change
  expect(value).toMatchObject({revision:s.drawing().revision,proposal:{status:'applied',stale:true,statusInstruction:'applied 仅表示历史上曾应用，可能已撤销或继续编辑；当前状态以本次读取的草图为准。'}});
  expect(s.stats().writes).toBe(0);
 });
+
+it('reports only valid effective-scope image dimensions, without exporting or falling back outside focus',async()=>{
+ const status=vi.fn(()=>({all:{stale:false,width:1600,height:800},focus:{stale:false,width:320,height:200}}));
+ const s=await setup({status} as unknown as VisualRepository);
+ expect(await s.read()).toMatchObject({image:{prepared:true,width:1600,height:800}});
+ s.agent.setFocus(owner,{revision:s.drawing().revision,elementIds:['rect']},s.drawing());
+ expect(await s.agent.read(session,{scope:'all'},s.signal)).toMatchObject({scope:'focus',image:{prepared:true,width:320,height:200}});
+ status.mockReturnValue({all:{stale:false,width:1600,height:800},focus:{stale:true,width:320,height:200}});
+ const stale=await s.read();expect(stale).toMatchObject({image:{prepared:false}});if(!('image' in stale))throw new Error('Expected image metadata');expect(stale.image).not.toHaveProperty('width');expect(stale.image).not.toHaveProperty('height');
+ expect(s.stats().writes).toBe(0);
+});
 it('resolves an exact short comment reference in the existing read tool without scene writes',async()=>{
  const s=await setup();await s.agent.annotate(session,s.input(),'ref',s.signal);
  const batch=s.agent.comments.get(owner)!,reference=await commentReference(s.drawing(),batch,'agent',batch.comments[0]!.id),before=canonical(s.drawing()),writes=s.stats().writes;

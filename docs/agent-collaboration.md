@@ -8,6 +8,10 @@
 
 0.3.2 新增用户主动准备的全图/重点原生图片工具，关闭画板后按需可读；本页中“不提供关闭后的 PNG”等描述是 0.3.0 历史边界，当前能力及限制见 [0.3.2 实现说明](submission-v0.3.2.md) 和 [Windows 验收](windows-acceptance-v0.3.2.md)。
 
+## v0.6.0 补充
+
+摘要的 `image.width/height` 仅描述当前 revision、实际读取 scope 的有效缓存；重点生效时不回退全图尺寸。结构不携带外观样式，外观判断需要当前视觉依据（插件 PNG 或用户提供的有效图片），不能从结构猜颜色/字号/描边。`purposeTruncated` 表示用途受到长度或总输出字节预算截断，必要时再按需询问用户；不改永久草稿。
+
 ## 当前实现
 
 - `sketch_read` 通过固定版 DSH 官方 `defineTool()` / `ctx.tools.register()` 接入。会话身份取自 `exec.agent.session.header`，请求不接受模型传入的 sessionId。默认读取宿主已保存快照的紧凑摘要；支持 revision 校验、按真实元素 ID 获取细节和分页。关闭画板不影响结构读取，未保存编辑不属于读取结果。

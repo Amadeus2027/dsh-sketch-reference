@@ -265,7 +265,7 @@ async function rebuildNpmCorpus(packages) {
       const target = corpusPackagePath(pkg, source.fileName);
       await mkdir(dirname(target), { recursive: true });
       await writeFile(target, normalizedText);
-      copiedFiles.push(relative(licensesRoot, target));
+      copiedFiles.push(relative(licensesRoot, target).replaceAll('\\', '/'));
     }
     rows.push({ ...pkg, license: licenseInfo.license, licenseFiles: copiedFiles, note: licenseInfo.note });
   }

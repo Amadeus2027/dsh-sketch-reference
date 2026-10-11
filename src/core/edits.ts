@@ -5,11 +5,19 @@ import {SCENE_LIMITS} from './limits.ts';
 export const EDIT_LIMITS=Object.freeze({operations:20,bytes:16*1024,coordinate:100000,text:500,records:500,storageBytes:128*1024*1024});
 const coordinate=z.number().min(-EDIT_LIMITS.coordinate).max(EDIT_LIMITS.coordinate);
 const size=z.number().positive().max(EDIT_LIMITS.coordinate);
+const span=z.number().min(0).max(EDIT_LIMITS.coordinate);
+const arrowPoints=z.tuple([z.tuple([coordinate,coordinate]),z.tuple([coordinate,coordinate])]);
 const id=z.string().min(1).max(256);
 const label=(max:number)=>z.string().refine(v=>!!v.trim()&&!v.includes('\0')&&Array.from(v).length<=max);
 export const editOperationSchema=z.discriminatedUnion('op',[
- z.object({op:z.literal('create'),type:z.enum(['rectangle','ellipse','diamond','text','arrow']),x:coordinate,y:coordinate,width:size,height:size,text:label(EDIT_LIMITS.text).optional()}).strict().superRefine((v,ctx)=>{
+ z.object({op:z.literal('create'),type:z.enum(['rectangle','ellipse','diamond','text','arrow']),x:coordinate,y:coordinate,width:span,height:span,text:label(EDIT_LIMITS.text).optional(),points:arrowPoints.optional()}).strict().superRefine((v,ctx)=>{
   if((v.type==='text')!==!!v.text)ctx.addIssue({code:'custom',message:'只有 text 图形必须提供 text；文字尺寸由 Excalidraw 计算'});
+  if(v.type!=='arrow'){
+   if(v.points||v.width===0||v.height===0)ctx.addIssue({code:'custom',message:'仅箭头接受 points 或单个零跨度；其他图形尺寸必须为正'});
+  }else{
+   const [start,end]=v.points??[[0,0],[v.width,v.height]];
+   if(start[0]!==0||start[1]!==0||Math.abs(end[0])!==v.width||Math.abs(end[1])!==v.height||v.width+v.height===0||Math.abs(v.x+end[0])>EDIT_LIMITS.coordinate||Math.abs(v.y+end[1])>EDIT_LIMITS.coordinate)ctx.addIssue({code:'custom',message:'箭头 points 为 [[0,0],[dx,dy]]，绝对跨度须与 width/height 一致，不能为零长度或越界'});
+  }
  }),
  z.object({op:z.literal('move'),elementId:id,x:coordinate,y:coordinate}).strict(),
  z.object({op:z.literal('resize'),elementId:id,width:size,height:size}).strict(),
@@ -52,7 +60,13 @@ export function validateOperations(scene:Drawing['scene'],operations:EditOperati
  const restrictions=editRestrictions(scene);
  let additions=0;
  for(const op of operations){
-  if(op.op==='create'){if(op.type==='text'&&/[\r\t]/.test(op.text??''))throw new SketchError('UNSUPPORTED_EDIT','新增文字请使用普通换行和空格，当前不接受回车或制表符',422);additions++;continue;}
+  if(op.op==='create'){
+   if(op.type==='text'&&/[\r\t]/.test(op.text??''))throw new SketchError('UNSUPPORTED_EDIT','新增文字请使用普通换行和空格，当前不接受回车或制表符',422);
+   // 0.18.1 insets each nonzero axis by 0.5 at both ends; <=1 collapses/reverses it.
+   // Keep stored proposal schema compatible, but refuse these before admission/apply.
+   if(op.type==='arrow'&&[op.width,op.height].some(n=>n>0&&n<=1))throw new SketchError('UNSUPPORTED_EDIT','箭头每个非零跨度必须大于 1 个场景单位；水平或竖直的另一跨度可为 0',422);
+   additions++;continue;
+  }
   const e=live.get(op.elementId);
   if(!e)throw new SketchError('ELEMENT_NOT_FOUND','目标不存在或已删除，请重新读取草图',409);
   if(restrictions.has(e.id))throw new SketchError('UNSUPPORTED_EDIT','首版不修改锁定、绑定或分组元素，请手动调整',409);
@@ -86,9 +100,11 @@ export function validateEditScene(proposal:EditProposal,scene:Drawing['scene']){
   else if(e.width!==op.width||e.height!==op.height)throw new SketchError('INVALID_EDIT','新增尺寸不符合提议');
   // The public 0.18.1 converter can inset arrow endpoints by half a pixel.
   // Validate its bounded result rather than overriding native geometry.
+  // Exact zero axes and signed deltas are measured on 0.18.1; re-test on upgrade.
   if(op.type==='arrow'){
    const points=e.points;
-   if(!points||points.length!==2||Math.abs(points[0]![0])>1||Math.abs(points[0]![1])>1||Math.abs(points[1]![0]-op.width)>1||Math.abs(points[1]![1]-op.height)>1||e.endArrowhead!=='arrow'||e.startArrowhead!==null||e.elbowed)throw new SketchError('INVALID_EDIT','新增箭头不符合提议');
+   const expected=op.points??[[0,0],[op.width,op.height]];
+   if(!points||points.length!==2||points.some((p,i)=>p.some((n,j)=>Math.abs(n-expected[i]![j]!)>1))||[0,1].some(j=>Math.sign(points[1]![j]!-points[0]![j]!)!==Math.sign(expected[1]![j]!)||expected[1]![j]===0&&(points[0]![j]!==0||points[1]![j]!==0))||e.endArrowhead!=='arrow'||e.startArrowhead!==null||e.elbowed)throw new SketchError('INVALID_EDIT','新增箭头不符合提议');
   }
   const allowed=new Set(['id','type','x','y','width','height','angle','strokeColor','backgroundColor','fillStyle','strokeWidth','strokeStyle','roughness','opacity','groupIds','frameId','roundness','seed','version','versionNonce','isDeleted','boundElements','updated','link','locked','index',...(op.type==='text'?['text','originalText','containerId','fontSize','fontFamily','textAlign','verticalAlign','autoResize','lineHeight']:op.type==='arrow'?['points','lastCommittedPoint','startBinding','endBinding','startArrowhead','endArrowhead','elbowed','fixedSegments','startIsSpecial','endIsSpecial']:[])]);
   if(Object.keys(e).some(k=>!allowed.has(k)))throw new SketchError('INVALID_EDIT','新增图形包含未提议的字段');
