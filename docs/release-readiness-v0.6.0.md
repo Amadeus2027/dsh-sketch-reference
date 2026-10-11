@@ -91,8 +91,8 @@ Windows重新生成许可清单发现路径反斜线引发纯格式漂移；生�
 | 新方向安装实测 / DS更新源码复审 | 通过 |
 | 原生布局A/B、实时主题、窄屏、安装升级重启 | 长会话分栏、干净官方安装的实时深色、禁用/重启/重新启用及一次升级保留草稿通过；实际390窄屏未覆盖 |
 | 压力、缓存、异常恢复 | 250/1950元素、平移缩放重开、缓存版本通过；长时泄漏等未覆盖 |
-| bundle/pack、许可、RC干净安装 | 通过；813个包条目，无node_modules、test-results、AGENTS或私有状态；247运行包许可、250许可文件及9字体族 |
-| GitHub Actions / PR | 随PR核查，不用历史CI代替 |
+| bundle/pack、许可、RC干净安装 | 通过；首次验包813条目，最终补入深色截图后814；无node_modules、test-results、AGENTS或私有状态；247运行包许可、250许可文件及9字体族。最终包421个运行时文件与安装实测版本逐文件一致 |
+| GitHub Actions / PR | [草稿PR #14](https://github.com/Amadeus2027/dsh-sketch-reference/pull/14)；[本轮CI](https://github.com/Amadeus2027/dsh-sketch-reference/actions/runs/38100012289)类型检查、测试、构建、打包及产物上传通过；后续文档提交的状态以PR当前检查为准 |
 
 2026-10-11续作时临时盘和测试进程已退出；恢复映射及AppContainer后浏览器连接仍阻断，因此未追加模型请求来重做既有验收。批注插入保留文字、不自动发送已有本轮实证；带选区及待发送PNG的最新复测尚未完成，不能只靠历史通过记为本版实测。
 
