@@ -1,6 +1,6 @@
 import type { Context } from '@deepseek-ai/cordis';
 import type {} from '@deepseek-ai/dsh-llm';
-import type {} from '@deepseek-ai/dsh-attachment';
+import type {ImageAttachmentRef} from '@deepseek-ai/dsh-attachment';
 import {z} from 'zod';
 import { adviceSchema,anchorSchema,SketchError,type Route,type Advice,type Drawing,type AnalysisMode } from '../core/contracts.ts';
 import {describeScene} from '../core/comments.ts';
@@ -35,10 +35,11 @@ export function parseAdvice(raw:string,elements:readonly {id:string}[]=[]):Advic
  });
  return adviceSchema.parse({...parsed.data,suggestions});
 }
-export async function generateAdvice(ctx:Context,route:Route,png:Uint8Array,goal:string,signal:AbortSignal,scene:Drawing['scene']={elements:[],appState:{},files:{}},inputMode:AnalysisMode='hybrid'):Promise<Advice> {
+export async function generateAdvice(ctx:Context,route:Route,png:Uint8Array,goal:string,signal:AbortSignal,scene:Drawing['scene']={elements:[],appState:{},files:{}},inputMode:AnalysisMode='hybrid',onImage?:(image:ImageAttachmentRef)=>void):Promise<Advice> {
  const info=await checkRoute(ctx,route,signal,inputMode!=='structure');
  signal.throwIfAborted();const structure=describeScene(scene);
  const image=inputMode==='structure'?null:await ctx.attachments.saveImage({data:png,mediaType:'image/png',name:'sketch-reference.png'});
+ if(image)onImage?.(image);
  signal.throwIfAborted();
  const texts=new Map<number,string>(); let bytes=0; let stopped=false;
  const off=info.reasoning?.efforts.find(e=>e.id==='off');

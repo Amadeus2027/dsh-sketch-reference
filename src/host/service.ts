@@ -21,6 +21,7 @@ import {AgentEvents} from './agent-events.ts';
 import {proposalSchema,proposalActionSchema,applyEditSchema,type EditProposal} from '../core/edits.ts';
 import {EditRepository} from './edit-repository.ts';
 import {VisualRepository} from './visual-repository.ts';
+import {imageValue} from './image-reference.ts';
 import {visualRecordSchema,visualPrepareSchema,type VisualRecord} from '../core/visual.ts';
 import type {} from '@deepseek-ai/dsh-tools';
 export interface Config { adviceDeadlineMs:number }
@@ -185,13 +186,14 @@ export class SketchService extends Service {
    if(this.times.size>500) for(const [k,v] of this.times){if(v.every(t=>Date.now()-t>60000))this.times.delete(k);}
    const combined=AbortSignal.any([signal,AbortSignal.timeout(this.config.adviceDeadlineMs)]);
    try {
-    const advice=await generateAdvice(this.ctx,input.route,png,drawing.goal,combined,drawing.scene,input.inputMode);
+    let analysisImage:Batch['analysisImage'];
+    const advice=await generateAdvice(this.ctx,input.route,png,drawing.goal,combined,drawing.scene,input.inputMode,image=>{analysisImage=imageValue(image);});
     await check();combined.throwIfAborted();
     const current=async()=>{
      await check();combined.throwIfAborted();
      if(this.repository.get(owner)?.revision!==drawing.revision)throw new SketchError('REVISION_CONFLICT','分析期间草图已修改，请重新分析',409);
     };
-    const batch:Batch={id:randomUUID(),owner,analysisRevision:drawing.revision,inputMode:input.inputMode,contentDigest:drawing.contentDigest,goal:drawing.goal,route:input.route,advice,createdAt:new Date().toISOString()};
+    const batch:Batch={id:randomUUID(),owner,analysisRevision:drawing.revision,inputMode:input.inputMode,...(analysisImage?{analysisImage}:{}),contentDigest:drawing.contentDigest,goal:drawing.goal,route:input.route,advice,createdAt:new Date().toISOString()};
     return await this.advice.put(batch,current);
    }catch(error){
     // Chromium can transparently retry POST responses with 408. Upstream model

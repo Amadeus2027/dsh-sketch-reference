@@ -3,8 +3,8 @@ import type {KvTable} from '@deepseek-ai/dsh-storage-domain';
 import {randomUUID} from 'node:crypto';
 import {Repository} from '../src/host/repository.ts';
 import {EditRepository} from '../src/host/edit-repository.ts';
-import {proposeEditSchema,proposalSchema,validateOperations,validateEditScene,createdElementId,type EditProposal,type EditOperation} from '../src/core/edits.ts';
-import {canonical,type Drawing,type Owner} from '../src/core/contracts.ts';
+import {EDIT_LIMITS,proposeEditSchema,proposalSchema,validateOperations,validateEditScene,createdElementId,type EditProposal,type EditOperation} from '../src/core/edits.ts';
+import {canonical,ownerKey,type Drawing,type Owner} from '../src/core/contracts.ts';
 import {Autosave} from '../src/editor/autosave.ts';
 import {requestBodyLimit,SCENE_LIMITS,RPC_LIMITS} from '../src/core/limits.ts';
 import type {JsonValue} from '../src/core/scene.ts';
@@ -135,4 +135,16 @@ it('rejects native-collapsing arrow spans before storing, while keeping legacy r
  expect(s.edits.get(owner)).toBeNull();expect(s.drawings.get(owner)).toEqual(s.drawing);
  const p=await s.edits.propose(owner,s.input([{op:'create',type:'arrow',x:0,y:0,width:1.5,height:0}]),'native-safe',s.check);
  expect(proposalSchema.safeParse({...p,operations:[{op:'create',type:'arrow',x:0,y:0,width:0.5,height:0}]}).success).toBe(true);
+});
+it('checks growing confirmation and dismissal receipts before writing or changing a drawing',async()=>{
+ const s=await setup(),p=await s.proposal(),pendingBytes=Buffer.byteLength(JSON.stringify(p));
+ // A synthetic historical record fills the remaining quota exactly. The actual
+ // repository admission and byte calculation are exercised, not mocked away.
+ const padding='x'.repeat(EDIT_LIMITS.storageBytes-pendingBytes-2);
+ s.store.rows.set('history',{toJSON:()=>padding} as unknown as EditProposal);
+ const scene=structuredClone(p.before);Object.assign(scene.elements[0]!,{x:60,y:80});
+ await expect(s.edits.apply(owner,p.id,scene,s.check)).rejects.toMatchObject({code:'STORAGE_FULL'});
+ await expect(s.edits.dismiss(owner,p.id,s.check)).rejects.toMatchObject({code:'STORAGE_FULL'});
+ expect(s.drawings.get(owner)).toEqual(s.drawing);expect(s.store.rows.get(ownerKey(owner))?.status).toBe('pending');
+ s.store.rows.delete('history');await expect(s.edits.apply(owner,p.id,scene,s.check)).resolves.toMatchObject({mutationId:p.id});
 });

@@ -28,7 +28,7 @@ export function describeScene(scene:Drawing['scene']) {
  const encoder=new TextEncoder();let bytes=2;
  for(const e of active){
   if(elements.length>=ANALYSIS_LIMITS.maxElements)break;
-  const item={id:e.id,type:e.type,x:e.x,y:e.y,width:e.width,height:e.height,angle:e.angle??0,...linearGeometry(e),...(e.type==='text'?{text:Array.from(e.text??'').slice(0,ANALYSIS_LIMITS.maxElementTextChars).join(''),...(e.containerId?{containerId:e.containerId}:{})}:{})};
+  const item={id:e.id,type:e.type,x:e.x,y:e.y,width:e.width,height:e.height,angle:e.angle??0,...linearGeometry(e),...(e.type==='text'?{text:Array.from(e.text??'').slice(0,ANALYSIS_LIMITS.maxSummaryTextChars).join(''),...(e.containerId?{containerId:e.containerId}:{})}:{})};
   const size=encoder.encode(JSON.stringify(item)).length+(elements.length?1:0);
   if(bytes+size>ANALYSIS_LIMITS.maxStructureBytes)break;
   elements.push(item);bytes+=size;
