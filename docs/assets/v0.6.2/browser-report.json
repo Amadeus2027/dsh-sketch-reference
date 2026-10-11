@@ -1,0 +1,150 @@
+{
+  "realModel": false,
+  "viewports": [
+    {
+      "width": 1280,
+      "height": 720,
+      "card": {
+        "height": 74,
+        "width": 320
+      },
+      "selectedStyle": {
+        "outline": "none",
+        "shadow": "rgb(15, 17, 21) 2px 0px 0px 0px inset",
+        "border": "rgba(0, 0, 0, 0.12)"
+      },
+      "trigger": {
+        "width": 26,
+        "height": 24,
+        "font": "17px",
+        "whiteSpace": "normal"
+      },
+      "marker": {
+        "text": "1",
+        "fontStyle": "normal",
+        "font": "system-ui, -apple-system, \"Segoe UI\", sans-serif",
+        "width": 26
+      },
+      "markerColors": [
+        {
+          "active": true,
+          "background": "rgb(15, 17, 21)",
+          "color": "rgb(255, 255, 255)"
+        },
+        {
+          "active": false,
+          "background": "color(srgb 0.905882 0.906667 0.908235)",
+          "color": "rgb(15, 17, 21)"
+        },
+        {
+          "active": false,
+          "background": "color(srgb 0.905882 0.906667 0.908235)",
+          "color": "rgb(15, 17, 21)"
+        }
+      ],
+      "disclosure": {
+        "border": "solid",
+        "background": "rgb(255, 255, 255)"
+      },
+      "header": {
+        "disclosureTop": 93,
+        "refreshTop": 94,
+        "right": 584,
+        "headerRight": 584
+      }
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "card": {
+        "height": 74,
+        "width": 320
+      },
+      "selectedStyle": {
+        "outline": "none",
+        "shadow": "rgb(15, 17, 21) 2px 0px 0px 0px inset",
+        "border": "rgba(0, 0, 0, 0.12)"
+      },
+      "trigger": {
+        "width": 26,
+        "height": 24,
+        "font": "17px",
+        "whiteSpace": "normal"
+      },
+      "marker": {
+        "text": "1",
+        "fontStyle": "normal",
+        "font": "system-ui, -apple-system, \"Segoe UI\", sans-serif",
+        "width": 26
+      },
+      "markerColors": [
+        {
+          "active": true,
+          "background": "rgb(15, 17, 21)",
+          "color": "rgb(255, 255, 255)"
+        },
+        {
+          "active": false,
+          "background": "color(srgb 0.905882 0.906667 0.908235)",
+          "color": "rgb(15, 17, 21)"
+        },
+        {
+          "active": false,
+          "background": "color(srgb 0.905882 0.906667 0.908235)",
+          "color": "rgb(15, 17, 21)"
+        }
+      ],
+      "disclosure": {
+        "border": "solid",
+        "background": "rgb(255, 255, 255)"
+      },
+      "header": {
+        "disclosureTop": 93,
+        "refreshTop": 94,
+        "right": 968,
+        "headerRight": 968
+      }
+    }
+  ],
+  "actions": [
+    {
+      "action": "追问",
+      "draftPreserved": true,
+      "attachmentPreserved": true,
+      "autoSent": false
+    },
+    {
+      "action": "纠正",
+      "draftPreserved": true,
+      "attachmentPreserved": true,
+      "autoSent": false
+    },
+    {
+      "action": "修改这里",
+      "draftPreserved": true,
+      "attachmentPreserved": true,
+      "autoSent": false
+    }
+  ],
+  "errors": [],
+  "allMarkersAndOffscreenLocation": true,
+  "paging": {
+    "total": 5,
+    "firstPage": 3,
+    "lastPage": 2,
+    "markerSelectsCorrectPage": true,
+    "noSaveOrModel": true
+  },
+  "viewRestored": {
+    "zoom": {
+      "value": 0.65
+    },
+    "scrollX": 37,
+    "scrollY": -89
+  },
+  "viewSessionIsolated": true,
+  "uiNoSaveOrModelOrExport": true,
+  "zeroSuggestionsPersisted": true,
+  "deletedAnchorRejected": true,
+  "closedEventClients": 0
+}

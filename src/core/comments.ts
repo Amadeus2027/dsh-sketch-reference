@@ -13,7 +13,10 @@ export interface CommentRecord {
 export type CommentBatch=Batch&{commentRevision:string;comments:NonNullable<Batch['comments']>};
 /** Pure legacy view: stable IDs and CAS token, without rewriting the stored batch on reads. */
 export function withComments<T extends Pick<CommentRecord,'id'|'createdAt'|'commentRevision'|'comments'|'advice'>>(batch:T):T&{commentRevision:string;comments:NonNullable<Batch['comments']>} {
- return {...batch,commentRevision:batch.commentRevision??batch.id,comments:batch.comments??batch.advice.suggestions.map((_,i)=>({id:batch.id.slice(0,-1)+i.toString(16),suggestionIndex:i,status:'open' as const,createdAt:batch.createdAt}))};
+ // Preserve the original IDs for indices 0–15; carry into the UUID tail for
+ // longer batches instead of appending a second hex digit to a UUID.
+ const tail=BigInt('0x'+batch.id.slice(-12))&~15n;
+ return {...batch,commentRevision:batch.commentRevision??batch.id,comments:batch.comments??batch.advice.suggestions.map((_,i)=>({id:batch.id.slice(0,-12)+((tail+BigInt(i))&0xffffffffffffn).toString(16).padStart(12,'0'),suggestionIndex:i,status:'open' as const,createdAt:batch.createdAt}))};
 }
 export function adviceIsStale(batch:Pick<Batch,'contentDigest'|'goal'>|null,contentDigest:string|null|undefined,goal:string):boolean {
  return !!batch && (batch.contentDigest!==contentDigest || batch.goal!==goal);

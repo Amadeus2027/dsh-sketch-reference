@@ -27,7 +27,8 @@ export function apply(ctx){
    {kind:'improve',title:'统一卡片间距',reason:'保持布局节奏一致。',actionPrompt:'根据所附手绘参考图，统一卡片间距。',anchor:{type:'element',elementId:'not-in-this-analysis'}},
    {kind:'clarify',title:'确认页面用途',reason:'用途决定内容重点。',actionPrompt:'根据所附手绘参考图，先确认页面目标。'},
   ];
-  yield {type:'text-delta',index:0,text:goal?.includes('格式错误')?'{not JSON':JSON.stringify({summary:'模拟布局建议：用于协议与界面测试',suggestions})};
+  if(goal?.includes('多批注分页'))suggestions.push(...['polish-main','polish-side'].map((id,i)=>({kind:'clarify',title:`核对区域${i+4}`,reason:`确认区域${i+4}的职责。`,actionPrompt:`讨论所附手绘参考图区域${i+4}。`,anchor:{type:'element',elementId:id}})));
+  yield {type:'text-delta',index:0,text:goal?.includes('格式错误')?'{not JSON':JSON.stringify(goal?.includes('完整草图无建议')?{summary:'草图已完整表达布局，暂无需要补充的建议。',suggestions:[]}:{summary:'模拟布局建议：用于协议与界面测试',suggestions})};
   yield {type:'finish',reason:{kind:'stop'}};
  };
  ctx.effect(()=>()=>{ctx.llm.stream=original;});

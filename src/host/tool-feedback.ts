@@ -15,7 +15,7 @@ export const editOperationParameters={oneOf:[
 
 const guidance:Record<string,string>={
  sketch_read:'按 ID 读取须同时提供 mode=elements 和摘要 revision；elementIds 为 1–50 个真实 ID。scope=focus 须提供 revision，且不能同时带 elementIds；offset 为 0–2000 的整数。',
- sketch_annotate:'comments 必须为 1–3 条；summary 最多 240、title 最多 60、reason 最多 1000 个 Unicode 字符，均非空且不能含空字符。revision/expectedBatchId 使用摘要中的 UUID；无批次时使用 JSON null。',
+ sketch_annotate:'comments 至少一条，只提出有价值且不重复的批注，整个输入最多 64 KiB；summary 最多 240、title 最多 60、reason 最多 1000 个 Unicode 字符，均非空且不能含空字符。revision/expectedBatchId 使用摘要中的 UUID；无批次时使用 JSON null。',
  sketch_propose_edit:'operations 必须为 1–20 条，总输入不超过 16 KiB；仅提供对应操作的字段。坐标范围 ±100000，尺寸大于 0 且不超过 100000（箭头允许单个零跨度、每个非零跨度必须大于 1）；箭头 points 仅为 [[0,0],[dx,dy]]，绝对跨度与 width/height 一致；summary 最多 240、text 最多 500 个 Unicode 字符且非空。revision/expectedProposalId 使用摘要中的 UUID；无提议时使用 JSON null。',
  sketch_read_image:'revision 使用当前摘要的 UUID；scope 仅为 all 或 focus。',
 };

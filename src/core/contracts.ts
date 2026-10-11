@@ -13,16 +13,16 @@ export const routeSchema = z.object({provider: z.enum(['deepseek-official','deep
 export type Route = z.infer<typeof routeSchema>;
 export const anchorSchema=z.object({type:z.literal('element'),elementId:z.string().min(1).max(256)}).strict();
 export type Anchor=z.infer<typeof anchorSchema>;
-export const adviceSchema = z.object({summary: text(120).refine(v => !!v.trim()), suggestions: z.array(z.object({kind:z.enum(['clarify','improve','create']),title:text(24).refine(v => !!v.trim()),reason:text(100).refine(v => !!v.trim()),actionPrompt:text(500).refine(v => !!v.trim()),anchor:anchorSchema.optional()}).strict()).min(1).max(3)}).strict();
+export const adviceSchema = z.object({summary: text(120).refine(v => !!v.trim()), suggestions: z.array(z.object({kind:z.enum(['clarify','improve','create']),title:text(24).refine(v => !!v.trim()),reason:text(100).refine(v => !!v.trim()),actionPrompt:text(500).refine(v => !!v.trim()),anchor:anchorSchema.optional()}).strict())}).strict();
 export type Advice = z.infer<typeof adviceSchema>;
 export const commentStatusSchema=z.enum(['open','resolved','ignored']);
 export type CommentStatus=z.infer<typeof commentStatusSchema>;
-export const commentSchema=z.object({id:z.uuid(),suggestionIndex:z.number().int().min(0).max(2),status:commentStatusSchema,createdAt:z.string()}).strict();
+export const commentSchema=z.object({id:z.uuid(),suggestionIndex:z.number().int().nonnegative().safe(),status:commentStatusSchema,createdAt:z.string()}).strict();
 export const commentUpdateSchema=z.object({batchId:z.uuid(),expectedRevision:z.uuid(),mutationId:z.uuid(),commentId:z.uuid(),status:commentStatusSchema}).strict();
 export type CommentUpdate=z.infer<typeof commentUpdateSchema>;
 export const analysisModeSchema=z.enum(['image','structure','hybrid']);
 export type AnalysisMode=z.infer<typeof analysisModeSchema>;
-export const batchSchema = z.object({id:z.uuid(),owner:ownerSchema,contentDigest:z.string(),goal:text(2000),route:routeSchema,advice:adviceSchema,createdAt:z.string(),analysisRevision:z.uuid().optional(),inputMode:analysisModeSchema.optional(),analysisImage:imageRefSchema.optional(),commentRevision:z.uuid().optional(),comments:z.array(commentSchema).min(1).max(3).optional(),commentMutation:commentUpdateSchema.optional()}).strict().superRefine((batch,ctx)=>{
+export const batchSchema = z.object({id:z.uuid(),owner:ownerSchema,contentDigest:z.string(),goal:text(2000),route:routeSchema,advice:adviceSchema,createdAt:z.string(),analysisRevision:z.uuid().optional(),inputMode:analysisModeSchema.optional(),analysisImage:imageRefSchema.optional(),commentRevision:z.uuid().optional(),comments:z.array(commentSchema).optional(),commentMutation:commentUpdateSchema.optional()}).strict().superRefine((batch,ctx)=>{
  if(!!batch.comments!==!!batch.commentRevision || (batch.commentMutation&&!batch.comments))ctx.addIssue({code:'custom',message:'Incomplete comment metadata'});
  if(batch.comments && (batch.comments.length!==batch.advice.suggestions.length || new Set(batch.comments.map(c=>c.id)).size!==batch.comments.length || new Set(batch.comments.map(c=>c.suggestionIndex)).size!==batch.comments.length || batch.comments.some(c=>c.suggestionIndex>=batch.advice.suggestions.length)))ctx.addIssue({code:'custom',message:'Comments must match suggestions'});
 });
