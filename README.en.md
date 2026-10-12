@@ -69,7 +69,23 @@ The plugin supplies editable sketches and reference images; **DSH Agent** contin
 
 ## Quick start
 
-**Install with DSH’s official plugin manager.** The package includes the Excalidraw editor and fonts; the official manager installs runtime dependencies.
+**Install from a source ZIP or a prebuilt package.** Both use DSH’s official plugin manager. No separate Excalidraw installation is required.
+
+**Option 1: extract the source ZIP and add the project directory**
+
+Use **[Code → Download ZIP](https://github.com/Amadeus2027/dsh-sketch-reference/archive/refs/heads/main.zip)**, extract it and open the directory containing `package.json`. Install dependencies and build, then add that directory directly; packing a `.tgz` is optional:
+
+```sh
+pnpm install --frozen-lockfile
+pnpm run bundle
+# Save your drawing and exit the running DSH host before adding the directory
+dsh plugin --profile web add "/absolute/path/dsh-sketch-reference-main"
+dsh web
+```
+
+DSH links this directory. Keep it, including `lib` and `node_modules`; rebuild and restart DSH after source updates. Run `add` again if you move to a new directory. [Directory installation and upgrades](docs/installation.md#从源码-zip-目录直接安装)
+
+**Option 2: prebuilt package (no local build)**
 
 - **ZIP download remains available:** open a [successful build](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml), download the `dsh-sketch-reference-installable` ZIP artifact and extract the `.tgz` and `SHA256SUMS.txt`.
 - **Direct download:** get the versioned `.tgz` and checksum file from [Releases](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest).
@@ -80,7 +96,7 @@ Once you have the versioned `.tgz` and its matching `SHA256SUMS.txt`, save your 
 dsh plugin --profile web add /absolute/path/dsh-sketch-reference-0.6.5.tgz
 ```
 
-Run `dsh web` to start. Both download options use the same installation command; no repository clone, separate Excalidraw installation or local build is needed. The source ZIP build option is also retained below.
+Run `dsh web` to start. The prebuilt package includes the editor and fonts; no repository clone, separate Excalidraw installation or local build is needed.
 
 Environment: DSH Web `0.2.1-alpha.1` / `0.2.1-alpha.2`, with pnpm available to the npm CLI manager. Keep your profile, storage and browser data when upgrading. [Installation and upgrades](docs/installation.md)
 
@@ -110,7 +126,7 @@ The UI is Chinese. Models and authentication use your DSH configuration; image r
 <details>
 <summary>Build, validation and licenses</summary>
 
-You can still use **[Code → Download ZIP](https://github.com/Amadeus2027/dsh-sketch-reference/archive/refs/heads/main.zip)** to obtain the source. Extract it and run the commands below in the project directory containing `package.json`, then install the resulting `.tgz` as above. The source ZIP differs from the prebuilt installation ZIP.
+You can add the extracted source directory directly as described above. For the full checks or an optional distributable `.tgz`, run:
 
 ```sh
 pnpm install --frozen-lockfile

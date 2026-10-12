@@ -44,3 +44,13 @@
 最终连续原片 42.42 秒，GIF 42.38 秒；无剪辑、加速、合成 UI、模拟回答或发送消息。录制在无 mock 的实际安装 profile 中完成，自动化输入来源与原片 SHA256 见 [素材记录](assets/v0.6.5/README.md)。不声称命令运行／文件写入或多轮模型对话已拍摄；完整真人／真实 Agent Windows 录像按 [清单](demo-recording-v0.6.5.md)补齐。网页/PPT 真实效果沿用原版本历史证据。
 
 v0.6.5 Windows、真实模型／网络故障／429／超时、非默认工具模式与长期资源检查仍待验收，v0.6.4 的 [Windows 双宿主清单](windows-acceptance-v0.6.4.md)仍可用于基础回归，并补看通知颜色、原生 line/arrow 与安装包来源。未做正式 Release、npm 发布或比赛提交。
+
+## 源码 ZIP 目录安装补验（2026-10-12）
+
+用户要求保留的是源码 ZIP 解压后将项目目录加入 DSH，不是 CI 产物 ZIP。以 main `a3f847876274d84edcbf9f814ce5d92a81dd066e` 的受版本控制文件通过 `git archive --format=zip` 生成全新源码 ZIP，再解压到独立临时目录；初始没有 `lib` 或 `node_modules`。这是源码归档内容与安装流程验证，不是 GitHub ZIP 下载网络测试。
+
+独立目录执行 `pnpm install --frozen-lockfile`、`pnpm run bundle` 与 `pnpm run verify:distribution` 成功，无依赖或源码修改。两版官方 CLI 的 `dsh plugin --profile web add "/源码目录"` 均成功，在各自全新隔离 Web profile 中保存 `link:` 依赖并选择插件；没有先执行 `pnpm pack`，没有版本豁免或手工编辑 profile。源码构建完成后启动 alpha.1、alpha.2，均可正常打开画板。
+
+两版裸官方宿主无模型测试覆盖层。Chromium 的入口/资源检查与 `tests/browser-smoke.mjs` 均通过：中文绘图、保存、PNG 解码和可编辑草稿导出、关闭重开、原生附件、已有输入保留、附件去重、窄屏关闭、匿名请求拒绝及无 CDN 请求。复验按宿主分别保存输出，避免共享测试下载目录。没有模型调用；不替代 Windows、Desktop 或真实模型验收。
+
+源码目录保持链接，因此删除或移动它会使插件失效。中英文 README、安装指南和源码传输说明已明确目录安装及构建/保留/升级要求；预构建 tgz 安装仍保留。
