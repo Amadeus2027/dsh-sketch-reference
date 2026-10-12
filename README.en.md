@@ -4,7 +4,7 @@
 
 ### Sketch it. Discuss it. Keep building in DSH.
 
-[![Release](https://img.shields.io/github/v/release/Amadeus2027/dsh-sketch-reference?label=release&color=4176e6)](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) [![CI](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![Tested DSH](https://img.shields.io/badge/DSH-0.2.1--alpha.1-536DFE)](https://github.com/deepseek-ai/deepseek-harness)
+[![Release](https://img.shields.io/github/v/release/Amadeus2027/dsh-sketch-reference?label=release&color=4176e6)](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) [![CI](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![Tested DSH](https://img.shields.io/badge/DSH-alpha.1_%7C_alpha.2-536DFE)](https://github.com/deepseek-ai/deepseek-harness)
 
 [**Download**](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) · [**Quick start**](#quick-start) · [**中文**](README.md) · [**DeepWiki**](https://deepwiki.com/Amadeus2027/dsh-sketch-reference)
 
@@ -58,20 +58,21 @@ An actual screenshot of the installed release. Comment text comes from a fixed t
 
 ## Quick start
 
-Use Node.js `22.19–22.x` or `24+`, a local browser and a DSH Web profile. The verified baseline is Windows PC, DSH `0.2.1-alpha.1` and Excalidraw `0.18.1`.
+Use Node.js `22.19–22.x` or `24+`, a local browser and a DSH Web profile. v0.6.4 supports DSH Web `0.2.1-alpha.1` and `0.2.1-alpha.2`, with Excalidraw `0.18.1`. Both hosts have isolated cloud functional checks; Windows and real-model acceptance remain on the [checklist](docs/windows-acceptance-v0.6.4.md).
 
-Download `dsh-sketch-reference-0.6.3.tgz` and `SHA256SUMS.txt` from [Releases](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest).
+Download `dsh-sketch-reference-0.6.4.tgz` and `SHA256SUMS.txt` from [Releases](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest).
 
 ```sh
-npm install -g @deepseek-ai/dsh@0.2.1-alpha.1
+npm install -g @deepseek-ai/dsh@0.2.1-alpha.2
+# Existing alpha.1 installations can use the same plugin package.
 # Initialize the official Web profile, then exit the host.
 dsh web
 # Replace with the absolute path to the downloaded package.
-dsh plugin --profile web add /absolute/path/dsh-sketch-reference-0.6.3.tgz
+dsh plugin --profile web add /absolute/path/dsh-sketch-reference-0.6.4.tgz
 dsh web
 ```
 
-Pin the host version shown above. The latest `alpha.2` cannot directly install v0.6.3; users of other versions should read the [compatibility report](https://github.com/Amadeus2027/dsh-sketch-reference/blob/main/docs/dsh-compatibility.md) and preserve their existing DSH data.
+Use alpha.1 or alpha.2. Save and exit the host before upgrading; preserve the existing profile, storage and browser data. No drawing migration or version exemption is needed. The old v0.6.3 package still accepts alpha.1 only; see the [compatibility report](docs/dsh-compatibility.md).
 
 1. Choose a workspace and session, click **参考板** beside the composer, then draw and add a purpose.
 2. Wait for **已保存** and return to native chat. **作为参考发送** optionally adds the PNG to the composer.
@@ -82,13 +83,13 @@ The UI is Chinese. Configure models and authentication inside DSH; image reads n
 <details>
 <summary>Compatibility, data and feature boundaries</summary>
 
-- The fixed verification baseline is Windows PC with DSH alpha.1. Other host versions, mobile clients and every plugin combination are not claimed compatible; new homepage media comes from an isolated Linux environment.
+- v0.6.4 functional checks cover both Web hosts on isolated Linux installations; Windows and real models remain pending. Other host versions, mobile clients, non-default tool modes and every plugin combination are not claimed compatible.
 - Uncertain anchors fall back to text. Models may misread sketches or return invalid arguments; mathematical correctness is not guaranteed. Focus is version-bound and does not restrict other host tools or erase chat history.
 - Canvas edits are allowlisted; arbitrary changes to locked, bound, grouped elements or styles are unsupported. Undo history is not restored across refreshes.
 - Drafts/images live in local DSH storage; model-visible data goes to the configured provider. Historical attachments are not automatically reclaimed. Export backups before upgrading or uninstalling.
 - After a synchronization disconnect, use **⋯ → 同步批注** or reopen. There is no bundled website/PPT generator or automatic drawing-to-code synchronization.
 
-[Host compatibility report](docs/dsh-compatibility.md) · [v0.6.3 validation scope](docs/validation-v0.6.3.md)
+[Host compatibility report](docs/dsh-compatibility.md) · [v0.6.4 validation scope](docs/validation-v0.6.4.md)
 
 </details>
 
@@ -107,7 +108,7 @@ pnpm run bundle
 pnpm pack
 ```
 
-[Contributing](CONTRIBUTING.md) · [v0.6.3 validation](https://github.com/Amadeus2027/dsh-sketch-reference/blob/main/docs/validation-v0.6.3.md) · [Reuse](REUSE.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
+[Contributing](CONTRIBUTING.md) · [v0.6.4 validation](https://github.com/Amadeus2027/dsh-sketch-reference/blob/main/docs/validation-v0.6.4.md) · [Reuse](REUSE.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
 
 [MIT](LICENSE). Drawing is provided by Excalidraw and host capabilities by DeepSeek Harness. This is a community plugin. Third-party licenses remain applicable; real-model evidence and scripted protocol tests are recorded separately.
 

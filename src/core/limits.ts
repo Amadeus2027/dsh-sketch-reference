@@ -30,3 +30,5 @@ export function requestBodyLimit(method: string): number {
   if (method === 'drawing/save' || method === 'proposal/apply') return SCENE_LIMITS.maxSceneBytes + RPC_LIMITS.envelopeBytes;
   return RPC_LIMITS.envelopeBytes;
 }
+// Theme transport stays bounded; alpha.2 expands the computed fallback font list.
+export const APPEARANCE_LIMITS=Object.freeze({colorChars:256,fontFamilyChars:1024});

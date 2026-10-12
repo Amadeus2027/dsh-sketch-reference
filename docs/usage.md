@@ -1,6 +1,8 @@
 # 使用指南
 
-适用环境：Windows PC、DSH 0.2.1-alpha.1、Excalidraw 0.18.1。
+v0.6.4 支持 DSH Web 0.2.1-alpha.1 与 0.2.1-alpha.2，Excalidraw 0.18.1。两版云端实装功能回归见 [验证记录](validation-v0.6.4.md)；Windows／真实模型仍按 [清单](windows-acceptance-v0.6.4.md) 验收。
+
+alpha.2 在同一会话改变有效执行目录时，仍保留原会话画板与存储身份；切换另一会话继续隔离。升级不需要迁移或重建草图存储。
 
 ## 用草图表达网页布局
 
