@@ -2,7 +2,7 @@
 
 # DSH Sketch Reference
 
-### Sketch the idea. Discuss the details. Approve the changes.
+### Sketch it. Discuss it. Keep building in DSH.
 
 [![Release](https://img.shields.io/github/v/release/Amadeus2027/dsh-sketch-reference?label=release&color=4176e6)](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) [![CI](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![Tested DSH](https://img.shields.io/badge/DSH-0.2.1--alpha.1-536DFE)](https://github.com/deepseek-ai/deepseek-harness)
 
@@ -10,51 +10,51 @@
 
 </div>
 
-An editable Excalidraw canvas inside DeepSeek Harness. Let the native Agent read saved structure and images, anchor discussions to shapes, and propose changes for your approval.
+**Draw three boxes instead of describing every layout detail.** Sketch Reference brings Excalidraw into DeepSeek Harness. The native Agent can read your sketch on demand, anchor comments to shapes and propose canvas edits for your approval.
 
-![Current v0.6.3 UI: native chat beside a simple three-region freehand sketch](https://raw.githubusercontent.com/Amadeus2027/dsh-sketch-reference/main/docs/assets/v0.6.3/sketch.png)
+![v0.6.3 workflow: freehand sketch, native PNG attachment, return to chat and reopen](https://raw.githubusercontent.com/Amadeus2027/dsh-sketch-reference/main/docs/assets/v0.6.3/workflow.gif)
 
-*Current UI captured from the published v0.6.3 package: three native freehand outlines and short Chinese labels. No model was called for this canvas screenshot. [Capture provenance](docs/assets/v0.6.3/README.md).*
+*About 20 seconds of actual interaction with the published v0.6.3 package. Three simple freehand regions; no model calls or chat messages sent. [Still image](docs/assets/v0.6.3/sketch.png) · [Capture provenance](docs/assets/v0.6.3/README.md)*
 
-## See the workflow
+## Before and after adding the plugin
 
-**Locate a comment → continue the conversation → review the before/after → approve.**
+The same task: **“Build from this layout, then change this part.”**
 
-> “Build a webpage in this workspace from my sketch.”<br>“You misunderstood this area. Let's discuss it here.”<br>“Show me a preview before changing the drawing.”
-
-| What you want to do | How the plugin helps |
+| Native chat + an ordinary PNG | With Sketch Reference |
 | --- | --- |
-| Express a webpage, UI or slide layout | Native Excalidraw editing, autosave and session-isolated drafts |
-| Discuss the whole drawing or a selection | On-demand saved structure and PNG; explicit selection focus |
-| Point to the part you mean | Element-anchored comments, navigation, follow-ups and corrections in the native composer |
-| Ask for a drawing change | Restricted proposals and aligned before/after previews; apply only after confirmation, then native undo |
-| Keep iterating in the same task | Restore the canvas and viewport; export PNG and editable backups |
+| **Express the layout:** describe it, or draw elsewhere and upload | **Draw in the session:** autosave alongside the current task |
+| **Discuss one area:** describe “the box on the right” or mark another image | **Point to shapes:** anchored comments, navigation and follow-up menus |
+| **Update the reference:** edit the original, export and attach again | **Read on demand:** Agent gets the current saved structure and PNG |
+| **Edit the canvas:** adjust it manually in a drawing tool | **Preview and approve:** Agent proposes → you preview → approve → native undo |
 
-Drawing, hovering, paging and comment synchronization do not trigger model requests. Inserting a follow-up does not send a message automatically.
+DSH already supports image understanding and workspace tools. This compares **communication and editing workflows**, not model quality, latency or token consumption.
+
+## One sketch, three ways to collaborate
+
+- **Draw and ask.** Use native chat: “Build a webpage from the current sketch.” Standalone AI analysis is optional.
+- **Point and discuss.** Ask the Agent to annotate an area. Follow-up, correction and edit actions draft a message in the native composer; you edit and send it.
+- **Preview and approve.** Restricted tools propose canvas changes with aligned before/after previews. Stale proposals cannot overwrite a newer sketch.
+
+Drawings and comments are session-bound. Drawing, hovering and paging do not call a model. No extra AI service or separate key configuration is introduced.
 
 <details>
 <summary>See the current comment menu</summary>
 
-![Compact v0.6.3 comment strip, anchor and follow-up menu](https://raw.githubusercontent.com/Amadeus2027/dsh-sketch-reference/main/docs/assets/v0.6.3/comments.png)
+![Compact v0.6.3 comment strip, shape anchor and follow-up menu](https://raw.githubusercontent.com/Amadeus2027/dsh-sketch-reference/main/docs/assets/v0.6.3/comments.png)
 
-*An actual screenshot of the installed release. Comment text comes from a fixed test response to demonstrate the follow-up, correction and edit menu; it is not a new real DeepSeek result.*
+An actual screenshot of the installed release. Comment text comes from a fixed test response to demonstrate interaction; it is not a new real DeepSeek result.
 
 </details>
 
-## Real examples
+## What you can build with it
 
-Historical real-model records cover webpages, UI and slides, with follow-up corrections in the same DSH conversation. Generated applications and older plugin screenshots remain in the linked evidence reports, separate from the current plugin UI.
-
-| Verified example | Evidence |
+| Use case | Keep iterating in the same conversation |
 | --- | --- |
-| Operations dashboard | HTML/CSS/JS, navigation, order search, dark theme and corrections |
-| Three-screen UI | Login, tasks and settings; corrected save/return behavior |
-| Editable slides | Five-page PPTX with 24 native shapes; corrected page 3 layout, other four rendered pages unchanged |
-| Freehand discussion | An unlabeled cup sketch read as a real image in native chat |
+| Web / UI | Sketch → implement → correct search, navigation and return behavior. [Dashboard and three-screen UI](docs/release-readiness-v0.6.0.md#b-真实应用与纠正) |
+| Slides | Sketch regions → create editable slides → adjust a specific page. [Five-page PPTX and focused correction](docs/release-readiness-v0.6.0.md#b-真实应用与纠正) |
+| Freehand | Draw an object or diagram → discuss the image → clarify. [Unlabeled cup and collaboration](docs/windows-validation-v0.4.0-20261010.md) |
 
-[Web / UI / PPT evidence](https://github.com/Amadeus2027/dsh-sketch-reference/blob/main/docs/release-readiness-v0.6.0.md#b-真实应用与纠正) · [Freehand and collaboration evidence](https://github.com/Amadeus2027/dsh-sketch-reference/blob/main/docs/windows-validation-v0.4.0-20261010.md)
-
-These are individual examples, not a quality guarantee. **DSH Agent workspace tools produce the webpages, UI and slides. The plugin supplies editable visual context; it does not bundle a website/PPT generator or automatically synchronize drawings with application code.**
+**DSH Agent** creates the webpages, UI and slides; the plugin supplies editable visual context. Older UI in these reports remains historical evidence. Individual examples do not guarantee results for every drawing.
 
 ## Quick start
 
@@ -73,27 +73,28 @@ dsh web
 
 Pin the host version shown above. The latest `alpha.2` cannot directly install v0.6.3; users of other versions should read the [compatibility report](https://github.com/Amadeus2027/dsh-sketch-reference/blob/main/docs/dsh-compatibility.md) and preserve their existing DSH data.
 
-1. Select a workspace, create a session and click **参考板** beside the composer.
-2. Draw, add useful labels/purpose and wait for **已保存**.
-3. Return to native chat and ask about the sketch. There is no required analysis step.
-4. Ask for comments when useful; use **追问 / 纠正 / 修改这里** to draft a follow-up, then send it yourself.
-5. Inspect the edit proposal and approve explicitly before changing the canvas.
+1. Choose a workspace and session, click **参考板** beside the composer, then draw and add a purpose.
+2. Wait for **已保存** and return to native chat. **作为参考发送** optionally adds the PNG to the composer.
+3. Discuss, annotate or request a change. Review and approve canvas edits; send chat messages yourself.
 
-The UI is Chinese. **AI 分析草图** is an optional standalone analysis entry; ordinary questions and development use the native Agent. Configure a model inside DSH; image reads require image input support. No additional AI API, key or authentication layer is introduced. Without a model, drawing, saving and exports remain available.
+The UI is Chinese. Configure models and authentication inside DSH; image reads need image input support. Without a model, drawing, saving and exports still work. See the [usage guide (Chinese)](docs/usage.md).
 
-## Boundaries
+<details>
+<summary>Compatibility, data and feature boundaries</summary>
 
-- Models can misread drawings or return invalid tool arguments. Corrections and explicit retries remain necessary; mathematical correctness is not guaranteed.
-- Focus is version-bound and must be reset after changes. It does not erase chat history or restrict other host tools.
-- Edit operations are allowlisted; arbitrary style, locked, bound or grouped elements are not supported. Undo history is not restored across refreshes.
-- Drafts/images live in local DSH storage; model-visible data goes to your configured provider. Historical attachments are not automatically reclaimed by the plugin.
-- After a synchronization disconnect, use **⋯ → 同步批注** or reopen the board. Other host versions, platforms, mobile clients and all plugin combinations are not claimed compatible.
+- The fixed verification baseline is Windows PC with DSH alpha.1. Other host versions, mobile clients and every plugin combination are not claimed compatible; new homepage media comes from an isolated Linux environment.
+- Uncertain anchors fall back to text. Models may misread sketches or return invalid arguments; mathematical correctness is not guaranteed. Focus is version-bound and does not restrict other host tools or erase chat history.
+- Canvas edits are allowlisted; arbitrary changes to locked, bound, grouped elements or styles are unsupported. Undo history is not restored across refreshes.
+- Drafts/images live in local DSH storage; model-visible data goes to the configured provider. Historical attachments are not automatically reclaimed. Export backups before upgrading or uninstalling.
+- After a synchronization disconnect, use **⋯ → 同步批注** or reopen. There is no bundled website/PPT generator or automatic drawing-to-code synchronization.
 
-See the [usage guide (Chinese)](docs/usage.md) for focus, recovery and removal. Back up sketches before upgrading or uninstalling.
+[Host compatibility report](docs/dsh-compatibility.md) · [v0.6.3 validation scope](docs/validation-v0.6.3.md)
 
-## Join in
+</details>
 
-If editable visual collaboration fits your workflow, **star the repository** to follow updates. [Issues and ideas](https://github.com/Amadeus2027/dsh-sketch-reference/issues) with sanitized sketches and reproducible steps are welcome. Never upload keys, login links or private conversations.
+## Help improve visual collaboration
+
+**Star the repository** to follow updates if you want DSH to keep working with the same sketch. [Share issues and use cases](https://github.com/Amadeus2027/dsh-sketch-reference/issues) with sanitized drawings and reproducible steps. Never upload keys, login links or private conversations.
 
 <details>
 <summary>Build, validation and licenses</summary>
