@@ -21,7 +21,10 @@ jobs:
       - run: pnpm test
       - run: pnpm run bundle
       - run: pnpm pack
+      - run: sha256sum *.tgz > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
           name: dsh-sketch-reference-installable
-          path: '*.tgz'
+          path: |
+            *.tgz
+            SHA256SUMS.txt

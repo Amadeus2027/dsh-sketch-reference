@@ -1,0 +1,42 @@
+# 安装与发行
+
+## 用户安装
+
+插件编辑器、React 绘图运行代码、Excalidraw 和九个字体族都在预构建 tgz 里。**不要单独安装 Excalidraw，也不用克隆仓库或运行构建。** 仅宿主 Zod 依赖由 DSH 官方插件管理器按声明解析安装；不增加模型服务或独立密钥。
+
+使用 DSH Web `0.2.1-alpha.1` / `0.2.1-alpha.2` 和可用的官方插件管理器。已保存并退出宿主后：
+
+```sh
+dsh plugin --profile web add /绝对路径/dsh-sketch-reference-0.6.5.tgz
+dsh web
+```
+
+第一条命令一次安装插件与声明的运行依赖，第二条只是启动宿主。保留原有 profile、存储与浏览器数据；不要使用版本豁免或删除草稿。Windows 可将路径写为带引号的完整文件名，包含空格的路径始终加引号。
+
+DSH npm CLI 两个固定版本本身会调用 pnpm。仅有 Node 和 CLI、PATH 没有 pnpm 时，官方命令会以 127 失败；这是实测的宿主前置。插件尚未安装时无法替宿主启动它自己的安装器，不能据此承诺所有 DSH 分发形式完全没有包管理器前置。若宿主提示 pnpm 不存在，按官方宿主说明补齐，不另装 Excalidraw。不要把已安装开发依赖的验证环境当成“完全没有包管理器”的证明。
+
+## 来源与校验
+
+- **正式发布**：从 GitHub Releases 下载版本化 `.tgz` 与同次构建的 `SHA256SUMS.txt`。不要安装 Source code ZIP。
+- **候选版**：在对应 PR 的成功 CI 页面下载 `dsh-sketch-reference-installable`，解压后取 tgz 和校验清单。尚未正式发布时，不使用不存在的 npm 包名或 Release URL。
+- CI 和本地 pack 可能具有不同归档元数据，校验必须与实际下载来源的清单配对，不能拿另一包的 SHA256 套用。
+
+DSH 官方插件管理器也接收 tgz URL；正式 v0.6.5 Release 的资产存在后可用：
+
+```sh
+dsh plugin --profile web add https://github.com/Amadeus2027/dsh-sketch-reference/releases/download/v0.6.5/dsh-sketch-reference-0.6.5.tgz
+```
+
+HTTP URL 依赖安装已在本地隔离服务器验证；这不是未发布 GitHub URL 的下载通过证明。安装过程中保留 pnpm 的输出；网络或兼容检查失败时不宣称已安装。
+
+## 发布者检查
+
+`pnpm run bundle` 构建预编译编辑器并复制字体、保留许可证。`pnpm pack` 的 prepack 必须通过 `build/check-distribution.mjs`：检查宿主和客户端入口、编辑器 JS/CSS、字体与许可，拒绝残缺包，不在用户安装时执行构建。此检查可直接针对解开的 tgz 目录复验：
+
+```sh
+node build/check-distribution.mjs /路径/解包后的package
+```
+
+CI 执行 frozen install、typecheck、单测、bundle、pack，自动生成与 tgz 配对的 SHA256 清单并上传产物。正式发布时，把这两个文件作为同一次构建的资产上传；发布后再核对默认 URL 安装。当前没有 npm 发布凭据或新版本 Release 上传完成记录，不能把文档命令当成正式发布。
+
+卸载前保存并退出宿主：`dsh plugin --profile web remove dsh-sketch-reference`。卸载不会主动清空草稿或宿主附件，也不作热卸载保证。
