@@ -12,6 +12,10 @@ export class SceneUpdates {
  constructor(private apply:(elements:readonly Element[],state:Record<string,unknown>)=>void){}
  accept(elements:readonly Element[],state:Record<string,unknown>):boolean {
   if(this.closed)return false;
+  // Public Excalidraw draft state can briefly contain a single-point line.
+  // Keep the last complete snapshot until that gesture becomes persistable.
+  const draft=state.newElement??state.multiElement;
+  if(draft&&typeof draft==='object'&&'type' in draft&&(draft.type==='line'||draft.type==='arrow')&&'points' in draft&&Array.isArray(draft.points)&&draft.points.length<2)return false;
   const retained=Object.fromEntries(['gridSize','gridStep','gridModeEnabled'].filter(k=>state[k]!==undefined).map(k=>[k,state[k]])),signature=JSON.stringify(retained);
   const versions=elements.map(e=>`${e.id}:${e.version}:${e.versionNonce}:${e.isDeleted}`);
   if(signature===this.state&&elements.length===this.previous.length&&elements.every((e,i)=>e===this.previous[i]&&versions[i]===this.versions[i]))return false;

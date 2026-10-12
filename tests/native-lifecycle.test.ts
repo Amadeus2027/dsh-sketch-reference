@@ -23,6 +23,15 @@ it('flushes the latest coalesced snapshot on teardown and accepts same-version r
  vi.useFakeTimers();const apply=vi.fn(),updates=new SceneUpdates(apply),element={id:'a',version:1};
  updates.accept([element],{});updates.flush();expect(updates.accept([{...element}],{})).toBe(true);updates.dispose();expect(apply).toHaveBeenCalledTimes(2);expect(updates.accept([],{})).toBe(false);expect(vi.getTimerCount()).toBe(0);
 });
+it('defers only the public in-progress single-point line/arrow draft, then flushes its completed gesture',()=>{
+ vi.useFakeTimers();const apply=vi.fn(),updates=new SceneUpdates(apply),existing={id:'saved',version:1},draft={id:'new',version:1};
+ updates.accept([existing],{});updates.flush();
+ for(const type of ['line','arrow'])for(const key of ['newElement','multiElement'])expect(updates.accept([existing,draft],{[key]:{type,points:[[0,0]]}})).toBe(false);
+ vi.advanceTimersByTime(1000);expect(apply).toHaveBeenCalledTimes(1);
+ expect(updates.accept([existing,draft],{newElement:{type:'line',points:[[0,0],[50,0]]}})).toBe(true);updates.flush();expect(apply).toHaveBeenCalledTimes(2);
+ // Malformed non-draft input still reaches strict scene validation.
+ expect(updates.accept([{...draft,version:2}],{newElement:null,multiElement:null})).toBe(true);updates.dispose();expect(apply).toHaveBeenCalledTimes(3);
+});
 it('finishes newer edits after an in-flight save when navigating away',async()=>{
  const requests:Save[]=[];let finish!:(value:Drawing)=>void;
  const save=async(input:Save)=>{requests.push(input);const record={formatVersion:1,owner,revision:crypto.randomUUID(),mutationId:input.mutationId,sceneDigest:'s',contentDigest:'c',scene:input.scene,goal:input.goal,updatedAt:'now'} as Drawing;

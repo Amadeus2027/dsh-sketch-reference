@@ -3,7 +3,7 @@ export async function prepareHost(page,url){
  await page.goto(url);
  for(let i=0;i<5;i++){
   await page.waitForTimeout(300);
-  for(const name of ['Continue','Configure later']){const b=page.getByRole('button',{name,exact:true});if(await b.isVisible().catch(()=>false))await b.click();}
+  for(const name of ['Continue','Configure later']){const b=page.getByRole('button',{name,exact:true});if(await b.isVisible().catch(()=>false)&&await b.isEnabled().catch(()=>false))await b.click({timeout:2000}).catch(async error=>{if(await b.isVisible().catch(()=>false)&&await b.isEnabled().catch(()=>false))throw error;});}
  }
  const choose=page.getByRole('button',{name:'Choose workspace',exact:true});
  if(await choose.isVisible()){

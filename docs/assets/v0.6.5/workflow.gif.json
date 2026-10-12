@@ -1,0 +1,15 @@
+{
+  "sourceSha256": "53bb07ad3a4250ec158b7cb8538674099dacd2aa7bfcbc488641044924f3b014",
+  "sourceDurationSeconds": 42.416667,
+  "playbackSpeed": 1,
+  "fps": 8,
+  "maxWidth": 1040,
+  "transformations": [
+    "downscale",
+    "frame resampling",
+    "palette quantization"
+  ],
+  "cuts": 0,
+  "syntheticFrames": 0,
+  "modelEvidence": "Must be documented separately; conversion does not prove real model execution."
+}

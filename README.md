@@ -2,7 +2,7 @@
 
 # DSH Sketch Reference
 
-### 画出想法，在 DSH 里接着做。
+### 草图留在会话里，DSH Agent 接着完成任务。
 
 [![Release](https://img.shields.io/github/v/release/Amadeus2027/dsh-sketch-reference?label=release&color=4176e6)](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) [![CI](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![Tested DSH](https://img.shields.io/badge/DSH-alpha.1_%7C_alpha.2-536DFE)](https://github.com/deepseek-ai/deepseek-harness) [![Ask DeepWiki](https://img.shields.io/badge/DeepWiki-Ask-20B8A5.svg)](https://deepwiki.com/Amadeus2027/dsh-sketch-reference)
 
@@ -10,11 +10,13 @@
 
 </div>
 
-**用三个框表达布局，在原生聊天里继续讨论和实现。** Sketch Reference 把 Excalidraw 接入 DeepSeek Harness，让 Agent 按需读取草图、定位批注、提出修改；画板修改先预览，再由你确认。
+**画布局、讨论细节、在工作区实现。** Sketch Reference 把 Excalidraw 接入 DeepSeek Harness，让 Agent 按需读取草图、定位批注、提出修改；画板修改先预览，再由你确认。
 
-![v0.6.3 操作演示：手绘三个区域、加入原生附件、返回聊天并重开草图](https://raw.githubusercontent.com/Amadeus2027/dsh-sketch-reference/main/docs/assets/v0.6.3/workflow.gif)
+![v0.6.5 画板操作录屏：Excalidraw 手绘风格布局、撤销重画、PNG 附件与返回聊天](docs/assets/v0.6.5/workflow.gif)
 
-*约 20 秒 · 正式 v0.6.3 实际操作录像 · 三个简单手绘框。演示未调用模型、未发送聊天消息。[静态截图](docs/assets/v0.6.3/sketch.png) · [素材来源](docs/assets/v0.6.3/README.md)*
+*连续屏幕录制，保留系统鼠标、原生绘画、修改与保存等待。自动化输入，无模型调用或伪造回答。[静态截图](docs/assets/v0.6.5/sketch.png) · [素材来源](docs/assets/v0.6.5/README.md)*
+
+完整真人／真实 DeepSeek 多轮开发录像待 Windows 录制；已有真实网页与 PPT 案例见下方。普通原生聊天可以使用 DSH 正常的命令和文件工具，插件不把 Agent 限制为画板分析。
 
 ## 使用前与使用后
 
@@ -38,11 +40,11 @@ DSH 原本就能理解图片、调用工作区工具。这张表对比的是**�
 草图与批注按会话保存。绘图、悬停、翻页不会触发模型；没有额外 AI 服务或独立密钥配置。
 
 <details>
-<summary>看看当前批注菜单</summary>
+<summary>历史批注菜单示例（v0.6.3）</summary>
 
 ![v0.6.3 的紧凑批注栏、图形锚点与追问菜单](https://raw.githubusercontent.com/Amadeus2027/dsh-sketch-reference/main/docs/assets/v0.6.3/comments.png)
 
-当前安装包的真实界面截图；批注文字来自固定测试响应，仅展示交互，不是新的真实 DeepSeek 结果。
+v0.6.3 真实界面截图；批注文字来自固定测试响应，仅展示菜单交互，不是本次版本或真实 DeepSeek 演示。
 
 </details>
 
@@ -58,23 +60,19 @@ DSH 原本就能理解图片、调用工作区工具。这张表对比的是**�
 
 ## 快速开始
 
-需要 Node.js `22.19–22.x` 或 `24+`、本地浏览器和 DSH Web profile。v0.6.4 支持 DSH Web `0.2.1-alpha.1` 与 `0.2.1-alpha.2`，Excalidraw `0.18.1`。两版云端实装验证已记录，Windows／真实模型按 [清单](docs/windows-acceptance-v0.6.4.md) 继续验收。
+**已安装受支持的 DSH？不需要再装 Excalidraw。** 编辑器、React 绘图运行代码和字体随插件包提供；其余声明的运行依赖交给 DSH 官方插件管理器安装。
 
-### 1. 安装固定宿主与插件
+### 1. 官方管理器一次安装
 
-从 [Releases](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) 下载 `dsh-sketch-reference-0.6.4.tgz` 和 `SHA256SUMS.txt`。
+下载对应版本的 `.tgz` 和同包 `SHA256SUMS.txt`，等待草图保存并退出宿主，然后执行：
 
 ```sh
-npm install -g @deepseek-ai/dsh@0.2.1-alpha.2
-# 已有 alpha.1 也可继续使用同一个插件包
-# 首次运行初始化 Web profile，随后退出宿主
-dsh web
-# 使用下载包的绝对路径；不要安装到终端 profile
-dsh plugin --profile web add /绝对路径/dsh-sketch-reference-0.6.4.tgz
-dsh web
+dsh plugin --profile web add /绝对路径/dsh-sketch-reference-0.6.5.tgz
 ```
 
-请使用 alpha.1 或 alpha.2。升级插件前等待保存并退出宿主，保留原 profile、存储与浏览器数据；无需迁移草图或启用版本豁免。旧 v0.6.3 仍只接受 alpha.1，其他宿主版本见 [兼容说明](docs/dsh-compatibility.md)。
+重新运行 `dsh web`。无需克隆源码、单独安装 Excalidraw 或手动构建。**0.6.5 发布前从 [CI 产物](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml) 获取候选包，正式发布后从 [Releases](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) 下载。** 不把 Source code ZIP 当成插件包。
+
+支持 DSH Web `0.2.1-alpha.1` / `0.2.1-alpha.2`。保留原 profile、存储和浏览器数据，无需迁移草稿或启用版本豁免。npm CLI 版 DSH 自身的管理器要求可用 pnpm；这属于宿主环境，不是 Excalidraw 前置安装。检查宿主前置、URL 安装与升级见 [安装指南](docs/installation.md)。
 
 ### 2. 从一张简单草图开始
 
@@ -87,13 +85,13 @@ dsh web
 <details>
 <summary>兼容性、数据与功能边界</summary>
 
-- v0.6.4 两版 Web 宿主功能回归来自 Linux 隔离环境；Windows／真实模型仍需验收。其他宿主版本、移动端、非默认工具模式和所有插件组合不作兼容承诺。
+- v0.6.5 两版 Web 宿主功能回归来自 Linux 隔离环境；Windows／真实模型仍需验收。其他宿主版本、移动端、非默认工具模式和所有插件组合不作兼容承诺。
 - 无法可靠定位时保留文字建议，不猜测位置。模型可能误读草图或返回无效参数；数学正确性无保证。重点按版本绑定，不限制其他宿主工具或清除聊天历史。
 - 画板修改受图形白名单限制，不任意修改锁定、绑定、成组元素或样式；跨刷新撤销历史不保证恢复。
 - 草稿与图片在本地 DSH 存储；模型读取时发送至已配置的服务。历史附件尚无自动回收机制；升级／卸载前请导出草图备份。
 - 同步断线后用 **「⋯ → 同步批注」** 或重开画板。没有内置网页／PPT 生成器，也没有草图与代码自动双向绑定。
 
-[宿主兼容报告](docs/dsh-compatibility.md) · [v0.6.4 验证范围](docs/validation-v0.6.4.md)
+[宿主兼容报告](docs/dsh-compatibility.md) · [v0.6.5 验证范围](docs/validation-v0.6.5.md)
 
 </details>
 
@@ -112,7 +110,7 @@ pnpm run bundle
 pnpm pack
 ```
 
-[贡献流程](CONTRIBUTING.md) · [0.6.4 验证记录](https://github.com/Amadeus2027/dsh-sketch-reference/blob/main/docs/validation-v0.6.4.md) · [复用说明](REUSE.md) · [第三方许可](THIRD_PARTY_NOTICES.md)
+[贡献流程](CONTRIBUTING.md) · [0.6.5 验证记录](docs/validation-v0.6.5.md) · [复用说明](REUSE.md) · [第三方许可](THIRD_PARTY_NOTICES.md)
 
 插件采用 [MIT](LICENSE)，绘图能力来自 Excalidraw，宿主能力来自 DeepSeek Harness。这是社区插件；第三方软件遵循各自许可证。实际模型验证与固定响应的协议测试分别记录，不将测试次数写成生成质量或 Token 节省证明。
 

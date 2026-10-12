@@ -1,8 +1,10 @@
 # 使用指南
 
-v0.6.4 支持 DSH Web 0.2.1-alpha.1 与 0.2.1-alpha.2，Excalidraw 0.18.1。两版云端实装功能回归见 [验证记录](validation-v0.6.4.md)；Windows／真实模型仍按 [清单](windows-acceptance-v0.6.4.md) 验收。
+v0.6.5 支持 DSH Web 0.2.1-alpha.1 与 0.2.1-alpha.2，Excalidraw 0.18.1。两版云端实装功能回归见 [验证记录](validation-v0.6.5.md)；Windows／真实模型仍按 [清单](windows-acceptance-v0.6.4.md) 验收。
 
 alpha.2 在同一会话改变有效执行目录时，仍保留原会话画板与存储身份；切换另一会话继续隔离。升级不需要迁移或重建草图存储。
+
+安装只需官方管理器添加预构建 tgz；不需要单独安装 Excalidraw。来源、宿主前置与校验见 [安装指南](installation.md)。
 
 ## 用草图表达网页布局
 

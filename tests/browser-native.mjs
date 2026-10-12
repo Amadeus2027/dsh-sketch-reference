@@ -26,6 +26,15 @@ try{
  await button.click();await page.locator('iframe[title="手绘参考板"]').waitFor({state:'detached'});
  assert(await originalInput.evaluate(node=>node===document.querySelector('[contenteditable=true]')));assert.equal(await input.innerText(),'原生化验收：保留输入与光标。');
  await button.click();frame=await editorFrame(page);await ready();assert.equal(await frame.getByLabel('这张图准备用来做什么？').inputValue(),'快速关闭仍保存');
+ // Real native gestures publish a transient one-point draft before movement.
+ await frame.locator('.excalidraw').click({position:{x:200,y:280}});const drawingBox=await frame.locator('.excalidraw').boundingBox();assert(drawingBox);
+ for(const key of ['l','a']){
+  await page.keyboard.press(key);const y=drawingBox.y+(key==='l'?280:350);await page.mouse.move(drawingBox.x+200,y);await page.mouse.down();await page.waitForTimeout(250);
+  assert.equal(await frame.locator('.notice').filter({hasText:'elements require at least two points'}).count(),0);
+  await page.mouse.move(drawingBox.x+320,y,{steps:12});await page.mouse.up();await frame.getByRole('status').filter({hasText:'已保存'}).waitFor();
+  const drawn=(await load()).drawing.scene.elements.find(e=>e.type===(key==='l'?'line':'arrow'));assert(drawn&&drawn.points.length>=2);
+  assert.equal(await frame.locator('.notice').filter({hasText:'elements require at least two points'}).count(),0);
+ }
  await frame.evaluate(()=>window.__sketchEditor().updateScene({elements:[{id:'native-test',type:'rectangle',x:80,y:120,width:200,height:100,angle:0,strokeColor:'#1e1e1e',backgroundColor:'transparent',fillStyle:'solid',strokeWidth:1,strokeStyle:'solid',roughness:1,opacity:100,groupIds:[],frameId:null,roundness:null,seed:1,isDeleted:false,boundElements:null,updated:1,link:null,locked:false,version:1,versionNonce:1}]}));await page.waitForTimeout(1000);await frame.getByRole('status').filter({hasText:'已保存'}).waitFor();
  const before=await load();
  for(const theme of ['dark','light']){

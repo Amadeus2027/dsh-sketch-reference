@@ -61,10 +61,15 @@ try{
  assert.equal(await frame.evaluate(()=>window.__sketchMetrics.rasterizations),syncRaster);
  await topMenu.click();await frame.getByRole('button',{name:'清除选区重点',exact:true}).click();
  const notice=frame.locator('.notice.info').filter({hasText:'选区重点已清除。'});await notice.waitFor();
+ const assertBlue=async locator=>{
+  const colors=await locator.evaluate(n=>{const actual=getComputedStyle(n).color,probe=document.createElement('span');probe.style.cssText='display:none;color:var(--sketch-blue)';n.append(probe);const expected=getComputedStyle(probe).color;probe.remove();return {actual,expected,background:getComputedStyle(n).backgroundColor};});
+  assert.equal(colors.actual,colors.expected,'Every notice state must retain the native DeepSeek blue');return colors;
+ };
  const blue=await notice.evaluate(n=>({color:getComputedStyle(n).color,blue:getComputedStyle(document.documentElement).getPropertyValue('--sketch-blue').trim(),background:getComputedStyle(n).backgroundColor}));
  assert.equal(blue.blue,'#4176e6');assert.equal(blue.color,'rgb(65, 118, 230)');
  await topMenu.click();await frame.getByRole('button',{name:'选区作为重点',exact:true}).click();
- await frame.locator('.notice:not(.info)[role=alert]').filter({hasText:'请先使用画板原生选择或框选工具选中图形'}).waitFor();
+ const warning=frame.locator('.notice:not(.info)[role=alert]').filter({hasText:'请先使用画板原生选择或框选工具选中图形'});await warning.waitFor();
+ const warningBlue=await assertBlue(warning);await warning.hover();assert.deepEqual(await assertBlue(warning),warningBlue);
  await topMenu.click();await frame.getByRole('button',{name:'清除选区重点',exact:true}).click();await notice.waitFor();
  const refBlue=await referenceStyle();assert.deepEqual(refBlue,{color:'rgb(255, 255, 255)',background:'rgb(65, 118, 230)'},'Open reference button remains blue');
  const baseline=await frame.locator('header>div').evaluate(n=>getComputedStyle(n).alignItems);assert.equal(baseline,'baseline');
@@ -76,7 +81,7 @@ try{
  await page.screenshot({path:out+'/v063-light.png'});
  await hostContext(page,'theme','dark');await frame.waitForFunction(()=>document.documentElement.dataset.theme==='dark');
  const nativeDarkBlue=await page.evaluate(()=>{const hex=getComputedStyle(document.body).getPropertyValue('--dsw-alias-button-info-fill').trim();return `rgb(${[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)).join(', ')})`;});
- assert(await notice.isVisible());assert.deepEqual(await referenceStyle(),{color:'rgb(255, 255, 255)',background:nativeDarkBlue});await page.screenshot({path:out+'/v063-dark.png'});
+ assert(await notice.isVisible());await assertBlue(notice);assert.deepEqual(await referenceStyle(),{color:'rgb(255, 255, 255)',background:nativeDarkBlue});await page.screenshot({path:out+'/v063-dark.png'});
  await hostContext(page,'theme','light');await frame.waitForFunction(()=>document.documentElement.dataset.theme==='light');
  report.v063={catalog,syncWithoutModelSaveOrExport:true,blue,referenceButton:refBlue,baseline,nativeSearch:true};
  const settled=await stats();const rasterBefore=await frame.evaluate(()=>window.__sketchMetrics.rasterizations);
@@ -85,6 +90,7 @@ try{
   await title(1).click();await frame.getByText('保持布局节奏一致。',{exact:true}).waitFor();
   assert.equal(await frame.getByText('保持布局节奏一致。',{exact:true}).count(),1,'Global comment must remain readable on canvas');
   await title(0).click();await title(0).hover();assert.equal(await frame.locator('.commentHighlight').count(),1);
+  await assertBlue(notice);
   const selectedStyle=await frame.locator('.commentCard.active').evaluate(n=>{const s=getComputedStyle(n);return {outline:s.outlineStyle,shadow:s.boxShadow,border:s.borderTopColor};});
   assert.equal(selectedStyle.outline,'none');assert(selectedStyle.shadow.includes('inset'),'Selection should stay inside the card');
   const layout=await frame.locator('.commentPopover').evaluate(n=>{const r=n.getBoundingClientRect();return {height:r.height,width:r.width};});
@@ -153,7 +159,7 @@ try{
  await frame.getByRole('status').filter({hasText:'已保存'}).waitFor();
  await frame.getByLabel('这张图准备用来做什么？').fill('完整草图无建议');await frame.getByRole('status').filter({hasText:'已保存'}).waitFor();const intact=(await load()).drawing;
  await frame.getByRole('button',{name:'重新分析草图',exact:true}).click();await frame.getByText('草图已完整表达布局，暂无需要补充的建议。',{exact:true}).waitFor();
- assert.equal(await frame.locator('.commentCard').count(),0);assert.equal(await toolbar().count(),0);await expect(frame.locator('.commentMarker')).toHaveCount(0);
+ assert.equal(await frame.locator('.commentCard').count(),0);assert.equal(await toolbar().count(),0);await expect(frame.locator('.commentMarker')).toHaveCount(0);await assertBlue(frame.locator('.commentEmpty'));
  assert.equal((await load()).drawing.revision,intact.revision);assert.deepEqual((await load()).latestAdvice.advice.suggestions,[]);
  const beforeView=await stats(),viewRaster=await frame.evaluate(()=>window.__sketchMetrics.rasterizations);
  const view={zoom:{value:.65},scrollX:37,scrollY:-89};await frame.evaluate(view=>window.__sketchEditor().updateScene({appState:view}),view);await page.waitForTimeout(1000);
@@ -168,6 +174,6 @@ try{
  await hostContext(page,'theme','light');await frame.getByRole('button',{name:'返回聊天 ×',exact:true}).click();await page.locator('iframe[title="手绘参考板"]').waitFor({state:'detached'});
  await page.waitForFunction(async()=>{const s=await (await fetch('/sketch-reference-test-agent-stats')).json();return s.eventClients===0;});
  const final=await stats();assert.equal(final.analysis.calls.length-settled.analysis.calls.length,2);assert.equal(final.agent.calls.length,nativeCalls);
- assert.equal(final.agent.eventClients,0);report.uiNoSaveOrModelOrExport=true;report.zeroSuggestionsPersisted=true;report.deletedAnchorRejected=true;report.closedEventClients=final.agent.eventClients;
+ assert.equal(final.agent.eventClients,0);report.uiNoSaveOrModelOrExport=true;report.zeroSuggestionsPersisted=true;report.deletedAnchorRejected=true;report.closedEventClients=final.agent.eventClients;report.noticeBlue={normal:true,warning:true,hover:true,selection:true,dark:true,emptySummary:true};
  assert.deepEqual(report.errors,[]);await writeFile(`${out}/report.json`,JSON.stringify(report,null,2));console.log('PASS: comment density, compact native popover actions, global/anchored detail, upright markers, 2 PC viewports, keyboard, status lifecycle, draft+PNG preservation, three native discussion actions, zero-suggestion persistence, no background model/export/save, and event cleanup. No real model judgment tested.');
 }catch(error){if(page){await page.screenshot({path:`${out}/failure.png`}).catch(()=>{});await writeFile(`${out}/failure.json`,JSON.stringify({error:String(error),pageErrors:report.errors,frames:await Promise.all(page.frames().map(f=>f.evaluate(()=>({path:location.pathname,hasInspector:typeof window.__sketchEditor==='function',hasBoard:!!document.querySelector('main.board')})).catch(()=>null)))},null,2));}throw error;}finally{await browser.close();}
