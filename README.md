@@ -71,15 +71,18 @@ v0.6.3 菜单示例，批注为演示用固定样例。[素材说明](docs/asset
 
 **通过官方管理器，一条命令安装。** Excalidraw 编辑器和字体随包提供，运行依赖由官方插件管理器安装。
 
-### 1. 官方管理器一次安装
+### 1. 下载与安装（保留 ZIP 方式）
 
-下载对应版本的 `.tgz` 和同包 `SHA256SUMS.txt`，等待草图保存并退出宿主，然后执行：
+- **ZIP 下载**：进入 [成功的构建记录](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml)，下载页面底部的 `dsh-sketch-reference-installable` ZIP，解压得到 `.tgz` 和 `SHA256SUMS.txt`。
+- **直接下载**：从 [正式发行](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) 获取对应版本的 `.tgz` 和校验清单。
+
+取得对应版本的 `.tgz` 和同包 `SHA256SUMS.txt` 后，等待草图保存并退出宿主，然后执行：
 
 ```sh
 dsh plugin --profile web add /绝对路径/dsh-sketch-reference-0.6.5.tgz
 ```
 
-运行 `dsh web` 即可使用。[0.6.5 构建包](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml) · [正式发行](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest)。安装文件为 `.tgz`，无需克隆源码、另装 Excalidraw 或手动构建。
+运行 `dsh web` 即可使用。两种下载方式使用同一安装命令，无需克隆源码、另装 Excalidraw 或手动构建。源码 ZIP 的构建方式也保留，见下方「从源码构建」。
 
 环境：DSH Web `0.2.1-alpha.1` / `0.2.1-alpha.2`，npm CLI 管理器可调用 pnpm。升级保留原 profile、存储与浏览器数据。[安装与升级指南](docs/installation.md)
 
@@ -110,6 +113,8 @@ dsh plugin --profile web add /绝对路径/dsh-sketch-reference-0.6.5.tgz
 
 <details>
 <summary>从源码构建、验证记录与开源许可</summary>
+
+仍可使用 **[Code → Download ZIP](https://github.com/Amadeus2027/dsh-sketch-reference/archive/refs/heads/main.zip)** 获取源码。解压后，在含 `package.json` 的项目目录运行以下命令；生成的 `.tgz` 按上方方法安装。源码 ZIP 与预构建安装包 ZIP 用途不同。
 
 ```sh
 pnpm install --frozen-lockfile

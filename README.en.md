@@ -71,13 +71,16 @@ The plugin supplies editable sketches and reference images; **DSH Agent** contin
 
 **Install with DSH’s official plugin manager.** The package includes the Excalidraw editor and fonts; the official manager installs runtime dependencies.
 
-Download the versioned `.tgz` and its matching `SHA256SUMS.txt`, save your work and exit the host, then run:
+- **ZIP download remains available:** open a [successful build](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml), download the `dsh-sketch-reference-installable` ZIP artifact and extract the `.tgz` and `SHA256SUMS.txt`.
+- **Direct download:** get the versioned `.tgz` and checksum file from [Releases](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest).
+
+Once you have the versioned `.tgz` and its matching `SHA256SUMS.txt`, save your work and exit the host, then run:
 
 ```sh
 dsh plugin --profile web add /absolute/path/dsh-sketch-reference-0.6.5.tgz
 ```
 
-Run `dsh web` to start. [v0.6.5 builds](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml) · [Releases](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest). Install the `.tgz`; no repository clone, separate Excalidraw installation or local build is needed.
+Run `dsh web` to start. Both download options use the same installation command; no repository clone, separate Excalidraw installation or local build is needed. The source ZIP build option is also retained below.
 
 Environment: DSH Web `0.2.1-alpha.1` / `0.2.1-alpha.2`, with pnpm available to the npm CLI manager. Keep your profile, storage and browser data when upgrading. [Installation and upgrades](docs/installation.md)
 
@@ -106,6 +109,8 @@ The UI is Chinese. Models and authentication use your DSH configuration; image r
 
 <details>
 <summary>Build, validation and licenses</summary>
+
+You can still use **[Code → Download ZIP](https://github.com/Amadeus2027/dsh-sketch-reference/archive/refs/heads/main.zip)** to obtain the source. Extract it and run the commands below in the project directory containing `package.json`, then install the resulting `.tgz` as above. The source ZIP differs from the prebuilt installation ZIP.
 
 ```sh
 pnpm install --frozen-lockfile

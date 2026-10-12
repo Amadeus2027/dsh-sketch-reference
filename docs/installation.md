@@ -17,8 +17,10 @@ DSH npm CLI 两个固定版本本身会调用 pnpm。仅有 Node 和 CLI、PATH 
 
 ## 来源与校验
 
-- **正式发布**：从 GitHub Releases 下载版本化 `.tgz` 与同次构建的 `SHA256SUMS.txt`。不要安装 Source code ZIP。
-- **候选版**：在对应 PR 的成功 CI 页面下载 `dsh-sketch-reference-installable`，解压后取 tgz 和校验清单。尚未正式发布时，不使用不存在的 npm 包名或 Release URL。
+- **ZIP 方式保留**：在对应版本提交或 PR 的成功 CI 页面，下载 Artifacts 下的 `dsh-sketch-reference-installable` ZIP。解压后得到 `.tgz` 和同次构建的 `SHA256SUMS.txt`，再按上方命令安装 `.tgz`。这是预构建包，无需构建源码或另装 Excalidraw；下载 CI artifact 通常需要登录 GitHub，过期产物需选择仍有效的构建。
+- **正式发布直接下载**：从 GitHub Releases 下载版本化 `.tgz` 与同次构建的 `SHA256SUMS.txt`，使用相同安装命令。
+- **源码 ZIP 方式也保留**：通过仓库 Code → Download ZIP 或 Release 的 Source code ZIP 下载源码。解压后按下方步骤构建，不直接将源码 ZIP 交给安装命令。
+- 尚未正式发布时，不使用不存在的 npm 包名或 Release URL。
 - CI 和本地 pack 可能具有不同归档元数据，校验必须与实际下载来源的清单配对，不能拿另一包的 SHA256 套用。
 
 DSH 官方插件管理器也接收 tgz URL；正式 v0.6.5 Release 的资产存在后可用：
@@ -28,6 +30,20 @@ dsh plugin --profile web add https://github.com/Amadeus2027/dsh-sketch-reference
 ```
 
 HTTP URL 依赖安装已在本地隔离服务器验证；这不是未发布 GitHub URL 的下载通过证明。安装过程中保留 pnpm 的输出；网络或兼容检查失败时不宣称已安装。
+
+## 从源码 ZIP 构建安装
+
+下载 [main 源码 ZIP](https://github.com/Amadeus2027/dsh-sketch-reference/archive/refs/heads/main.zip)，或在对应 Release 下载固定版本源码 ZIP。解压并进入包含 `package.json` 的项目目录，再运行：
+
+```sh
+pnpm install --frozen-lockfile
+pnpm run typecheck
+pnpm test
+pnpm run bundle
+pnpm pack
+```
+
+把生成的 `.tgz` 交给上方 DSH 官方插件管理器安装。此方式需要源码构建环境；Excalidraw 作为项目依赖由 `pnpm install` 获取，不要求提前单独安装。`main` ZIP 随开发更新，需要复现固定版本时选用对应 tag 或提交的源码。
 
 ## 发布者检查
 
