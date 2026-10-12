@@ -10,13 +10,22 @@
 
 </div>
 
-**Draw three boxes instead of describing every layout detail.** Sketch Reference brings Excalidraw into DeepSeek Harness. The native Agent can read your sketch on demand, anchor comments to shapes and propose canvas edits for your approval.
+**Sketch, discuss and build in your workspace.** Sketch Reference brings Excalidraw into DeepSeek Harness. The native Agent can read your sketch on demand, anchor comments to shapes and propose canvas edits for your approval.
 
 ![v0.6.5 canvas recording: native sketch-style layout, undo and redraw, PNG attachment, back to chat](docs/assets/v0.6.5/workflow.gif)
 
-*Continuous screen capture with the system cursor, native drawing, edits and save waits. Automated inputs; no model calls or fabricated answers. [Still image](docs/assets/v0.6.5/sketch.png) · [Provenance](docs/assets/v0.6.5/README.md)*
+*Sketch → adjust the layout → add a reference → return to chat. [Still image](docs/assets/v0.6.5/sketch.png)*
 
-A human-operated, real DeepSeek multi-turn development video is pending Windows recording. Existing real website and PPT cases are linked below. Normal DSH chat retains its command and file tools; the plugin does not restrict the Agent to canvas analysis.
+<details>
+<summary>Demo and case notes</summary>
+
+The v0.6.5 canvas recording uses automated inputs and shows drawing, saving, PNG attachments and returning to chat. It contains no model calls or sent chat messages. [Recording provenance](docs/assets/v0.6.5/README.md)
+
+Website, UI and PPT cases come from real DSH Agent experiments at the versions documented in their linked reports. A human-operated, real DeepSeek multi-turn development recording is still pending Windows capture. [Recording checklist](docs/demo-recording-v0.6.5.md)
+
+The comparison below covers sketch communication and editing workflows; model quality, latency and token use were not measured comparatively.
+
+</details>
 
 ## Before and after adding the plugin
 
@@ -29,7 +38,7 @@ The same task: **“Build from this layout, then change this part.”**
 | **Update the reference:** edit the original, export and attach again | **Read on demand:** Agent gets the current saved structure and PNG |
 | **Edit the canvas:** adjust it manually in a drawing tool | **Preview and approve:** Agent proposes → you preview → approve → native undo |
 
-DSH already supports image understanding and workspace tools. This compares **communication and editing workflows**, not model quality, latency or token consumption.
+Bring sketching, focused discussions and reviewed edits into DSH’s native chat and workspace tools.
 
 ## One sketch, three ways to collaborate
 
@@ -40,11 +49,11 @@ DSH already supports image understanding and workspace tools. This compares **co
 Drawings and comments are session-bound. Drawing, hovering and paging do not call a model. No extra AI service or separate key configuration is introduced.
 
 <details>
-<summary>Historical comment menu (v0.6.3)</summary>
+<summary>Comments and follow-up menu</summary>
 
 ![Compact v0.6.3 comment strip, shape anchor and follow-up menu](https://raw.githubusercontent.com/Amadeus2027/dsh-sketch-reference/main/docs/assets/v0.6.3/comments.png)
 
-An actual screenshot of the installed release. Comment text comes from a fixed test response to demonstrate interaction; it is not a new real DeepSeek result.
+v0.6.3 menu example with scripted sample comments. [Asset notes](docs/assets/v0.6.3/README.md)
 
 </details>
 
@@ -56,11 +65,11 @@ An actual screenshot of the installed release. Comment text comes from a fixed t
 | Slides | Sketch regions → create editable slides → adjust a specific page. [Five-page PPTX and focused correction](docs/release-readiness-v0.6.0.md#b-真实应用与纠正) |
 | Freehand | Draw an object or diagram → discuss the image → clarify. [Unlabeled cup and collaboration](docs/windows-validation-v0.4.0-20261010.md) |
 
-**DSH Agent** creates the webpages, UI and slides; the plugin supplies editable visual context. Older UI in these reports remains historical evidence. Individual examples do not guarantee results for every drawing.
+The plugin supplies editable sketches and reference images; **DSH Agent** continues building webpages, UI and slides in the workspace.
 
 ## Quick start
 
-**DSH already installed? No separate Excalidraw installation.** The package includes the editor, its React drawing runtime and fonts; DSH’s official manager installs declared host dependencies.
+**Install with DSH’s official plugin manager.** The package includes the Excalidraw editor and fonts; the official manager installs runtime dependencies.
 
 Download the versioned `.tgz` and its matching `SHA256SUMS.txt`, save your work and exit the host, then run:
 
@@ -68,15 +77,15 @@ Download the versioned `.tgz` and its matching `SHA256SUMS.txt`, save your work 
 dsh plugin --profile web add /absolute/path/dsh-sketch-reference-0.6.5.tgz
 ```
 
-Restart with `dsh web`. No repository clone, separate Excalidraw install or user-side build. Before v0.6.5 is published, obtain the candidate from [CI artifacts](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml); published packages live in [Releases](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest). A source ZIP is not an installable plugin.
+Run `dsh web` to start. [v0.6.5 builds](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml) · [Releases](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest). Install the `.tgz`; no repository clone, separate Excalidraw installation or local build is needed.
 
-Supports DSH Web `0.2.1-alpha.1` / `0.2.1-alpha.2`. Keep your profile, storage and browser data; no drawing migration or version exemption. The npm CLI host’s manager itself requires pnpm; that is a host prerequisite, not a separate Excalidraw requirement. See the [installation guide](docs/installation.md).
+Environment: DSH Web `0.2.1-alpha.1` / `0.2.1-alpha.2`, with pnpm available to the npm CLI manager. Keep your profile, storage and browser data when upgrading. [Installation and upgrades](docs/installation.md)
 
 1. Choose a workspace and session, click **参考板** beside the composer, then draw and add a purpose.
 2. Wait for **已保存** and return to native chat. **作为参考发送** optionally adds the PNG to the composer.
 3. Discuss, annotate or request a change. Review and approve canvas edits; send chat messages yourself.
 
-The UI is Chinese. Configure models and authentication inside DSH; image reads need image input support. Without a model, drawing, saving and exports still work. See the [usage guide (Chinese)](docs/usage.md).
+The UI is Chinese. Models and authentication use your DSH configuration; image reads require visual input support. Drawing, saving and exports work independently. [Usage guide](docs/usage.md)
 
 <details>
 <summary>Compatibility, data and feature boundaries</summary>
@@ -93,7 +102,7 @@ The UI is Chinese. Configure models and authentication inside DSH; image reads n
 
 ## Help improve visual collaboration
 
-**Star the repository** to follow updates if you want DSH to keep working with the same sketch. [Share issues and use cases](https://github.com/Amadeus2027/dsh-sketch-reference/issues) with sanitized drawings and reproducible steps. Never upload keys, login links or private conversations.
+**Star the repository** to follow updates if you want DSH to keep working with the same sketch. [Share issues and use cases](https://github.com/Amadeus2027/dsh-sketch-reference/issues) with sanitized drawings and reproducible steps.
 
 <details>
 <summary>Build, validation and licenses</summary>
@@ -108,6 +117,6 @@ pnpm pack
 
 [Contributing](CONTRIBUTING.md) · [v0.6.5 validation](docs/validation-v0.6.5.md) · [Reuse](REUSE.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
 
-[MIT](LICENSE). Drawing is provided by Excalidraw and host capabilities by DeepSeek Harness. This is a community plugin. Third-party licenses remain applicable; real-model evidence and scripted protocol tests are recorded separately.
+Community plugin under [MIT](LICENSE), with drawing from Excalidraw and host capabilities from DeepSeek Harness. See the linked third-party licenses and validation records.
 
 </details>
