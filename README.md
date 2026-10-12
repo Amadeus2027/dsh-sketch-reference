@@ -12,9 +12,9 @@
 
 Sketch Reference 把 **Excalidraw 可编辑画板接入 DSH 原生会话**：画出想法，让 Agent 按需读取图片与图形，把讨论锚定到具体位置。修改先预览，再由你确认。
 
-![真实 DeepSeek 原生对话与草图修改前后预览](https://raw.githubusercontent.com/Amadeus2027/dsh-sketch-reference/main/docs/screenshots/v0.4.0/edit-comparison.jpg)
+![v0.6.3 当前界面：原生聊天与三个简单手绘区域](https://raw.githubusercontent.com/Amadeus2027/dsh-sketch-reference/main/docs/assets/v0.6.3/sketch.png)
 
-*Windows / 官方 DeepSeek 的 v0.4.0 实机记录，展示真实修改提议；不是设计稿或脚本模型输出。当前界面已进一步压缩批注区、加入分页和菜单，见 [v0.6.3 更新](docs/release-v0.6.3.md)。*
+*v0.6.3 正式发布包的当前界面：三个原生自由笔迹框、少量中文标注，画板与原生聊天并排。此画板截图未调用模型；[拍摄来源](docs/assets/v0.6.3/README.md)。*
 
 ## 看一次完整协作
 
@@ -32,13 +32,20 @@ Sketch Reference 把 **Excalidraw 可编辑画板接入 DSH 原生会话**：画
 
 绘图、悬停、翻页、同步批注都不会自动调用模型；从批注插入文字也不会自动发送聊天消息。
 
+<details>
+<summary>展开查看当前批注菜单</summary>
+
+![v0.6.3 的紧凑批注栏、锚点与追问菜单](https://raw.githubusercontent.com/Amadeus2027/dsh-sketch-reference/main/docs/assets/v0.6.3/comments.png)
+
+*当前安装包的真实界面截图。批注文字由固定测试响应提供，用于展示「追问 / 纠正 / 修改这里」菜单，不代表新的真实 DeepSeek 分析结果。*
+
+</details>
+
 ## 草图可以用来做什么
 
 ### 网页与 UI：表达布局，再围绕结果纠正
 
-下面的运营看板由真实 DeepSeek 在 DSH 工作区生成，浏览器验收覆盖导航、搜索和深色主题；后续纠正限定了搜索的作用范围。
-
-![DeepSeek 根据草图需求生成并经浏览器验收的运营看板](https://raw.githubusercontent.com/Amadeus2027/dsh-sketch-reference/main/docs/evidence/v0.6.0/web-orders-dark.png)
+历史实机记录覆盖网页、UI 和 PPT：从简单布局表达出发，在同一 DSH 会话继续提问与纠正。应用成品与旧版界面截图保留在下方证据链接中，与当前插件界面分开展示。
 
 | 已验证案例 | 结果与证据 |
 | --- | --- |
