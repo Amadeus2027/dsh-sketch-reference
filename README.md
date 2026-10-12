@@ -14,9 +14,18 @@
 
 ![v0.6.5 画板操作录屏：Excalidraw 手绘风格布局、撤销重画、PNG 附件与返回聊天](docs/assets/v0.6.5/workflow.gif)
 
-*连续屏幕录制，保留系统鼠标、原生绘画、修改与保存等待。自动化输入，无模型调用或伪造回答。[静态截图](docs/assets/v0.6.5/sketch.png) · [素材来源](docs/assets/v0.6.5/README.md)*
+*画草图 → 调整布局 → 加入参考 → 回到聊天。[查看静态图](docs/assets/v0.6.5/sketch.png)*
 
-完整真人／真实 DeepSeek 多轮开发录像待 Windows 录制；已有真实网页与 PPT 案例见下方。普通原生聊天可以使用 DSH 正常的命令和文件工具，插件不把 Agent 限制为画板分析。
+<details>
+<summary>演示与案例说明</summary>
+
+画板演示为 v0.6.5 连续录屏，输入由自动化驱动，展示绘画、保存、PNG 附件与返回聊天；未调用模型或发送聊天消息。[录制来源与参数](docs/assets/v0.6.5/README.md)
+
+网页、UI 与 PPT 案例来自各自记录中的真实 DSH Agent 实验，版本和运行结果见案例链接。完整真人／真实 DeepSeek 多轮开发录像仍待 Windows 录制。[录制清单](docs/demo-recording-v0.6.5.md)
+
+下表比较草图沟通与编辑流程；模型质量、速度和 Token 消耗未作对照测量。
+
+</details>
 
 ## 使用前与使用后
 
@@ -29,7 +38,7 @@
 | **更新参考**：修改原图，再导出、附上新版 | **按需读取**：Agent 获取当前保存版本的结构与 PNG |
 | **修改画板**：在绘图工具中手动调整 | **预览确认**：Agent 提议 → 前后预览 → 你确认 → 原生撤销 |
 
-DSH 原本就能理解图片、调用工作区工具。这张表对比的是**草图沟通与编辑工作流**，不是模型质量、速度或 Token 消耗的对照实验。
+草图表达、局部讨论和修改确认，接在 DSH 的原生聊天与工作区工具上。
 
 ## 一张草图，三种协作方式
 
@@ -40,11 +49,11 @@ DSH 原本就能理解图片、调用工作区工具。这张表对比的是**�
 草图与批注按会话保存。绘图、悬停、翻页不会触发模型；没有额外 AI 服务或独立密钥配置。
 
 <details>
-<summary>历史批注菜单示例（v0.6.3）</summary>
+<summary>批注与追问菜单</summary>
 
 ![v0.6.3 的紧凑批注栏、图形锚点与追问菜单](https://raw.githubusercontent.com/Amadeus2027/dsh-sketch-reference/main/docs/assets/v0.6.3/comments.png)
 
-v0.6.3 真实界面截图；批注文字来自固定测试响应，仅展示菜单交互，不是本次版本或真实 DeepSeek 演示。
+v0.6.3 菜单示例，批注为演示用固定样例。[素材说明](docs/assets/v0.6.3/README.md)
 
 </details>
 
@@ -56,11 +65,11 @@ v0.6.3 真实界面截图；批注文字来自固定测试响应，仅展示菜�
 | PPT | 画出分区关系 → 制作可编辑幻灯片 → 调整指定页布局。[5 页 PPTX 与局部纠正](docs/release-readiness-v0.6.0.md#b-真实应用与纠正) |
 | 手绘 | 画物品或示意图 → 读图讨论 → 补充说明。[无文字杯子草图与协作闭环](docs/windows-validation-v0.4.0-20261010.md) |
 
-网页、UI 和 PPT 由 **DSH Agent** 生成，插件提供可持续编辑的视觉上下文。证据中的旧版界面保留为历史记录；具体案例不保证任意草图的生成质量。
+插件提供可持续编辑的草图与参考图，**DSH Agent** 在工作区继续完成网页、UI 和 PPT。
 
 ## 快速开始
 
-**已安装受支持的 DSH？不需要再装 Excalidraw。** 编辑器、React 绘图运行代码和字体随插件包提供；其余声明的运行依赖交给 DSH 官方插件管理器安装。
+**通过官方管理器，一条命令安装。** Excalidraw 编辑器和字体随包提供，运行依赖由官方插件管理器安装。
 
 ### 1. 官方管理器一次安装
 
@@ -70,9 +79,9 @@ v0.6.3 真实界面截图；批注文字来自固定测试响应，仅展示菜�
 dsh plugin --profile web add /绝对路径/dsh-sketch-reference-0.6.5.tgz
 ```
 
-重新运行 `dsh web`。无需克隆源码、单独安装 Excalidraw 或手动构建。**0.6.5 发布前从 [CI 产物](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml) 获取候选包，正式发布后从 [Releases](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) 下载。** 不把 Source code ZIP 当成插件包。
+运行 `dsh web` 即可使用。[0.6.5 构建包](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml) · [正式发行](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest)。安装文件为 `.tgz`，无需克隆源码、另装 Excalidraw 或手动构建。
 
-支持 DSH Web `0.2.1-alpha.1` / `0.2.1-alpha.2`。保留原 profile、存储和浏览器数据，无需迁移草稿或启用版本豁免。npm CLI 版 DSH 自身的管理器要求可用 pnpm；这属于宿主环境，不是 Excalidraw 前置安装。检查宿主前置、URL 安装与升级见 [安装指南](docs/installation.md)。
+环境：DSH Web `0.2.1-alpha.1` / `0.2.1-alpha.2`，npm CLI 管理器可调用 pnpm。升级保留原 profile、存储与浏览器数据。[安装与升级指南](docs/installation.md)
 
 ### 2. 从一张简单草图开始
 
@@ -80,7 +89,7 @@ dsh plugin --profile web add /绝对路径/dsh-sketch-reference-0.6.5.tgz
 2. 等待 **「已保存」**，返回原生聊天提问；也可点 **「作为参考发送」** 将 PNG 加入输入框。
 3. 接着讨论、添加批注或请求修改。画板修改检查预览后确认，聊天消息由你发送。
 
-模型与认证在 DSH 内配置；图片读取需要模型支持图片输入。模型未配置时，绘图、保存与导出仍可使用。操作细节见 [使用指南](docs/usage.md)。
+模型与认证沿用 DSH 配置，图片读取需模型支持视觉输入。绘图、保存和导出可独立使用。[使用指南](docs/usage.md)
 
 <details>
 <summary>兼容性、数据与功能边界</summary>
@@ -97,7 +106,7 @@ dsh plugin --profile web add /绝对路径/dsh-sketch-reference-0.6.5.tgz
 
 ## 一起把草图协作做得更好
 
-如果你希望 DSH 能持续理解同一张草图，欢迎 **Star** 关注更新。欢迎带着脱敏草图和复现步骤来 [反馈问题、提出场景](https://github.com/Amadeus2027/dsh-sketch-reference/issues)。请勿上传密钥、登录链接或私人会话。
+如果你希望 DSH 能持续理解同一张草图，欢迎 **Star** 关注更新。欢迎带着脱敏草图和复现步骤来 [反馈问题、提出场景](https://github.com/Amadeus2027/dsh-sketch-reference/issues)。
 
 <details>
 <summary>从源码构建、验证记录与开源许可</summary>
@@ -112,6 +121,6 @@ pnpm pack
 
 [贡献流程](CONTRIBUTING.md) · [0.6.5 验证记录](docs/validation-v0.6.5.md) · [复用说明](REUSE.md) · [第三方许可](THIRD_PARTY_NOTICES.md)
 
-插件采用 [MIT](LICENSE)，绘图能力来自 Excalidraw，宿主能力来自 DeepSeek Harness。这是社区插件；第三方软件遵循各自许可证。实际模型验证与固定响应的协议测试分别记录，不将测试次数写成生成质量或 Token 节省证明。
+社区插件，采用 [MIT](LICENSE)。绘图能力来自 Excalidraw，宿主能力来自 DeepSeek Harness；第三方许可与验证记录见上方链接。
 
 </details>
