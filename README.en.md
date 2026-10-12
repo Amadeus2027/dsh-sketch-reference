@@ -4,27 +4,23 @@
 
 ### Sketch the idea. Discuss the details. Approve the changes.
 
-**An editable Excalidraw canvas inside DeepSeek Harness.**
-
 [![Release](https://img.shields.io/github/v/release/Amadeus2027/dsh-sketch-reference?label=release&color=4176e6)](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) [![CI](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![Tested DSH](https://img.shields.io/badge/DSH-0.2.1--alpha.1-536DFE)](https://github.com/deepseek-ai/deepseek-harness)
 
 [**Download**](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) · [**Quick start**](#quick-start) · [**中文**](README.md) · [**DeepWiki**](https://deepwiki.com/Amadeus2027/dsh-sketch-reference)
 
 </div>
 
-> “Build a webpage in this workspace from my sketch.”<br>“You misunderstood this area. Let's discuss it here.”<br>“Show me a preview before changing the drawing.”
+An editable Excalidraw canvas inside DeepSeek Harness. Let the native Agent read saved structure and images, anchor discussions to shapes, and propose changes for your approval.
 
-Draw a layout, flow or visual requirement. The native DSH Agent reads saved elements and images on demand, anchors comments to shapes, and proposes restricted edits for your approval. Keep using the native conversation, model configuration and authentication.
+![Real DeepSeek conversation and before/after sketch edit preview](https://raw.githubusercontent.com/Amadeus2027/dsh-sketch-reference/main/docs/screenshots/v0.4.0/edit-comparison.jpg)
 
-**Current release: v0.6.3 · Windows PC / DSH Web CLI · MIT**
+*Windows / official DeepSeek recording from v0.4.0, showing a real proposal, not a mockup or a scripted model result. Later versions make comments more compact and add paging and menus; see [v0.6.3 changes](docs/release-v0.6.3.md).*
 
 ## See the workflow
 
 **Locate a comment → continue the conversation → review the before/after → approve.**
 
-![Real DeepSeek conversation and before/after sketch edit preview](https://raw.githubusercontent.com/Amadeus2027/dsh-sketch-reference/main/docs/screenshots/v0.4.0/edit-comparison.jpg)
-
-*Windows / official DeepSeek recording from v0.4.0, showing a real proposal, not a mockup or a scripted model result. Later versions make comments more compact and add paging and menus; see [v0.6.3 changes](docs/release-v0.6.3.md).*
+> “Build a webpage in this workspace from my sketch.”<br>“You misunderstood this area. Let's discuss it here.”<br>“Show me a preview before changing the drawing.”
 
 | What you want to do | How the plugin helps |
 | --- | --- |

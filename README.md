@@ -4,29 +4,23 @@
 
 ### 画出需求，和 DeepSeek 一起把它做出来。
 
-**Sketch → Discuss → Annotate → Preview → Approve**
-
-在 DeepSeek Harness 里画草图、讨论具体位置，并在确认后修改画板。
-
 [![Release](https://img.shields.io/github/v/release/Amadeus2027/dsh-sketch-reference?label=release&color=4176e6)](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) [![CI](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![Tested DSH](https://img.shields.io/badge/DSH-0.2.1--alpha.1-536DFE)](https://github.com/deepseek-ai/deepseek-harness) [![Ask DeepWiki](https://img.shields.io/badge/DeepWiki-Ask-20B8A5.svg)](https://deepwiki.com/Amadeus2027/dsh-sketch-reference)
 
 [**下载插件**](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) · [**快速开始**](#快速开始) · [**使用指南**](docs/usage.md) · [**English**](https://github.com/Amadeus2027/dsh-sketch-reference/blob/main/README.en.md)
 
 </div>
 
-> “按这张草图，在当前工作区实现一个网页。”<br>“这个区域理解错了，我们围绕这里继续讨论。”<br>“先给我看修改预览，我确认后再改画板。”
+Sketch Reference 把 **Excalidraw 可编辑画板接入 DSH 原生会话**：画出想法，让 Agent 按需读取图片与图形，把讨论锚定到具体位置。修改先预览，再由你确认。
 
-Sketch Reference 把 **Excalidraw 可编辑画板接入 DSH 原生会话**。你画出布局、流程或视觉需求，Agent 按需读取结构和真实图片，把讨论锚定到图形；修改先预览，再由你确认。问答继续使用 DSH 原生聊天，模型与认证也沿用宿主配置。
+![真实 DeepSeek 原生对话与草图修改前后预览](https://raw.githubusercontent.com/Amadeus2027/dsh-sketch-reference/main/docs/screenshots/v0.4.0/edit-comparison.jpg)
 
-**当前正式版本：v0.6.3 · Windows PC / DSH Web CLI · MIT 开源**
+*Windows / 官方 DeepSeek 的 v0.4.0 实机记录，展示真实修改提议；不是设计稿或脚本模型输出。当前界面已进一步压缩批注区、加入分页和菜单，见 [v0.6.3 更新](docs/release-v0.6.3.md)。*
 
 ## 看一次完整协作
 
 **定位批注 → 继续对话 → 检查修改前后 → 确认应用。**
 
-![真实 DeepSeek 原生对话与草图修改前后预览](https://raw.githubusercontent.com/Amadeus2027/dsh-sketch-reference/main/docs/screenshots/v0.4.0/edit-comparison.jpg)
-
-*Windows / 官方 DeepSeek 的 v0.4.0 实机记录，展示真实修改提议；不是设计稿或脚本模型输出。当前界面已进一步压缩批注区、加入分页和菜单，见 [v0.6.3 更新](docs/release-v0.6.3.md)。*
+> “按这张草图，在当前工作区实现一个网页。”<br>“这个区域理解错了，我们围绕这里继续讨论。”<br>“先给我看修改预览，我确认后再改画板。”
 
 | 你要做的事 | 插件提供的协作方式 |
 | --- | --- |
