@@ -111,6 +111,8 @@ export class SketchService extends Service {
   signal.throwIfAborted();if(!sameOwner(owner,await this.resolve(owner.sessionId,signal)))throw new SketchError('SESSION_CHANGED','会话已变化',409);
   if(revision!==null&&this.repository.get(owner)?.revision!==revision)throw new SketchError('REVISION_CONFLICT','草图已变化，请重新读取',409);
  }
+ // Both releases keep header.cwd immutable. alpha.2 workingDirectory is an
+ // execution projection, not a storage key: replacing it would orphan drafts.
  private async resolve(id:string,signal:AbortSignal):Promise<Owner> {
   signal.throwIfAborted();
   const header=this.sessions.get(SessionId(id))?.header;

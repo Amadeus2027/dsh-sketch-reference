@@ -4,7 +4,7 @@
 
 ### 画出想法，在 DSH 里接着做。
 
-[![Release](https://img.shields.io/github/v/release/Amadeus2027/dsh-sketch-reference?label=release&color=4176e6)](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) [![CI](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![Tested DSH](https://img.shields.io/badge/DSH-0.2.1--alpha.1-536DFE)](https://github.com/deepseek-ai/deepseek-harness) [![Ask DeepWiki](https://img.shields.io/badge/DeepWiki-Ask-20B8A5.svg)](https://deepwiki.com/Amadeus2027/dsh-sketch-reference)
+[![Release](https://img.shields.io/github/v/release/Amadeus2027/dsh-sketch-reference?label=release&color=4176e6)](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) [![CI](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![Tested DSH](https://img.shields.io/badge/DSH-alpha.1_%7C_alpha.2-536DFE)](https://github.com/deepseek-ai/deepseek-harness) [![Ask DeepWiki](https://img.shields.io/badge/DeepWiki-Ask-20B8A5.svg)](https://deepwiki.com/Amadeus2027/dsh-sketch-reference)
 
 [**下载插件**](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) · [**快速开始**](#快速开始) · [**使用指南**](docs/usage.md) · [**English**](https://github.com/Amadeus2027/dsh-sketch-reference/blob/main/README.en.md)
 
@@ -58,22 +58,23 @@ DSH 原本就能理解图片、调用工作区工具。这张表对比的是**�
 
 ## 快速开始
 
-需要 Node.js `22.19–22.x` 或 `24+`、本地浏览器和 DSH Web profile。当前固定验收环境为 Windows PC、DSH `0.2.1-alpha.1`、Excalidraw `0.18.1`。
+需要 Node.js `22.19–22.x` 或 `24+`、本地浏览器和 DSH Web profile。v0.6.4 支持 DSH Web `0.2.1-alpha.1` 与 `0.2.1-alpha.2`，Excalidraw `0.18.1`。两版云端实装验证已记录，Windows／真实模型按 [清单](docs/windows-acceptance-v0.6.4.md) 继续验收。
 
 ### 1. 安装固定宿主与插件
 
-从 [Releases](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) 下载 `dsh-sketch-reference-0.6.3.tgz` 和 `SHA256SUMS.txt`。
+从 [Releases](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) 下载 `dsh-sketch-reference-0.6.4.tgz` 和 `SHA256SUMS.txt`。
 
 ```sh
-npm install -g @deepseek-ai/dsh@0.2.1-alpha.1
+npm install -g @deepseek-ai/dsh@0.2.1-alpha.2
+# 已有 alpha.1 也可继续使用同一个插件包
 # 首次运行初始化 Web profile，随后退出宿主
 dsh web
 # 使用下载包的绝对路径；不要安装到终端 profile
-dsh plugin --profile web add /绝对路径/dsh-sketch-reference-0.6.3.tgz
+dsh plugin --profile web add /绝对路径/dsh-sketch-reference-0.6.4.tgz
 dsh web
 ```
 
-请使用上述固定宿主版本。最新 `alpha.2` 暂不能直接安装 v0.6.3；已使用其他版本的用户请先查看 [兼容说明](https://github.com/Amadeus2027/dsh-sketch-reference/blob/main/docs/dsh-compatibility.md)，保留原 DSH 数据。
+请使用 alpha.1 或 alpha.2。升级插件前等待保存并退出宿主，保留原 profile、存储与浏览器数据；无需迁移草图或启用版本豁免。旧 v0.6.3 仍只接受 alpha.1，其他宿主版本见 [兼容说明](docs/dsh-compatibility.md)。
 
 ### 2. 从一张简单草图开始
 
@@ -86,13 +87,13 @@ dsh web
 <details>
 <summary>兼容性、数据与功能边界</summary>
 
-- 固定验证环境为 Windows PC、DSH alpha.1。其他宿主版本、移动端和所有插件组合不作兼容承诺；本页新增素材来自 Linux 隔离环境。
+- v0.6.4 两版 Web 宿主功能回归来自 Linux 隔离环境；Windows／真实模型仍需验收。其他宿主版本、移动端、非默认工具模式和所有插件组合不作兼容承诺。
 - 无法可靠定位时保留文字建议，不猜测位置。模型可能误读草图或返回无效参数；数学正确性无保证。重点按版本绑定，不限制其他宿主工具或清除聊天历史。
 - 画板修改受图形白名单限制，不任意修改锁定、绑定、成组元素或样式；跨刷新撤销历史不保证恢复。
 - 草稿与图片在本地 DSH 存储；模型读取时发送至已配置的服务。历史附件尚无自动回收机制；升级／卸载前请导出草图备份。
 - 同步断线后用 **「⋯ → 同步批注」** 或重开画板。没有内置网页／PPT 生成器，也没有草图与代码自动双向绑定。
 
-[宿主兼容报告](docs/dsh-compatibility.md) · [v0.6.3 验证范围](docs/validation-v0.6.3.md)
+[宿主兼容报告](docs/dsh-compatibility.md) · [v0.6.4 验证范围](docs/validation-v0.6.4.md)
 
 </details>
 
@@ -111,7 +112,7 @@ pnpm run bundle
 pnpm pack
 ```
 
-[贡献流程](CONTRIBUTING.md) · [0.6.3 验证记录](https://github.com/Amadeus2027/dsh-sketch-reference/blob/main/docs/validation-v0.6.3.md) · [复用说明](REUSE.md) · [第三方许可](THIRD_PARTY_NOTICES.md)
+[贡献流程](CONTRIBUTING.md) · [0.6.4 验证记录](https://github.com/Amadeus2027/dsh-sketch-reference/blob/main/docs/validation-v0.6.4.md) · [复用说明](REUSE.md) · [第三方许可](THIRD_PARTY_NOTICES.md)
 
 插件采用 [MIT](LICENSE)，绘图能力来自 Excalidraw，宿主能力来自 DeepSeek Harness。这是社区插件；第三方软件遵循各自许可证。实际模型验证与固定响应的协议测试分别记录，不将测试次数写成生成质量或 Token 节省证明。
 

@@ -40,6 +40,14 @@ it('accepts bounded native appearance and rejects injected CSS or unknown tokens
  const base={theme:'dark',fontFamily:'system-ui',colors:{background:'#151517'}};expect(appearanceSchema.safeParse(base).success).toBe(true);
  expect(appearanceSchema.safeParse({...base,colors:{background:'url(https://external.test/font)'}}).success).toBe(false);expect(appearanceSchema.safeParse({...base,colors:{unknown:'#fff'}}).success).toBe(false);expect(appearanceSchema.safeParse({...base,fontFamily:'x; color:red'}).success).toBe(false);
 });
+it('accepts the alpha.2 computed fallback font stack without dropping theme updates',()=>{
+ const stack='-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif';
+ const fontFamily=stack+', '+stack;expect(fontFamily.length).toBe(296);
+ for(const theme of ['light','dark'])expect(appearanceSchema.parse({theme,fontFamily,colors:{background:theme==='dark'?'#151517':'#fff'}}).theme).toBe(theme);
+ expect(appearanceSchema.safeParse({theme:'dark',fontFamily:'x'.repeat(1025),colors:{}}).success).toBe(false);
+ expect(appearanceSchema.safeParse({theme:'dark',fontFamily,colors:{background:'x'.repeat(257)}}).success).toBe(false);
+ for(const font of ['x; color:red','url(https://external.test/font)','x{color:red}'])expect(appearanceSchema.safeParse({theme:'dark',fontFamily:font,colors:{}}).success).toBe(false);
+});
 
 it('caches just one immutable PNG snapshot, shares in-flight work and retries failures',async()=>{
  const blob=new Blob(['PNG']),exporter=vi.fn(async()=>blob),exportScene=createSceneExport(exporter);

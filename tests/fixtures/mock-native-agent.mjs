@@ -11,7 +11,9 @@ export function apply(ctx){
   const rejection=ctx.connection.requestRejection(req);if(rejection){res.writeHead(rejection);res.end();return;}
   if(req.method==='POST'){ctx.get('sketchReference').events.close();res.writeHead(204);res.end();return;}
   res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});
-  res.end(JSON.stringify({calls,imageSaves,registered:['sketch_read','sketch_annotate'].map(name=>!!ctx.tools.get(name)),eventClients:ctx.get('sketchReference').events.size}));
+  const id=new URL(req.url,'http://127.0.0.1').searchParams.get('sessionId'),session=id?ctx.get('sessions')?.get(id):null;
+  const directory=session?{original:session.header.cwd,effective:ctx.get('workingDirectory')?.get(session)??session.header.cwd}:null;
+  res.end(JSON.stringify({scripted:true,directoryAvailable:!!ctx.get('workingDirectory'),calls,imageSaves,directory,registered:['sketch_read','sketch_annotate'].map(name=>!!ctx.tools.get(name)),eventClients:ctx.get('sketchReference').events.size}));
  }}));
  ctx.llm.stream=async function*(request){
   if(request.system?.startsWith('你是手绘参考板')){yield* previous.call(this,request);return;}
@@ -25,7 +27,11 @@ export function apply(ctx){
   request.signal?.throwIfAborted();request.signal?.addEventListener('abort',()=>{call.aborted=true;},{once:true});
   if(task.includes('FAIL'))throw new Error('Synthetic native model failure');
   if(task.includes('CANCEL'))await new Promise((resolve,reject)=>{const timer=setTimeout(resolve,60000);request.signal.addEventListener('abort',()=>{clearTimeout(timer);reject(request.signal.reason);},{once:true});});
+  const directoryMatch=/CHANGE_DIRECTORY=(\S+)/.exec(task)?.[1],directory=directoryMatch?decodeURIComponent(directoryMatch):undefined;
+  if(directory){const session=ctx.get('sessions').get(request.sessionId),service=ctx.get('workingDirectory');if(!session||!service)throw new Error('Directory test requires alpha.2 workingDirectory');if(service.get(session)!==directory){yield* tool('working_directory',{cd:directory});return;}}
   if(task.includes('READ_VISUAL')&&request.messages.slice(index+1).some(m=>m.role==='tool'&&m.isError)){yield* text('SKETCH_VISUAL_REFUSED：图片读取失败，未修改草图。');return;}
+  if(task.includes('FOCUS_STATE')&&request.messages.slice(index+1).some(m=>m.role==='tool'&&m.isError)){yield* text('SKETCH_FOCUS_REFUSED：草图工具拒绝读取，请重新设置或清除重点。');return;}
+  if(request.messages.slice(index+1).filter(m=>m.role==='tool').length>12){yield* text('SKETCH_TEST_LIMIT：测试工具调用未收敛，停止模拟。');return;}
   const annotated=results.find(r=>r.batchId&&r.message?.includes('批注已保存'));
   if(annotated){yield* text('SKETCH_AGENT_DONE：模拟原生回答与批注已完成。');return;}
   const proposed=results.find(r=>r.proposalId);

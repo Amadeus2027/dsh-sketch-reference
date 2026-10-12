@@ -1,6 +1,6 @@
 // Real installed DSH + Excalidraw. Dedicated no-credentials profile with fixed
 // model responses only; this verifies UI/contracts, not real model judgment.
-import {chromium} from '@playwright/test';
+import {chromium,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {prepareHost,hostContext,editorFrame,installEditorInspection,openCommentMenu,commentAction} from './fixtures/browser-session.mjs';
@@ -139,7 +139,8 @@ try{
  await frame.getByRole('button',{name:'展开建议与批注',exact:true}).click();
  await frame.getByLabel('这张图准备用来做什么？').fill('多批注分页');await frame.getByRole('status').filter({hasText:'已保存'}).waitFor();
  await frame.getByRole('button',{name:'重新分析草图',exact:true}).click();await frame.getByRole('button',{name:'下一组批注',exact:true}).waitFor();
- assert.equal(await frame.locator('.commentMarker').count(),5);assert.equal(await frame.locator('.commentCard').count(),3);assert.equal(await frame.getByRole('button',{name:'上一组批注',exact:true}).isDisabled(),true);
+ // The list commits before the native viewport overlay measures on its next frame.
+ await expect(frame.locator('.commentMarker')).toHaveCount(5);assert.equal(await frame.locator('.commentCard').count(),3);assert.equal(await frame.getByRole('button',{name:'上一组批注',exact:true}).isDisabled(),true);
  const pagingStats=await stats(),pagingRevision=(await load()).drawing.revision;
  await frame.getByRole('button',{name:'下一组批注',exact:true}).click();assert.equal(await frame.locator('.commentCard').count(),2);
  await frame.getByRole('button',{name:'⑤ 核对区域5',exact:true}).click();await frame.getByRole('dialog',{name:'批注详情⑤'}).waitFor();
@@ -152,7 +153,7 @@ try{
  await frame.getByRole('status').filter({hasText:'已保存'}).waitFor();
  await frame.getByLabel('这张图准备用来做什么？').fill('完整草图无建议');await frame.getByRole('status').filter({hasText:'已保存'}).waitFor();const intact=(await load()).drawing;
  await frame.getByRole('button',{name:'重新分析草图',exact:true}).click();await frame.getByText('草图已完整表达布局，暂无需要补充的建议。',{exact:true}).waitFor();
- assert.equal(await frame.locator('.commentCard').count(),0);assert.equal(await toolbar().count(),0);assert.equal(await frame.locator('.commentMarker').count(),0);
+ assert.equal(await frame.locator('.commentCard').count(),0);assert.equal(await toolbar().count(),0);await expect(frame.locator('.commentMarker')).toHaveCount(0);
  assert.equal((await load()).drawing.revision,intact.revision);assert.deepEqual((await load()).latestAdvice.advice.suggestions,[]);
  const beforeView=await stats(),viewRaster=await frame.evaluate(()=>window.__sketchMetrics.rasterizations);
  const view={zoom:{value:.65},scrollX:37,scrollY:-89};await frame.evaluate(view=>window.__sketchEditor().updateScene({appState:view}),view);await page.waitForTimeout(1000);
