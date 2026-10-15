@@ -1,5 +1,5 @@
 // Real installed DSH + Chromium; no real model requests. Isolated test profile only.
-import {chromium} from '@playwright/test';
+import {chromium,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {mkdir} from 'node:fs/promises';
 import {prepareHost,hostContext,editorFrame,installEditorInspection} from './fixtures/browser-session.mjs';
@@ -32,7 +32,7 @@ try{
   await page.keyboard.press(key);const y=drawingBox.y+(key==='l'?280:350);await page.mouse.move(drawingBox.x+200,y);await page.mouse.down();await page.waitForTimeout(250);
   assert.equal(await frame.locator('.notice').filter({hasText:'elements require at least two points'}).count(),0);
   await page.mouse.move(drawingBox.x+320,y,{steps:12});await page.mouse.up();await frame.getByRole('status').filter({hasText:'已保存'}).waitFor();
-  const drawn=(await load()).drawing.scene.elements.find(e=>e.type===(key==='l'?'line':'arrow'));assert(drawn&&drawn.points.length>=2);
+  await expect.poll(async()=>{const drawn=(await load()).drawing?.scene.elements.find(e=>e.type===(key==='l'?'line':'arrow'));return !!drawn&&drawn.points.length>=2;}).toBe(true);
   assert.equal(await frame.locator('.notice').filter({hasText:'elements require at least two points'}).count(),0);
  }
  await frame.evaluate(()=>window.__sketchEditor().updateScene({elements:[{id:'native-test',type:'rectangle',x:80,y:120,width:200,height:100,angle:0,strokeColor:'#1e1e1e',backgroundColor:'transparent',fillStyle:'solid',strokeWidth:1,strokeStyle:'solid',roughness:1,opacity:100,groupIds:[],frameId:null,roundness:null,seed:1,isDeleted:false,boundElements:null,updated:1,link:null,locked:false,version:1,versionNonce:1}]}));await page.waitForTimeout(1000);await frame.getByRole('status').filter({hasText:'已保存'}).waitFor();

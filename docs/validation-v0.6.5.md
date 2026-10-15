@@ -1,5 +1,7 @@
 # v0.6.5 验证记录
 
+2026-10-15 的 [Windows alpha.2 补充验收](windows-validation-v0.6.5.md) 已完成。下文保留 2026-10-12 云端运行当时的事实与待验收状态，不将历史测量改写成新的结果。
+
 日期：2026-10-12 UTC。基线 main `0de23f2`（已合并 v0.6.4 PR #25）；DSH Web alpha.1 / alpha.2、Excalidraw 0.18.1、React 18.3.1。Linux、Node 24.19.0、Chromium 151。无依赖升级、存储迁移或协议变化。
 
 ## 实际改动

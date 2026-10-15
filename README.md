@@ -12,6 +12,8 @@
 
 **画布局、讨论细节、在工作区实现。** Sketch Reference 把 Excalidraw 接入 DeepSeek Harness，让 Agent 按需读取草图、定位批注、提出修改；画板修改先预览，再由你确认。
 
+**v0.6.5** 支持 DSH Web `0.2.1-alpha.1` / `0.2.1-alpha.2`。Windows alpha.2 实机回归与旧数据升级核对见 [验收记录](docs/windows-validation-v0.6.5.md)。
+
 ![v0.6.5 画板操作录屏：Excalidraw 手绘风格布局、撤销重画、PNG 附件与返回聊天](docs/assets/v0.6.5/workflow.gif)
 
 *画草图 → 调整布局 → 加入参考 → 回到聊天。[查看静态图](docs/assets/v0.6.5/sketch.png)*
@@ -113,7 +115,7 @@ dsh plugin --profile web add /绝对路径/dsh-sketch-reference-0.6.5.tgz
 <details>
 <summary>兼容性、数据与功能边界</summary>
 
-- v0.6.5 两版 Web 宿主功能回归来自 Linux 隔离环境；Windows／真实模型仍需验收。其他宿主版本、移动端、非默认工具模式和所有插件组合不作兼容承诺。
+- v0.6.5 两版 Web 宿主已完成 Linux 隔离回归，Windows alpha.2 完成安装、批注／编辑闭环、主题、分栏和 alpha.1＋0.6.3 旧数据升级核对。Agent 自动回归使用固定响应，未新增真实模型质量验证。其他宿主版本、移动端、非默认工具模式和所有插件组合不作兼容承诺。
 - 无法可靠定位时保留文字建议，不猜测位置。模型可能误读草图或返回无效参数；数学正确性无保证。重点按版本绑定，不限制其他宿主工具或清除聊天历史。
 - 画板修改受图形白名单限制，不任意修改锁定、绑定、成组元素或样式；跨刷新撤销历史不保证恢复。
 - 草稿与图片在本地 DSH 存储；模型读取时发送至已配置的服务。历史附件尚无自动回收机制；升级／卸载前请导出草图备份。
