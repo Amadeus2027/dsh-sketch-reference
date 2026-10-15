@@ -3,8 +3,10 @@ import {ReactFlow,Background,Controls,Handle,Position,MarkerType,applyNodeChange
 import {exportToBlob,getCommonBounds} from '@excalidraw/excalidraw';
 import type {NonDeletedExcalidrawElement} from '@excalidraw/excalidraw/element/types';
 import {z} from 'zod';
-import {canonical,loadSchema,drawingSchema,saveSchema,ownerKey,type Owner,type Drawing} from '../core/contracts.ts';
-import {graphSchema,graphContentSchema,graphSaveSchema,initialGraph,documentOwner,anchorStatus,type GraphContent,type GraphNode,type GraphEdge,type GraphAnchor,type SketchGraph} from '../core/graph.ts';
+import {canonical,loadSchema,drawingSchema,type Owner,type Drawing} from '../core/contracts.ts';
+import {graphSchema,graphContentSchema,initialGraph,documentOwner,anchorStatus,type GraphContent,type GraphNode,type GraphEdge,type GraphAnchor,type SketchGraph} from '../core/graph.ts';
+import {GraphRecovery,type GraphPending,type ImportJob} from './graph-recovery.ts';
+import {GraphAutosave,type GraphSavePhase} from './graph-autosave.ts';
 import type {GraphEditorProps} from './graph-tools.tsx';
 import {rpc} from './rpc.ts';
 import {closeBoard} from './bridge.ts';
@@ -19,8 +21,6 @@ const documentResponse=z.object({drawing:drawingSchema.nullable()}).strict();
 const backupSchema=z.object({format:z.literal('dsh-sketch-graph'),version:z.literal(1),content:graphContentSchema,documents:z.array(z.object({nodeId:z.string(),drawing:drawingSchema.nullable()}).strict()).max(100)}).strict().superRefine((b,ctx)=>{
  if(b.documents.length!==b.content.nodes.length||new Set(b.documents.map(d=>d.nodeId)).size!==b.documents.length||b.documents.some(d=>!b.content.nodes.some(n=>n.id===d.nodeId)))ctx.addIssue({code:'custom',message:'备份文档必须与节点逐一对应'});
 });
-const importSchema=z.object({graph:graphSaveSchema,documents:z.array(z.object({nodeId:z.uuid(),input:saveSchema}).strict()).max(100)}).strict();
-type ImportJob=z.infer<typeof importSchema>;
 type SketchFlowNode=Node<{node:GraphNode;owner:Owner;edges:GraphEdge[];locate:GraphAnchor|null},'sketch'>;
 
 function Thumbnail({data,id}:NodeProps<SketchFlowNode>){
@@ -60,35 +60,34 @@ const nodeTypes={sketch:Thumbnail};
 export function GraphWorkspace({loaded,renderBoard,registerClose}:{loaded:Loaded;renderBoard:(loaded:Loaded,graph:GraphEditorProps,onReload:()=>void)=>ReactNode;registerClose:(handler:(()=>void)|null)=>void}){
  const appearance=useAppearance(),owner=loaded.owner;
  const [graph,setGraph]=useState<SketchGraph|null>(null),[content,setContent]=useState<GraphContent>(initialGraph),[ready,setReady]=useState(false),[error,setError]=useState(''),[busy,setBusy]=useState(false),[overview,setOverview]=useState(false),[current,setCurrent]=useState<Loaded>(loaded),[editorEpoch,setEditorEpoch]=useState(0),[previewEpoch,setPreviewEpoch]=useState(0),[selected,setSelected]=useState<string|null>(null),[selectedNode,setSelectedNode]=useState<string|null>(null),[rebind,setRebind]=useState<GraphEdge|null>(null),[locate,setLocate]=useState<GraphEdge|null>(null);
- const [pending,setPending]=useState<z.infer<typeof graphSaveSchema>|null>(null),[job,setJob]=useState<ImportJob|null>(null);
+ const [pending,setPending]=useState<GraphPending|null>(null),[job,setJob]=useState<ImportJob|null>(null),[phase,setPhase]=useState<GraphSavePhase>('clean');
  const menu=useRef<HTMLDetailsElement>(null);
  const flow=useRef<ReactFlowInstance<SketchFlowNode>|null>(null);
- const graphRef=useRef(graph),contentRef=useRef(content),flight=useRef(false);graphRef.current=graph;contentRef.current=content;
- const pendingKey='dsh-sketch-graph:v1:'+encodeURIComponent(ownerKey(owner)),importKey=pendingKey+':import';
+ const graphRef=useRef(graph),contentRef=useRef(content);graphRef.current=graph;contentRef.current=content;
+ const recovery=useMemo(()=>new GraphRecovery(owner),[owner]);
+ const queue=useMemo(()=>new GraphAutosave({write:record=>recovery.writePending(record),clear:id=>recovery.clearPending(id),save:async request=>graphSchema.parse(await rpc('graph/save',owner,request)),saved:value=>{graphRef.current=value;setGraph(value);},changed:(state,record,failure)=>{setPhase(state);setPending(state==='error'?record:null);if(state==='error')setError(failure instanceof Error?failure.message:'工作流保存失败');else if(state==='clean')setError('');}}),[owner,recovery]);
+ useEffect(()=>()=>queue.dispose(),[queue]);
  const accept=(value:SketchGraph|null)=>{graphRef.current=value;setGraph(value);const c=value?.content??initialGraph();contentRef.current=c;setContent(c);};
  const loadGraph=useCallback(async()=>{
   const next=graphResponse.parse(await rpc('graph/get',owner,null)).graph;accept(next);setError('');
-  try{const raw=localStorage.getItem(pendingKey),backup=raw?graphSaveSchema.parse(JSON.parse(raw)):null;
-   if(backup&&canonical(backup.content)!==canonical(next?.content??initialGraph()))setPending(backup);else{localStorage.removeItem(pendingKey);setPending(null);}
-   const rawJob=localStorage.getItem(importKey);setJob(rawJob?importSchema.parse(JSON.parse(rawJob)):null);
+  try{let backup=recovery.readPending();
+   if(backup&&!backup.next&&canonical(backup.request.content)===canonical(next?.content??initialGraph())){recovery.clearPending(backup.request.mutationId);backup=null;}
+   queue.reset(next,backup);if(backup){contentRef.current=backup.next??backup.request.content;setContent(contentRef.current);setOverview(true);}
+   const task=await recovery.readImport();setJob(task);if(task)setOverview(true);
   }catch{setError('本地工作流恢复存储不可用或损坏，请及时下载备份');}
   setReady(true);
- },[owner,pendingKey,importKey]);
+ },[owner,recovery,queue]);
  useEffect(()=>{void loadGraph().catch(e=>setError(e.message));},[loadGraph]);
- const save=async(next:GraphContent,retry?:z.infer<typeof graphSaveSchema>)=>{
+ const save=async(next:GraphContent)=>{
   menu.current?.removeAttribute('open');
-  if(flight.current)throw new Error('工作流正在保存，请稍后重试');
-  const args=graphSaveSchema.parse(retry??{expectedRevision:graphRef.current?.revision??null,mutationId:crypto.randomUUID(),content:next});
-  if(!retry&&pending)throw new Error('请先处理未确认保存的工作流副本');
-  flight.current=true;setBusy(true);setError('');setPending(args);contentRef.current=args.content;setContent(args.content);
-  try{try{localStorage.setItem(pendingKey,JSON.stringify(args));}catch{setError('本地恢复存储不可用，请及时下载备份');}
-   const value=graphSchema.parse(await rpc('graph/save',owner,args));accept(value);setPending(null);try{localStorage.removeItem(pendingKey);}catch{/* Server acknowledgement is authoritative. */}return value;
-  }catch(e){setError(e instanceof Error?e.message:'工作流保存失败');throw e;}finally{flight.current=false;setBusy(false);}
+  setError('');queue.update(next);contentRef.current=next;setContent(next);return queue.flush();
  };
+ const layout=(next:GraphContent)=>{try{queue.update(next);contentRef.current=next;setContent(next);}catch(e){setError(e instanceof Error?e.message:'工作流保存失败');}};
  const run=(work:()=>Promise<unknown>)=>{void work().catch(e=>setError(e instanceof Error?e.message:'操作失败'));};
- const open=async(id:string)=>{if(busy||pending||job)throw new Error('请先处理工作流保存或恢复');const data=loadSchema.parse(await rpc('drawing/get',documentOwner(owner,id),{sessionId:owner.sessionId}));setRebind(null);setCurrent(data);setOverview(false);setEditorEpoch(v=>v+1);};
- const back=async()=>{await loadGraph();setRebind(null);setOverview(true);setPreviewEpoch(v=>v+1);};
- useEffect(()=>{if(overview){registerClose(()=>{if(flight.current||pending||job){setError('请先处理工作流保存或恢复');return;}void closeBoard().catch(e=>setError(e.message));});return()=>registerClose(null);}},[overview,registerClose,pending,job]);
+ const open=async(id:string)=>{if(busy||pending||job)throw new Error('请先处理工作流保存或恢复');await queue.flush();const data=loadSchema.parse(await rpc('drawing/get',documentOwner(owner,id),{sessionId:owner.sessionId}));setRebind(null);setCurrent(data);setOverview(false);setEditorEpoch(v=>v+1);};
+ const back=async()=>{await queue.flush();await loadGraph();setRebind(null);setOverview(true);setPreviewEpoch(v=>v+1);};
+ const close=async()=>{if(busy||pending||job)throw new Error('请先处理工作流保存或恢复');await queue.flush();await closeBoard();};
+ useEffect(()=>{if(overview){registerClose(()=>{void close().catch(e=>setError(e.message));});return()=>registerClose(null);}},[overview,registerClose,pending,job,busy,queue]);
  const nodeId=current.owner.nodeId??'root';
  const link=async(anchor:GraphAnchor,type:GraphEdge['type'],target:string,name:string)=>{
   const next=structuredClone(contentRef.current);
@@ -106,30 +105,34 @@ export function GraphWorkspace({loaded,renderBoard,registerClose}:{loaded:Loaded
  const continueImport=async(task:ImportJob)=>{
   setBusy(true);try{const saved=graphSchema.parse(await rpc('graph/save',owner,task.graph));accept(saved);
    for(const doc of task.documents)await rpc('drawing/save',documentOwner(owner,doc.nodeId),doc.input);
-   localStorage.removeItem(importKey);localStorage.removeItem(pendingKey);setJob(null);setPending(null);setPreviewEpoch(v=>v+1);setError('备份已恢复为新节点，原草图保留');
+   await recovery.clearImport(task.graph.mutationId);setJob(null);queue.reset(saved);setPreviewEpoch(v=>v+1);setError('备份已恢复为新节点，原草图保留');
   }finally{setBusy(false);}
  };
  const importFile=async(file:File)=>{
   menu.current?.removeAttribute('open');
+  setBusy(true);try{await queue.flush();
   if(file.size>128*1024*1024)throw new Error('备份超过 128 MiB');const b=backupSchema.parse(JSON.parse(await file.text()));
+  const remaining=100-contentRef.current.nodes.length,remainingEdges=300-contentRef.current.edges.length;
+  if(b.content.nodes.length>remaining||b.content.edges.length>remainingEdges)throw new Error(`无法追加恢复：当前 ${contentRef.current.nodes.length} 个节点，剩余 ${remaining} 个节点／${remainingEdges} 条连线容量；备份包含 ${b.content.nodes.length} 个节点／${b.content.edges.length} 条连线。尚未恢复任何内容；请先减少备份节点或连线；当前仅支持追加恢复，不会覆盖已有根草图。`);
   const ids=new Map(b.content.nodes.map(n=>[n.id,crypto.randomUUID()]));
   const next=graphContentSchema.parse({...contentRef.current,nodes:[...contentRef.current.nodes,...b.content.nodes.map(n=>({...n,id:ids.get(n.id)!,name:`${n.name}（恢复）`,position:{x:n.position.x+480,y:n.position.y+160}}))],edges:[...contentRef.current.edges,...b.content.edges.map(e=>({...e,id:crypto.randomUUID(),sourceNodeId:ids.get(e.sourceNodeId)!,targetNodeId:ids.get(e.targetNodeId)!}))]});
   const task:ImportJob={graph:{expectedRevision:graphRef.current?.revision??null,mutationId:crypto.randomUUID(),content:next},documents:b.documents.filter(d=>d.drawing).map(d=>({nodeId:ids.get(d.nodeId)!,input:{expectedRevision:null,mutationId:crypto.randomUUID(),scene:d.drawing!.scene,goal:d.drawing!.goal}}))};
-  localStorage.setItem(importKey,JSON.stringify(task));setJob(task);await continueImport(task);
+  await recovery.writeImport(task);setJob(task);await continueImport(task);
+  }finally{setBusy(false);}
  };
- const edge=content.edges.find(e=>e.id===selected),node=content.nodes.find(n=>n.id===selectedNode),locked=busy||!!pending||!!job;
+ const edge=content.edges.find(e=>e.id===selected),node=content.nodes.find(n=>n.id===selectedNode),layoutLocked=busy||!!pending||!!job,locked=layoutLocked||phase==='saving';
  if(!ready)return <main className="loading"><p role="status">{error||'正在载入工作流…'}</p><button onClick={()=>run(loadGraph)}>重试</button></main>;
  if(!overview)return <div key={editorEpoch} style={{height:'100%'}}>{renderBoard(current,graphProps,()=>run(()=>open(nodeId)))}</div>;
  return <main className="board graphWorkspace">
-  <header><h1>手绘参考板</h1><div className="graphModes"><button aria-pressed>工作流总览</button><button disabled={locked} onClick={()=>run(()=>open(nodeId))}>草图编辑</button></div><button disabled={locked} onClick={()=>run(closeBoard)}>返回聊天 ×</button></header>
-  <div className="graphToolbar"><button disabled={locked} onClick={()=>run(async()=>{const id=crypto.randomUUID();await save({...contentRef.current,nodes:[...contentRef.current.nodes,{id,name:'新草图',kind:'unclassified',position:{x:(contentRef.current.nodes.length%3)*360,y:Math.floor(contentRef.current.nodes.length/3)*300}}]});setSelectedNode(id);})}>＋ 新建草图</button><details ref={menu} className="graphMore"><summary aria-label="更多工作流操作">更多</summary><div><button disabled={busy} onClick={()=>{menu.current?.removeAttribute('open');run(backup);}}>备份工作流</button><label className="graphImport">恢复备份<input type="file" accept="application/json,.json" disabled={locked} onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f)run(()=>importFile(f));}}/></label></div></details><span role="status">{busy?'正在保存…':pending?'保存待确认':'已保存'} · {content.nodes.length} 张草图</span></div>
+  <header><h1>手绘参考板</h1><div className="graphModes"><button aria-pressed>工作流总览</button><button disabled={locked} onClick={()=>run(()=>open(nodeId))}>草图编辑</button></div><button disabled={locked} onClick={()=>run(close)}>返回聊天 ×</button></header>
+  <div className="graphToolbar"><button disabled={locked} onClick={()=>run(async()=>{const id=crypto.randomUUID();await save({...contentRef.current,nodes:[...contentRef.current.nodes,{id,name:'新草图',kind:'unclassified',position:{x:(contentRef.current.nodes.length%3)*360,y:Math.floor(contentRef.current.nodes.length/3)*300}}]});setSelectedNode(id);})}>＋ 新建草图</button><details ref={menu} className="graphMore"><summary aria-label="更多工作流操作">更多</summary><div><button disabled={busy} onClick={()=>{menu.current?.removeAttribute('open');run(backup);}}>备份工作流</button><label className="graphImport">恢复备份<input type="file" accept="application/json,.json" disabled={locked} onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f)run(()=>importFile(f));}}/></label></div></details><span role="status">{busy||phase==='saving'?'正在保存…':pending?'保存待确认':phase==='dirty'?'未保存':'已保存'} · {content.nodes.length} 张草图</span></div>
   {error&&<div className="notice" role="alert">{error}</div>}
-  {pending&&<div className="notice">有未确认保存的工作流副本。<button disabled={busy} onClick={()=>run(()=>save(pending.content,pending))}>重试保存</button><button disabled={busy} onClick={()=>{download(new Blob([JSON.stringify(pending)],{type:'application/json'}),'sketch-graph-pending.json');}}>下载本地副本</button><button disabled={busy} onClick={()=>{if(window.confirm('放弃未确认的图布局与关联，重新载入服务器版本？')){try{localStorage.removeItem(pendingKey);}catch{}setPending(null);run(loadGraph);}}}>载入服务器版本</button></div>}
-  {job&&<div className="notice">备份恢复尚未完成，已保留恢复任务。<button disabled={busy} onClick={()=>run(()=>continueImport(job))}>继续恢复</button><button disabled={busy} onClick={()=>{download(new Blob([JSON.stringify(job)],{type:'application/json'}),'sketch-graph-restore-task.json');}}>下载恢复任务</button><button disabled={busy} onClick={()=>{if(window.confirm('结束恢复任务？已恢复的节点保留，未完成节点可手动删除。')){localStorage.removeItem(importKey);setJob(null);}}}>结束恢复</button></div>}
+  {pending&&<div className="notice">有未确认保存的工作流副本。<button disabled={phase==='saving'} onClick={()=>run(()=>queue.retry())}>重试保存</button><button disabled={busy} onClick={()=>{download(new Blob([JSON.stringify(pending)],{type:'application/json'}),'sketch-graph-pending.json');}}>下载本地副本</button><button disabled={busy} onClick={()=>{if(window.confirm('放弃未确认的图布局与关联，重新载入服务器版本？'))run(async()=>{recovery.clearPending(pending.request.mutationId);await loadGraph();});}}>载入服务器版本</button></div>}
+  {job&&<div className="notice">备份恢复尚未完成，已保留恢复任务。<button disabled={busy} onClick={()=>run(()=>continueImport(job))}>继续恢复</button><button disabled={busy} onClick={()=>{download(new Blob([JSON.stringify(job)],{type:'application/json'}),'sketch-graph-restore-task.json');}}>下载恢复任务</button><button disabled={busy} onClick={()=>{if(window.confirm('结束恢复任务？已恢复的节点保留，未完成节点可手动删除。'))run(async()=>{await recovery.clearImport(job.graph.mutationId);queue.reset(graphRef.current);setJob(null);});}}>结束恢复</button></div>}
   <div className="graphBody"><div className="graphCanvas">
-   <ReactFlow onInit={instance=>{flow.current=instance;}} key={previewEpoch} colorMode={appearance.theme} nodes={flowNodes} edges={flowEdges} nodeTypes={nodeTypes} defaultViewport={content.viewport} onlyRenderVisibleElements nodesDraggable={!locked} nodesConnectable={!locked} elementsSelectable={!locked} deleteKeyCode={null}
-    onNodesChange={changes=>{if(locked||!changes.some(c=>c.type==='position'))return;const updated=applyNodeChanges(changes,flowNodes);const next={...contentRef.current,nodes:contentRef.current.nodes.map(n=>({...n,position:updated.find(u=>u.id===n.id)?.position??n.position}))};contentRef.current=next;setContent(next);}}
-    onNodeDragStop={()=>{if(!locked)run(()=>save(contentRef.current));}} onMoveEnd={(_event,viewport:Viewport)=>{if(!locked&&canonical(viewport)!==canonical(contentRef.current.viewport))run(()=>save({...contentRef.current,viewport}));}}
+   <ReactFlow onInit={instance=>{flow.current=instance;}} key={previewEpoch} colorMode={appearance.theme} nodes={flowNodes} edges={flowEdges} nodeTypes={nodeTypes} defaultViewport={content.viewport} onlyRenderVisibleElements nodesDraggable={!layoutLocked} nodesConnectable={!locked} elementsSelectable={!locked} deleteKeyCode={null}
+    onNodesChange={changes=>{if(layoutLocked||!changes.some(c=>c.type==='position'))return;const updated=applyNodeChanges(changes,flowNodes);const next={...contentRef.current,nodes:contentRef.current.nodes.map(n=>({...n,position:updated.find(u=>u.id===n.id)?.position??n.position}))};layout(next);}}
+    onMove={(_event,viewport:Viewport)=>{if(!layoutLocked&&canonical(viewport)!==canonical(contentRef.current.viewport))layout({...contentRef.current,viewport});}}
     onNodeClick={(_e,n)=>{setSelectedNode(n.id);setSelected(null);}} onNodeDoubleClick={(_e,n)=>run(()=>open(n.id))} onEdgeClick={(_e,e)=>{setSelected(e.id);setSelectedNode(null);}} onPaneClick={()=>{setSelected(null);setSelectedNode(null);setLocate(null);}} onConnect={connect} edgesReconnectable={!locked} onReconnect={(old,c)=>run(async()=>{if(!c.source||!c.target)return;const anchor=c.source===old.source?(contentRef.current.edges.find(e=>e.id===old.id)?.anchor??{kind:'node' as const}):(contentRef.current.edges.find(e=>e.id===c.sourceHandle)?.anchor??{kind:'node' as const});await save({...contentRef.current,edges:contentRef.current.edges.map(e=>e.id===old.id?{...e,sourceNodeId:c.source!,targetNodeId:c.target!,anchor}:e)});})}>
     <Background/><Controls showInteractive={false}/>
    </ReactFlow><div className="graphLegend">蓝色实线：页面跳转　橙色虚线：细节展开</div>

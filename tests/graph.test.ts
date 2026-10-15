@@ -1,4 +1,4 @@
-import {expect,it} from 'vitest';
+import {expect,it,vi} from 'vitest';
 import {randomUUID} from 'node:crypto';
 import type {KvTable} from '@deepseek-ai/dsh-storage-domain';
 import {GraphRepository} from '../src/host/graph-repository.ts';
@@ -116,4 +116,36 @@ it('returns copyable node image arguments and refuses to interpret another node 
  const summary=await agent.read(session,{nodeId},signal);expect(summary).toMatchObject({nodeId,readOnly:true,imageReadArguments:{nodeId,revision:d.revision,scope:'all'}});
  await expect(agent.readImage(session,{revision:d.revision},signal)).rejects.toMatchObject({code:'REVISION_CONFLICT',message:expect.stringContaining('nodeId')});expect(readOwner).toBeNull();
  await expect(agent.readImage(session,'imageReadArguments' in summary?summary.imageReadArguments:{},signal)).resolves.toMatchObject({revision:d.revision});expect(readOwner).toEqual(target);
+});
+
+function cleanupHost(graphs:GraphRepository,documents=new Repository(table<Drawing>())){
+ const advice={prune:vi.fn(async(_removed:(owner:Owner)=>boolean)=>{})},visual={prune:vi.fn(async(_removed:(owner:Owner)=>boolean)=>{})};
+ const host=Object.assign(Object.create(SketchService.prototype),{graphs,documents,advice,visual,resolve:async()=>owner,ctx:{logger:{warn:vi.fn()}}});
+ return {host,advice,visual,documents,save:(c:GraphContent,revision:string|null)=>host.operation('graph/save',{owner,payload:input(c,revision)},new AbortController().signal) as Promise<SketchGraph>};
+}
+it('does not cascade on creation, movement, renaming, edge edits or unchanged graph retries',async()=>{
+ const graphs=new GraphRepository(table<SketchGraph>()),f=cleanupHost(graphs),prune=vi.spyOn(f.documents,'prune');let c=content(),g=await f.save(c,null);
+ for(const change of [(c:GraphContent)=>{c.nodes[1]!.position.x++;},(c:GraphContent)=>{c.nodes[1]!.name='rename';},(c:GraphContent)=>{c.edges.push(edge(c,0,1,'navigation'));},()=>{}]){c=structuredClone(c);change(c);g=await f.save(c,g.revision);}
+ expect(prune).not.toHaveBeenCalled();expect(f.advice.prune).not.toHaveBeenCalled();expect(f.visual.prune).not.toHaveBeenCalled();
+});
+it('detects same-count node replacement by IDs, retaining the root, live nodes and other sessions',async()=>{
+ const graphs=new GraphRepository(table<SketchGraph>()),f=cleanupHost(graphs),c=content();let g=await f.save(c,null);const deleted=documentOwner(owner,c.nodes[1]!.id),live=documentOwner(owner,c.nodes[2]!.id),other={...deleted,sessionId:'other'};
+ for(const o of [owner,deleted,live,other])await f.documents.save(o,{expectedRevision:null,mutationId:randomUUID(),scene,goal:''},check);
+ for(let i=0;i<20;i++)await f.documents.save({...other,sessionId:`other-${i}`},{expectedRevision:null,mutationId:randomUUID(),scene,goal:''},check);
+ const get=vi.spyOn(graphs,'get');const next=structuredClone(c);next.nodes[1]!.id=randomUUID();g=await f.save(next,g.revision);
+ expect(g.content.nodes).toHaveLength(c.nodes.length);expect(f.documents.get(deleted)).toBeNull();for(const o of [owner,live,other])expect(f.documents.get(o)).not.toBeNull();
+ expect(f.advice.prune).toHaveBeenCalledTimes(1);expect(f.visual.prune).toHaveBeenCalledTimes(1);expect(get.mock.calls.length).toBeLessThanOrEqual(6);
+});
+it('retains failed cascade compensation and retries on a later ordinary layout save',async()=>{
+ const graphs=new GraphRepository(table<SketchGraph>()),f=cleanupHost(graphs),c=content();let g=await f.save(c,null);const deleted=documentOwner(owner,c.nodes[1]!.id);await f.documents.save(deleted,{expectedRevision:null,mutationId:randomUUID(),scene,goal:''},check);
+ const prune=vi.spyOn(f.documents,'prune');prune.mockRejectedValueOnce(Error('disk failure'));const next={...c,nodes:c.nodes.filter(n=>n.id!==deleted.nodeId)};g=await f.save(next,g.revision);
+ expect(f.documents.get(deleted)).not.toBeNull();expect(f.host.graphCleanup.size).toBe(1);expect(f.advice.prune).not.toHaveBeenCalled();
+ next.viewport.x++;g=await f.save(next,g.revision);expect(prune).toHaveBeenCalledTimes(2);expect(f.documents.get(deleted)).toBeNull();expect(f.host.graphCleanup.size).toBe(0);
+ next.viewport.x++;await f.save(next,g.revision);expect(prune).toHaveBeenCalledTimes(2);
+});
+it('compensates partial cleanup after restart, caching graph membership per owner and retaining startup failures for retry',async()=>{
+ const graphs=new GraphRepository(table<SketchGraph>()),c=content();let g=await graphs.save(owner,input(c),check);const f=cleanupHost(graphs),deleted=documentOwner(owner,c.nodes[1]!.id);await f.documents.save(deleted,{expectedRevision:null,mutationId:randomUUID(),scene,goal:''},check);
+ const prune=vi.spyOn(f.documents,'prune');prune.mockRejectedValueOnce(Error('disk failure'));g=await f.save({...c,nodes:c.nodes.filter(n=>n.id!==deleted.nodeId)},g.revision);
+ const restarted=cleanupHost(graphs,f.documents);restarted.visual.prune.mockRejectedValueOnce(Error('visual store unavailable'));await restarted.host.pruneGraphOrphans();expect(restarted.documents.get(deleted)).toBeNull();expect(restarted.host.orphanCleanupPending).toBe(true);
+ await restarted.save({...g.content,viewport:{x:100,y:0,zoom:1}},g.revision);expect(restarted.host.orphanCleanupPending).toBe(false);expect(restarted.visual.prune).toHaveBeenCalledTimes(2);
 });
