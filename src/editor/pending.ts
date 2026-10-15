@@ -7,6 +7,7 @@ type Recovery={available:boolean;pending:Pending|null};
 function prefix(owner:Owner){return 'dsh-sketch:v1:'+encodeURIComponent(ownerKey(owner))+':';}
 let windowId:string;
 function id(){if(windowId)return windowId;try{windowId=sessionStorage.getItem('dsh-sketch:tab')??crypto.randomUUID();sessionStorage.setItem('dsh-sketch:tab',windowId);}catch{windowId=crypto.randomUUID();}return windowId;}
+export function pendingTabId(){return id();}
 export function writePending(owner:Owner,draft:Draft,base:string|null){localStorage.setItem(prefix(owner)+id(),JSON.stringify({...draft,base,updated:Date.now()}));}
 export function clearPending(owner:Owner){localStorage.removeItem(prefix(owner)+id());}
 /** Call only after server confirmation. Never consume another tab's newer snapshot. */

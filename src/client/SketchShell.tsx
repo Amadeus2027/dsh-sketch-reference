@@ -27,6 +27,12 @@ export function SketchShell({ctx,props}:{ctx:Context;props:Omit<ConversationSlot
  const sessions=props.useSessions(s=>({ids:s.ids,phase:s.phase}),(a,b)=>a.ids===b.ids&&a.phase===b.phase);
  useEffect(()=>{if(sessions.phase==='ready')props.prunePanels(sessions.ids);},[sessions,props.prunePanels]);
  const [ratio,setRatio]=useState(40);
+ const [fullscreen,setFullscreen]=useState(false),[collapsed,setCollapsed]=useState(false),[floating,setFloating]=useState({x:24,y:100});
+ const chat=useRef<HTMLDivElement>(null),drag=useRef<{x:number;y:number;left:number;top:number}|null>(null);
+ useEffect(()=>{setFullscreen(false);setCollapsed(false);},[open,props.sessionId]);
+ const clamp=(x:number,y:number)=>({x:Math.max(8,Math.min(x,window.innerWidth-(chat.current?.offsetWidth??420)-8)),y:Math.max(8,Math.min(y,window.innerHeight-(chat.current?.offsetHeight??500)-8))});
+ useEffect(()=>{if(!fullscreen)return;const resize=()=>setFloating(p=>{const next=clamp(p.x,p.y);return next.x===p.x&&next.y===p.y?p:next;});const observer=new ResizeObserver(resize);if(chat.current)observer.observe(chat.current);window.addEventListener('resize',resize);return()=>{observer.disconnect();window.removeEventListener('resize',resize);};},[fullscreen]);
+ const toggleFullscreen=()=>{if(!fullscreen)setFloating({x:24,y:Math.max(70,window.innerHeight-570)});setFullscreen(v=>!v);setCollapsed(false);};
  const session=props.useSession(s=>s),conversation=props.useConversation(s=>s);
  const workspace=props.useSessions(s=>props.sessionId===undefined?undefined:s.byId[props.sessionId]?.cwd);
  const summaryBlank=props.useSessions(s=>props.sessionId===undefined?undefined:s.byId[props.sessionId]?.blank);
@@ -37,8 +43,17 @@ export function SketchShell({ctx,props}:{ctx:Context;props:Omit<ConversationSlot
  const settling=props.sessionId!==undefined && ((blank && session?.openState==='loading' && summaryBlank!==true) || pending);
  const hero=props.sessionId===undefined || (blank && (session?.openState==='open' || summaryBlank===true));
  const phase=settling?'settling':hero?'hero':'active';
- return <div ref={shell} className={css.shell} data-sketch-open={open}>
-  <div className={`${original.root} ${css.chat}`} data-phase={phase} style={open?{flexBasis:`${ratio}%`}:undefined}>
+ return <div ref={shell} className={css.shell} data-sketch-open={open} data-sketch-fullscreen={open&&fullscreen}>
+  <div ref={chat} className={`${original.root} ${css.chat}`} data-phase={phase} data-collapsed={collapsed} style={open&&fullscreen?{left:floating.x,top:floating.y}:open?{flexBasis:`${ratio}%`}:undefined}>
+   <div className={css.floatingHeader} hidden={!open||!fullscreen}>
+    <div className={css.floatingDrag} role="toolbar" aria-label="移动悬浮对话" tabIndex={0}
+     onKeyDown={e=>{if(e.target!==e.currentTarget)return;const delta={ArrowLeft:[-16,0],ArrowRight:[16,0],ArrowUp:[0,-16],ArrowDown:[0,16]}[e.key];if(delta){e.preventDefault();setFloating(p=>clamp(p.x+delta[0]!,p.y+delta[1]!));}}}
+     onPointerDown={e=>{drag.current={x:e.clientX,y:e.clientY,left:floating.x,top:floating.y};e.currentTarget.setPointerCapture(e.pointerId);}}
+     onPointerMove={e=>{const start=drag.current;if(start&&e.currentTarget.hasPointerCapture(e.pointerId))setFloating(clamp(start.left+e.clientX-start.x,start.top+e.clientY-start.y));}}
+     onPointerUp={e=>{drag.current=null;if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);}}
+     onPointerCancel={()=>{drag.current=null;}}>原生对话</div>
+    <Button size="sm" variant="toolbar" aria-label={collapsed?'展开悬浮对话':'收起悬浮对话'} onClick={()=>setCollapsed(v=>!v)}>{collapsed?'展开':'收起'}</Button>
+   </div>
    {props.renderSlot(HEADER,{})}
    {props.renderFactorySlot('conversation.content',{variant:'main',phase,hero},{slots:{widthControls:ConversationWidthControls}})}
   </div>
@@ -47,6 +62,6 @@ export function SketchShell({ctx,props}:{ctx:Context;props:Omit<ConversationSlot
    onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);}}
    onPointerMove={e=>{if(e.currentTarget.hasPointerCapture(e.pointerId)){const r=e.currentTarget.parentElement!.getBoundingClientRect();setRatio(Math.max(30,Math.min(60,(e.clientX-r.left)/r.width*100)));}}}
    onPointerUp={e=>{if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);}} />
-   <aside className={css.panel}><SketchFrame key={`${props.sessionId}:${workspace??''}`} ctx={ctx} props={props} appearance={appearance} subscribeClose={props.subscribePanelClose} onClose={()=>{if(props.sessionId)props.setPanel(props.sessionId,false);}} /></aside></>}
+   <aside className={css.panel}><Button size="sm" variant="toolbar" className={css.fullscreenToggle} aria-label={fullscreen?'退出画板全屏':'画板全屏'} title={fullscreen?'恢复右侧画板':'全屏画板与悬浮对话'} onClick={toggleFullscreen}>{fullscreen?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M4 10h6V4m10 10h-6v6M10 10 3 3m11 11 7 7"/></svg>:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M9 3H3v6m12 12h6v-6M3 3l7 7m11 11-7-7"/></svg>}</Button><SketchFrame key={`${props.sessionId}:${workspace??''}`} ctx={ctx} props={props} appearance={appearance} subscribeClose={props.subscribePanelClose} onClose={()=>{if(props.sessionId)props.setPanel(props.sessionId,false);}} /></aside></>}
  </div>;
 }

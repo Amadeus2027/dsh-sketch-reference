@@ -7,7 +7,7 @@ export const RPC = '/sketch-reference-rpc/v1';
 export const MAX_PNG = IMAGE_LIMITS.maxBytes;
 export const sceneSchema = createSceneSchema(scenePolicy);
 const text = (max: number) => z.string().refine(v => Array.from(v).length <= max && !v.includes('\0'));
-export const ownerSchema = z.object({sessionId: z.string().min(1).max(200), createdAt: z.string().min(1).max(100), cwd: z.string().max(4096)}).strict();
+export const ownerSchema = z.object({sessionId: z.string().min(1).max(200), createdAt: z.string().min(1).max(100), cwd: z.string().max(4096),nodeId:z.uuid().optional()}).strict();
 export type Owner = z.infer<typeof ownerSchema>;
 export const routeSchema = z.object({provider: z.enum(['deepseek-official','deepseek-account']), model: z.string().trim().min(1).max(200).refine(v=>!/[\u0000-\u001f]/.test(v))}).strict();
 export type Route = z.infer<typeof routeSchema>;
@@ -47,7 +47,8 @@ export const resultSchema = z.discriminatedUnion('ok',[
 export class SketchError extends Error {
  constructor(public code:string, message:string, public status=400) {super(message);}
 }
-export function ownerKey(owner:Owner):string {return JSON.stringify([owner.sessionId,owner.createdAt,owner.cwd]);}
+export function sessionOwner(owner:Owner):Owner {return {sessionId:owner.sessionId,createdAt:owner.createdAt,cwd:owner.cwd};}
+export function ownerKey(owner:Owner):string {return JSON.stringify([owner.sessionId,owner.createdAt,owner.cwd,...(owner.nodeId?[owner.nodeId]:[])]);}
 export function sameOwner(a:Owner,b:Owner):boolean {return ownerKey(a)===ownerKey(b);}
 export function canonical(value: unknown): string {
  if (Array.isArray(value)) return '['+value.map(canonical).join(',')+']';

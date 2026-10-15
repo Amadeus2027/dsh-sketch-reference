@@ -32,4 +32,5 @@ export class Repository {
   this.tail=run.catch(()=>{}); return run;
  }
  async drain() {await this.tail;}
+ prune(removed:(owner:Owner)=>boolean){const run=this.tail.then(async()=>{for(const [key,value] of this.table.entries())if(removed(value.owner))await this.table.delete(key);});this.tail=run.catch(()=>{});return run;}
 }

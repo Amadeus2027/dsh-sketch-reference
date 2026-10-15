@@ -11,6 +11,7 @@ const fontRoot = join(root, "lib/editor/fonts");
 const lockPath = join(root, "pnpm-lock.yaml");
 
 const runtimeRoots = [
+  "@xyflow/react",
   "@excalidraw/excalidraw",
   "react",
   "react-dom",

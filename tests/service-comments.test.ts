@@ -38,6 +38,7 @@ async function setup(mode:'normal'|'changed'|'unavailable'|'waiting'='normal'){
   yield {type:'text-delta',index:0,text:JSON.stringify(advice)};yield {type:'finish',reason:{kind:'stop'}};
  }}}};
  // Exercise the actual RPC admission path with isolated host dependencies.
+ Object.setPrototypeOf(carrier,SketchService.prototype);Object.assign(carrier,{graphs:{get:()=>null}});
  const method=(SketchService.prototype as unknown as {operation:(method:string,body:unknown,signal:AbortSignal)=>Promise<unknown>}).operation;
  const call=(signal=new AbortController().signal,inputMode='hybrid',pngBase64=png)=>method.call(carrier,'advice/generate',{protocolVersion:1,requestId:randomUUID(),owner,payload:{revision:drawing.revision,pngBase64,route:{provider:'deepseek-account',model:'deepseek-flash'},inputMode}},signal);
  return {drawing,carrier,call,read:()=>({current,stored,calls})};

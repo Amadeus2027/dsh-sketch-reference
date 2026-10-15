@@ -12,7 +12,22 @@
 
 **画布局、讨论细节、在工作区实现。** Sketch Reference 把 Excalidraw 接入 DeepSeek Harness，让 Agent 按需读取草图、定位批注、提出修改；画板修改先预览，再由你确认。
 
-**v0.6.5** 支持 DSH Web `0.2.1-alpha.1` / `0.2.1-alpha.2`。Windows alpha.2 实机回归与旧数据升级核对见 [验收记录](docs/windows-validation-v0.6.5.md)。
+**开发预览 v0.7.0-alpha.1：Sketch Graph。** 一张草图一个节点，从元素或框选区域连接页面与细节设计；保留右侧画板，新增全屏与可拖动的原生悬浮对话。旧草图继续作为根节点，无需覆盖迁移。[功能与验证边界](docs/release-v0.7.0.md)
+
+![Sketch Graph 实际界面：分屏、全屏、悬浮对话与细节编辑](docs/assets/v0.7.0/sketch-graph.gif)
+
+*总览看关系，双击画细节。关联工具按需展开，备份收进更多菜单。[素材来源与剪辑说明](docs/assets/v0.7.0/README.md)*
+
+<details>
+<summary>真实 DeepSeek 对话生成的电商网页</summary>
+
+![真实 Agent 生成网页的浏览器交互：登录、商品详情与购物车](docs/assets/v0.7.0/agent-site.gif)
+
+Windows DSH alpha.2 原生聊天使用 DeepSeek-V4.1-Flash / High，读取 4 张草图及页面／细节关系，生成 HTML/CSS/JS，再经真实对话纠正与浏览器复验。GIF 展示最终网页的自动化操作，已剪去等待；不是完整生成过程录像，也不代表一次生成即可完成。[完整验收与失败记录](docs/validation-v0.7.0.md)
+
+</details>
+
+**稳定版 v0.6.5** 支持 DSH Web `0.2.1-alpha.1` / `0.2.1-alpha.2`。Windows alpha.2 实机回归与旧数据升级核对见 [验收记录](docs/windows-validation-v0.6.5.md)。
 
 ![v0.6.5 画板操作录屏：Excalidraw 手绘风格布局、撤销重画、PNG 附件与返回聊天](docs/assets/v0.6.5/workflow.gif)
 

@@ -1,0 +1,288 @@
+{
+  "capture": "Actual Edge browser screenshots during automated UI actions; approximately 4 fps, not OS video capture.",
+  "editing": "Selected segments joined in capture order; tool-call gaps and waits omitted. UI transitions between segments are cuts. No claim of continuous recording or model speed.",
+  "playbackSpeedWithinSegments": 1,
+  "fps": 4,
+  "maxWidth": 1280,
+  "syntheticFrames": 0,
+  "overlaidUiOrResponses": false,
+  "segments": [
+    {
+      "label": "split-overview",
+      "duration": 1.834,
+      "frames": [
+        {
+          "file": "split-overview-000.jpg",
+          "t": 0,
+          "duration": 0.308,
+          "sha256": "156830406723b4c8941585571369c5b266aad3a7c446602bdaa1c2785f953077"
+        },
+        {
+          "file": "split-overview-001.jpg",
+          "t": 0.308,
+          "duration": 0.292,
+          "sha256": "8980b861254d1218404fad8fe0dc47c2781b0d56517bad1c0fed094cd62fefab"
+        },
+        {
+          "file": "split-overview-002.jpg",
+          "t": 0.6,
+          "duration": 0.30800000000000005,
+          "sha256": "8980b861254d1218404fad8fe0dc47c2781b0d56517bad1c0fed094cd62fefab"
+        },
+        {
+          "file": "split-overview-003.jpg",
+          "t": 0.908,
+          "duration": 0.30700000000000005,
+          "sha256": "8980b861254d1218404fad8fe0dc47c2781b0d56517bad1c0fed094cd62fefab"
+        },
+        {
+          "file": "split-overview-004.jpg",
+          "t": 1.215,
+          "duration": 0.30899999999999994,
+          "sha256": "8980b861254d1218404fad8fe0dc47c2781b0d56517bad1c0fed094cd62fefab"
+        },
+        {
+          "file": "split-overview-005.jpg",
+          "t": 1.524,
+          "duration": 0.31000000000000005,
+          "sha256": "8980b861254d1218404fad8fe0dc47c2781b0d56517bad1c0fed094cd62fefab"
+        }
+      ]
+    },
+    {
+      "label": "fullscreen-open",
+      "duration": 1.843,
+      "frames": [
+        {
+          "file": "fullscreen-open-000.jpg",
+          "t": 0,
+          "duration": 0.317,
+          "sha256": "762e2aa6c385b8b232be7cc68852998e06400e927f9f33593e12fff045eab293"
+        },
+        {
+          "file": "fullscreen-open-001.jpg",
+          "t": 0.317,
+          "duration": 0.296,
+          "sha256": "762e2aa6c385b8b232be7cc68852998e06400e927f9f33593e12fff045eab293"
+        },
+        {
+          "file": "fullscreen-open-002.jpg",
+          "t": 0.613,
+          "duration": 0.31200000000000006,
+          "sha256": "762e2aa6c385b8b232be7cc68852998e06400e927f9f33593e12fff045eab293"
+        },
+        {
+          "file": "fullscreen-open-003.jpg",
+          "t": 0.925,
+          "duration": 0.31099999999999994,
+          "sha256": "762e2aa6c385b8b232be7cc68852998e06400e927f9f33593e12fff045eab293"
+        },
+        {
+          "file": "fullscreen-open-004.jpg",
+          "t": 1.236,
+          "duration": 0.31099999999999994,
+          "sha256": "762e2aa6c385b8b232be7cc68852998e06400e927f9f33593e12fff045eab293"
+        },
+        {
+          "file": "fullscreen-open-005.jpg",
+          "t": 1.547,
+          "duration": 0.29600000000000004,
+          "sha256": "762e2aa6c385b8b232be7cc68852998e06400e927f9f33593e12fff045eab293"
+        }
+      ]
+    },
+    {
+      "label": "fullscreen-moved",
+      "duration": 1.788,
+      "frames": [
+        {
+          "file": "fullscreen-moved-000.jpg",
+          "t": 0,
+          "duration": 0.298,
+          "sha256": "c7ea3effccd7b56f1d475f2ab092931ac6602d4a35a428adf25f5d61ea636bcc"
+        },
+        {
+          "file": "fullscreen-moved-001.jpg",
+          "t": 0.298,
+          "duration": 0.31,
+          "sha256": "39148c4eef2b91980c650b09a1f27e5cd230c8eb808e4b283ca9e57550b45d2a"
+        },
+        {
+          "file": "fullscreen-moved-002.jpg",
+          "t": 0.608,
+          "duration": 0.29600000000000004,
+          "sha256": "39148c4eef2b91980c650b09a1f27e5cd230c8eb808e4b283ca9e57550b45d2a"
+        },
+        {
+          "file": "fullscreen-moved-003.jpg",
+          "t": 0.904,
+          "duration": 0.29500000000000004,
+          "sha256": "39148c4eef2b91980c650b09a1f27e5cd230c8eb808e4b283ca9e57550b45d2a"
+        },
+        {
+          "file": "fullscreen-moved-004.jpg",
+          "t": 1.199,
+          "duration": 0.29499999999999993,
+          "sha256": "39148c4eef2b91980c650b09a1f27e5cd230c8eb808e4b283ca9e57550b45d2a"
+        },
+        {
+          "file": "fullscreen-moved-005.jpg",
+          "t": 1.494,
+          "duration": 0.29400000000000004,
+          "sha256": "39148c4eef2b91980c650b09a1f27e5cd230c8eb808e4b283ca9e57550b45d2a"
+        }
+      ]
+    },
+    {
+      "label": "fullscreen-collapsed",
+      "duration": 1.797,
+      "frames": [
+        {
+          "file": "fullscreen-collapsed-000.jpg",
+          "t": 0,
+          "duration": 0.298,
+          "sha256": "607bcbd5cdfccd4a1ff07654a9c522370c4511255c76ed46889d9b237ea80e62"
+        },
+        {
+          "file": "fullscreen-collapsed-001.jpg",
+          "t": 0.298,
+          "duration": 0.296,
+          "sha256": "607bcbd5cdfccd4a1ff07654a9c522370c4511255c76ed46889d9b237ea80e62"
+        },
+        {
+          "file": "fullscreen-collapsed-002.jpg",
+          "t": 0.594,
+          "duration": 0.29200000000000004,
+          "sha256": "607bcbd5cdfccd4a1ff07654a9c522370c4511255c76ed46889d9b237ea80e62"
+        },
+        {
+          "file": "fullscreen-collapsed-003.jpg",
+          "t": 0.886,
+          "duration": 0.29300000000000004,
+          "sha256": "607bcbd5cdfccd4a1ff07654a9c522370c4511255c76ed46889d9b237ea80e62"
+        },
+        {
+          "file": "fullscreen-collapsed-004.jpg",
+          "t": 1.179,
+          "duration": 0.31099999999999994,
+          "sha256": "607bcbd5cdfccd4a1ff07654a9c522370c4511255c76ed46889d9b237ea80e62"
+        },
+        {
+          "file": "fullscreen-collapsed-005.jpg",
+          "t": 1.49,
+          "duration": 0.30699999999999994,
+          "sha256": "607bcbd5cdfccd4a1ff07654a9c522370c4511255c76ed46889d9b237ea80e62"
+        }
+      ]
+    },
+    {
+      "label": "detail-editor",
+      "duration": 3.058,
+      "frames": [
+        {
+          "file": "detail-editor-000.jpg",
+          "t": 0,
+          "duration": 0.312,
+          "sha256": "8bf7d5c0b4ea7185e6bdf20b59a5079f88a1fbeba2b2ceb340b028874d53619b"
+        },
+        {
+          "file": "detail-editor-001.jpg",
+          "t": 0.312,
+          "duration": 0.295,
+          "sha256": "8bf7d5c0b4ea7185e6bdf20b59a5079f88a1fbeba2b2ceb340b028874d53619b"
+        },
+        {
+          "file": "detail-editor-002.jpg",
+          "t": 0.607,
+          "duration": 0.31100000000000005,
+          "sha256": "8bf7d5c0b4ea7185e6bdf20b59a5079f88a1fbeba2b2ceb340b028874d53619b"
+        },
+        {
+          "file": "detail-editor-003.jpg",
+          "t": 0.918,
+          "duration": 0.30999999999999994,
+          "sha256": "8bf7d5c0b4ea7185e6bdf20b59a5079f88a1fbeba2b2ceb340b028874d53619b"
+        },
+        {
+          "file": "detail-editor-004.jpg",
+          "t": 1.228,
+          "duration": 0.31099999999999994,
+          "sha256": "8bf7d5c0b4ea7185e6bdf20b59a5079f88a1fbeba2b2ceb340b028874d53619b"
+        },
+        {
+          "file": "detail-editor-005.jpg",
+          "t": 1.539,
+          "duration": 0.29700000000000015,
+          "sha256": "8bf7d5c0b4ea7185e6bdf20b59a5079f88a1fbeba2b2ceb340b028874d53619b"
+        },
+        {
+          "file": "detail-editor-006.jpg",
+          "t": 1.836,
+          "duration": 0.2949999999999997,
+          "sha256": "8bf7d5c0b4ea7185e6bdf20b59a5079f88a1fbeba2b2ceb340b028874d53619b"
+        },
+        {
+          "file": "detail-editor-007.jpg",
+          "t": 2.131,
+          "duration": 0.31000000000000005,
+          "sha256": "8bf7d5c0b4ea7185e6bdf20b59a5079f88a1fbeba2b2ceb340b028874d53619b"
+        },
+        {
+          "file": "detail-editor-008.jpg",
+          "t": 2.441,
+          "duration": 0.30900000000000016,
+          "sha256": "8bf7d5c0b4ea7185e6bdf20b59a5079f88a1fbeba2b2ceb340b028874d53619b"
+        },
+        {
+          "file": "detail-editor-009.jpg",
+          "t": 2.75,
+          "duration": 0.30799999999999983,
+          "sha256": "8bf7d5c0b4ea7185e6bdf20b59a5079f88a1fbeba2b2ceb340b028874d53619b"
+        }
+      ]
+    },
+    {
+      "label": "overview-return",
+      "duration": 1.809,
+      "frames": [
+        {
+          "file": "overview-return-000.jpg",
+          "t": 0,
+          "duration": 0.307,
+          "sha256": "adfbb7f07df4a76ee14086e16ff4880b7fbe18dea2fc1fde2c60bf40a994c2cb"
+        },
+        {
+          "file": "overview-return-001.jpg",
+          "t": 0.307,
+          "duration": 0.307,
+          "sha256": "3051e13a431f8c08c77d8dda5ad8a8c92d3e0f54e9737c70b40bb60b271ec34c"
+        },
+        {
+          "file": "overview-return-002.jpg",
+          "t": 0.614,
+          "duration": 0.29400000000000004,
+          "sha256": "3051e13a431f8c08c77d8dda5ad8a8c92d3e0f54e9737c70b40bb60b271ec34c"
+        },
+        {
+          "file": "overview-return-003.jpg",
+          "t": 0.908,
+          "duration": 0.30999999999999994,
+          "sha256": "3051e13a431f8c08c77d8dda5ad8a8c92d3e0f54e9737c70b40bb60b271ec34c"
+        },
+        {
+          "file": "overview-return-004.jpg",
+          "t": 1.218,
+          "duration": 0.29499999999999993,
+          "sha256": "3051e13a431f8c08c77d8dda5ad8a8c92d3e0f54e9737c70b40bb60b271ec34c"
+        },
+        {
+          "file": "overview-return-005.jpg",
+          "t": 1.513,
+          "duration": 0.29600000000000004,
+          "sha256": "3051e13a431f8c08c77d8dda5ad8a8c92d3e0f54e9737c70b40bb60b271ec34c"
+        }
+      ]
+    }
+  ],
+  "gifSha256": "e2f103a0d2649f0f4983a1cf9e796644c0ef317e74262fca6b0bcbce0833c56f"
+}

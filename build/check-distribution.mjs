@@ -1,6 +1,20 @@
 import {readFile,readdir,stat} from 'node:fs/promises';
 import {resolve,join,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import ts from 'typescript';
+
+function imports(code,file){
+ const found=[];
+ const visit=node=>{
+  if((ts.isImportDeclaration(node)||ts.isExportDeclaration(node))&&node.moduleSpecifier&&ts.isStringLiteral(node.moduleSpecifier))found.push(node.moduleSpecifier.text);
+  if(ts.isCallExpression(node)&&(node.expression.kind===ts.SyntaxKind.ImportKeyword||(ts.isIdentifier(node.expression)&&node.expression.text==='require'))&&node.arguments[0]&&(ts.isStringLiteral(node.arguments[0])||ts.isNoSubstitutionTemplateLiteral(node.arguments[0])))found.push(node.arguments[0].text);
+  ts.forEachChild(node,visit);
+ };
+ visit(ts.createSourceFile(file,code,ts.ScriptTarget.Latest,false,ts.ScriptKind.JS));return found;
+}
+async function editorScripts(directory){
+ const files=[];for(const entry of await readdir(directory,{withFileTypes:true})){const path=join(directory,entry.name);if(entry.isDirectory())files.push(...await editorScripts(path));else if(entry.isFile()&&entry.name.endsWith('.js'))files.push(path);}return files;
+}
 
 // Publisher check only: installed users never build or install Excalidraw.
 const root=resolve(process.argv[2]??fileURLToPath(new URL('../',import.meta.url)));
@@ -19,7 +33,11 @@ for(const family of ['Excalifont','Xiaolai','Virgil','Cascadia','Assistant','Com
 }
 for(const file of ['lib/index.js','lib/client.js']){
  const code=await readFile(join(root,file),'utf8');
- if(/(?:from\s*|require\s*\(\s*|import\s*\(\s*)["']@excalidraw\//.test(code))throw Error('Unbundled Excalidraw runtime import: '+file);
+ if(imports(code,file).some(spec=>/^@(?:excalidraw|xyflow)\//.test(spec)))throw Error('Unbundled editor runtime import: '+file);
+}
+for(const file of await editorScripts(join(root,'lib/editor/assets'))){
+ const bare=imports(await readFile(file,'utf8'),file).find(spec=>!spec.startsWith('.')&&!spec.startsWith('/')&&!/^[a-z][a-z\d+.-]*:/i.test(spec));
+ if(bare)throw Error(`Unbundled editor runtime bare import ${JSON.stringify(bare)}: ${file}`);
 }
 if(!manifest.dependencies?.zod)throw Error('Host Zod dependency must be installed by the official plugin manager');
 console.log('Distribution ready: local editor JS/CSS, 9 font families, host dependency and licenses. No separate Excalidraw installation.');

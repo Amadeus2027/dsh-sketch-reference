@@ -8,6 +8,7 @@ import {VISUAL_LIMITS,imageRefSchema,visualRecordSchema,type VisualRecord} from 
 
 /** Board-prepared exports only. Pixels belong to DSH's immutable attachment store. */
 export class VisualRepository {
+ prune(removed:(owner:Owner)=>boolean){const run=this.tail.then(async()=>{for(const [key,value] of this.table.entries())if(removed(value.owner))await this.table.delete(key);});this.tail=run.catch(()=>{});return run;}
  private tail:Promise<unknown>=Promise.resolve();
  private bytes=new RecordBytes<VisualRecord>();
  constructor(private table:KvTable<string,VisualRecord>,private attachments:Pick<AttachmentStore,'saveImage'|'readImage'>){}

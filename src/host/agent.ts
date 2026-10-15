@@ -15,7 +15,8 @@ import {resolveCommentReference} from '../core/comment-context.ts';
 import type {Batch} from '../core/contracts.ts';
 
 export interface SketchAgentHost {
- snapshot(session:SessionHeader,signal:AbortSignal):Promise<{owner:Owner;drawing:Drawing|null}>;
+ snapshot(session:SessionHeader,signal:AbortSignal,nodeId?:string):Promise<{owner:Owner;drawing:Drawing|null}>;
+ graph?(session:SessionHeader,input:unknown,signal:AbortSignal):Promise<Record<string,JsonValue>>;
  check(owner:Owner,revision:string|null,signal:AbortSignal):Promise<void>;
  changed(owner:Owner):void;
  analysis?(owner:Owner):Batch|null;
@@ -23,6 +24,7 @@ export interface SketchAgentHost {
 export interface ToolMeasurement {tool:'sketch_read'|'sketch_annotate'|'sketch_propose_edit'|'sketch_read_image';ms:number;outputBytes:number;ok:boolean;cacheHit:boolean;inputTokens:null}
 /** No model request, rendering or browser RPC is needed for an Agent read. */
 export class SketchAgent {
+ readGraph(session:SessionHeader,input:unknown,signal:AbortSignal){if(!this.host.graph)throw new SketchError('GRAPH_UNAVAILABLE','工作流暂不可用',503);return this.host.graph(session,input,signal);}
  private cache=new Map<string,{revision:string;summary:Record<string,JsonValue>}>();
  private focuses=new Map<string,SketchFocus>();
  private tail:Promise<unknown>=Promise.resolve();
@@ -34,7 +36,7 @@ export class SketchAgent {
   finally{this.measurements.push({tool,ms:performance.now()-start,outputBytes,ok,cacheHit,inputTokens:null});if(this.measurements.length>AGENT_LIMITS.maxMetrics)this.measurements.shift();}
  }
  read(session:SessionHeader,input:unknown,signal:AbortSignal){return this.measured('sketch_read',async hit=>{
-  const requested=agentReadSchema.parse(input),{owner,drawing}=await this.host.snapshot(session,signal);
+  const requested=agentReadSchema.parse(input),{owner,drawing}=await this.host.snapshot(session,signal,requested.nodeId);
   if(!drawing)return {revision:null,hasDrawing:false,message:'当前会话还没有已保存的草图。打开手绘参考板绘图并等待保存。'};
   const focus=this.focuses.get(ownerKey(owner));
   // A user-set focus is an actual read boundary, not just a model suggestion.
@@ -59,7 +61,7 @@ export class SketchAgent {
   const visibleComments=batch?.comments.filter(c=>c.status!=='ignored'&&(!focus||focusIds.has(batch.advice.suggestions[c.suggestionIndex]?.anchor?.elementId??'')))??[];
   const result={...data,...(visuals?{image:{...(data.image as Record<string,JsonValue>),prepared:!!image&&!image.stale,...(image&&!image.stale?{width:image.width,height:image.height}:{}),focusPrepared:!!visuals.focus&&!visuals.focus.stale,instruction:'如需视觉细节，按需调用 sketch_read_image（需要当前 revision）；未准备或过期时请用户更新视觉参考，也可使用原生聊天 PNG。不要在每轮聊天重复读取图片。'}}:{}),scope:args.scope,scopeInstruction:focus?'用户已设置选区重点；当前所有结构与图像读取均限定此重点。不能据此描述选区外内容；要读取全图，请用户在画板清除选区重点。':'未设置重点，可按需读取全图。',sceneTotalElements:scoped.scene.elements.filter(e=>!e.isDeleted).length,focus:focus?{revision:focus.revision,count:focus.elementIds.length,stale:focus.revision!==drawing.revision}:null,...(this.edits?{proposal:proposal?{id:proposal.id,status:proposal.status,baseRevision:proposal.baseRevision,stale:proposal.baseRevision!==drawing.revision,operationCount:proposal.operations.length,...(proposal.status==='applied'?{statusInstruction:'applied 仅表示历史上曾应用，可能已撤销或继续编辑；当前状态以本次读取的草图为准。'}:{})}:null}:{}),truncated:data.truncated??false,nextOffset:data.nextOffset??null,elements:[...(data.elements as Record<string,JsonValue>[])],annotations:batch?{batchId:batch.id,commentRevision:batch.commentRevision,count:visibleComments.length,scope:args.scope,stale:batch.contentDigest!==drawing.contentDigest||batch.goal!==drawing.goal,itemsTruncated:false,
    items:visibleComments.map(c=>{const v=batch.advice.suggestions[c.suggestionIndex]!;return {id:c.id,status:c.status,title:v.title,reason:clip(v.reason,120),reasonTruncated:Array.from(v.reason).length>120,...(v.anchor?{elementId:v.anchor.elementId}:{})};})}:null};
-  const response={...result,purpose:data.purpose??'',purposeTruncated:data.purposeTruncated??false,...(discussion?{discussion}:{})};
+  const response={...result,nodeId:requested.nodeId??'root',readOnly:!!owner.nodeId,imageReadArguments:{nodeId:requested.nodeId??'root',revision:drawing.revision,scope:args.scope},purpose:data.purpose??'',purposeTruncated:data.purposeTruncated??false,...(discussion?{discussion}:{})};
   const limit=args.mode==='summary'?AGENT_LIMITS.summaryBytes:AGENT_LIMITS.detailBytes;
   while(result.annotations&&Buffer.byteLength(JSON.stringify(result.annotations))>2048&&result.annotations.items.length){result.annotations.items.pop();result.annotations.itemsTruncated=true;}
   // Keep one element before trimming optional annotations so a page cannot stall.
@@ -74,8 +76,8 @@ export class SketchAgent {
  getFocus(owner:Owner):SketchFocus|null{const value=this.focuses.get(ownerKey(owner));return value?structuredClone(value):null;}
  readImage(session:SessionHeader,input:unknown,signal:AbortSignal){return this.measured('sketch_read_image',async()=>{
   if(!this.visual)throw new SketchError('VISUAL_UNAVAILABLE','视觉参考暂不可用，请使用原生附件',503);
-  const args=visualReadSchema.parse(input),{owner,drawing}=await this.host.snapshot(session,signal);
-  if(!drawing||drawing.revision!==args.revision)throw new SketchError('REVISION_CONFLICT','草图已变化，请重新读取摘要',409);
+  const args=visualReadSchema.parse(input),{owner,drawing}=await this.host.snapshot(session,signal,args.nodeId);
+  if(!drawing||drawing.revision!==args.revision)throw new SketchError('REVISION_CONFLICT','草图已变化或节点不匹配。读取非根草图必须同时传 nodeId 和该节点的 revision；省略 nodeId 始终读取 root。请按目标 nodeId 重新读取摘要，并使用返回的 imageReadArguments，不要重复旧参数。',409);
   const focus=this.getFocus(owner);
   return this.visual.read(owner,drawing,focus?'focus':args.scope,focus,signal,()=>this.host.check(owner,drawing.revision,signal));
  });}
