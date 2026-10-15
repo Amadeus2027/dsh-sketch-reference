@@ -3,10 +3,11 @@ import {ownerSchema} from './contracts.ts';
 import {focusSchema} from './agent.ts';
 import {IMAGE_LIMITS} from './limits.ts';
 import {imageRefSchema} from './image.ts';
+import {nodeIdSchema} from './graph.ts';
 export {imageRefSchema} from './image.ts';
 
 export const VISUAL_LIMITS=Object.freeze({records:1000,metadataBytes:2*1024*1024});
-export const visualReadSchema=z.object({revision:z.uuid(),scope:z.enum(['all','focus']).default('all')}).strict();
+export const visualReadSchema=z.object({nodeId:nodeIdSchema.optional(),revision:z.uuid(),scope:z.enum(['all','focus']).default('all')}).strict();
 export const visualPrepareSchema=visualReadSchema.extend({pngBase64:z.string().min(1).max(IMAGE_LIMITS.maxBase64Chars)}).strict();
 export const visualRecordSchema=z.object({owner:ownerSchema,revision:z.uuid(),sceneDigest:z.string(),scope:z.enum(['all','focus']),elementIds:focusSchema.shape.elementIds,image:imageRefSchema,createdAt:z.iso.datetime()}).strict();
 export type VisualRecord=z.infer<typeof visualRecordSchema>;

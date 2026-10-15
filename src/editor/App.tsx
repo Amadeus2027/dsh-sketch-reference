@@ -24,6 +24,8 @@ import {pngExport,download,downloadScene,base64} from './export.ts';
 import {createSceneExport} from './scene-export.ts';
 import {startBridge,stageImage,insertAdvice,insertComment,closeBoard} from './bridge.ts';
 import type {CommentRequest} from '../core/comment-context.ts';
+import {GraphWorkspace} from './graph-workspace.tsx';
+import {GraphEditorTools,type GraphEditorProps} from './graph-tools.tsx';
 const labels={clean:'已保存',dirty:'未保存',saving:'正在保存',error:'保存失败',conflict:'版本冲突'};
 export function SketchApp({sessionId}:{sessionId:string}) {
  const [loaded,setLoaded]=useState<ReturnType<typeof loadSchema.parse>|null>(null),[error,setError]=useState('');
@@ -36,9 +38,9 @@ export function SketchApp({sessionId}:{sessionId:string}) {
   return()=>abort.abort();
  },[sessionId,reload]);
  if(!loaded)return <main className="loading"><h1>手绘参考板</h1><p role="status">{error||'正在载入会话草图…'}</p>{error&&<button onClick={()=>setReload(v=>v+1)}>重试</button>}<button onClick={()=>void closeBoard()}>返回聊天</button></main>;
- return <Board key={reload} owner={loaded.owner} initial={loaded.drawing} latestAdvice={loaded.latestAdvice} routes={loaded.routes} registerClose={registerClose} onReload={()=>setReload(v=>v+1)} />;
+ return <GraphWorkspace key={reload} loaded={loaded} registerClose={registerClose} renderBoard={(data,graph,onReload)=><Board owner={data.owner} initial={data.drawing} latestAdvice={data.latestAdvice} routes={data.routes} registerClose={registerClose} onReload={onReload} graph={graph}/>}/>;
 }
-function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner:Owner;initial:Drawing|null;latestAdvice:Batch|null;routes:RouteOption[];onReload:()=>void;registerClose:(handler:(()=>void)|null)=>void}) {
+function Board({owner,initial,latestAdvice,routes,onReload,registerClose,graph}:{owner:Owner;initial:Drawing|null;latestAdvice:Batch|null;routes:RouteOption[];onReload:()=>void;registerClose:(handler:(()=>void)|null)=>void;graph:GraphEditorProps}) {
  const appearance=useAppearance();
  const [initialView]=useState(()=>readView(owner)),lastView=useRef(initialView);
  const [exportScene]=useState(()=>createSceneExport(pngExport));
@@ -216,6 +218,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   if(target&&locate)api.current.scrollToContent(target,{animate:false});
  };
  const discuss=(id:string,intent:CommentRequest['intent'])=>void run(async()=>{
+  if(owner.nodeId)throw new Error('新增草图的批注暂不支持插入聊天，请复制建议文字；Agent 可按节点读取草图');
   if(discussionPending.current)return;
   if(!comments||preparing||busy||pending||savingComments||editUncertain)throw new Error('请先结束或确认当前操作');
   discussionPending.current=true;setDiscussing(true);setPreparing(true);
@@ -225,7 +228,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
    if(mounted.current)await closeBoard();
   }finally{discussionPending.current=false;if(mounted.current){setDiscussing(false);setPreparing(false);}}
  });
- const actions:CommentActions={select:selectComment,hover:setHovered,discuss,change:changeComment,use:index=>void run(async()=>{if(!batch)return;await settle();setMessage(await insertAdvice(owner,batch.id,index));}),prompt:index=>{setCopy(batch?.advice.suggestions[index]?.actionPrompt??'');setAdviceOpen(true);}};
+ const actions:CommentActions={select:selectComment,hover:setHovered,discuss,change:changeComment,use:index=>void run(async()=>{if(owner.nodeId)throw new Error('新增草图请复制建议文字；Agent 可按节点读取草图');if(!batch)return;await settle();setMessage(await insertAdvice(owner,batch.id,index));}),prompt:index=>{setCopy(batch?.advice.suggestions[index]?.actionPrompt??'');setAdviceOpen(true);}};
  const analyze=()=>void run(async()=>{
   if(busy)return;if(pendingComment.current)throw new Error('请先重试保存或刷新批注');const route=routes[routeIndex];if(!route)throw new Error('请先在 Harness 中登录 DS 或配置官方 DS 路线');
   const abort=new AbortController();active.current=abort;setBusy(true);setPreparing(true);
@@ -255,6 +258,8 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
  const initialData={elements:(initial?.scene.elements??[]) as unknown as ExcalidrawElement[],appState:{...(initial?.scene.appState??{}),...initialView,viewBackgroundColor:'#ffffff',currentItemFontFamily:1} as Partial<AppState>};
  return <main className="board">
   <header><div><h1>手绘参考板</h1><span className={`save ${queue.state}`} role="status" title={labels[queue.state]}>{labels[queue.state]}</span>{exporting&&<span role="status">正在导出…</span>}</div><button onClick={close}>返回聊天 ×</button></header>
+  <GraphEditorTools graph={graph} api={editor} disabled={preparing||busy||!!pending||editUncertain||!!pendingComment.current||!!agent.pending} beforeAction={settle}/>
+  {owner.nodeId&&<div className="notice info">Agent 可按节点读取本草图；聊天批注、修改提案及直接发送参考图目前仅支持根草图。</div>}
   <section className="intent"><label className="srOnly" htmlFor="goal">这张图准备用来做什么？</label><input id="goal" maxLength={2000} value={goal} disabled={preparing||!!pending} placeholder="用途：例如识别物品、解释几何图形或讨论流程" onChange={e=>{const value=e.target.value;void run(async()=>{const scene=api.current?capture():queue.current().scene;setGoal(value);goalRef.current=value;queue.update({scene,goal:value});updateStale(scene,value);});}} />
   </section>
   {(batch||agent.batch||busy)&&<section className="advice" aria-label="AI 建议与批注">
@@ -301,7 +306,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose}:{owner
   <footer>
    {visual.state?.available&&<span className="collaborationStatus" aria-label="协作状态">{visual.state.selection?`重点 ${visual.state.selection.elementIds.length} 个${visual.state.selection.revision!==queue.revision||queue.state!=='clean'?' · 已过期':''}`:''}{visual.state.all?`${visual.state.selection?' · ':''}视觉参考${!visual.state.all.stale&&visual.state.all.revision===queue.revision&&queue.state==='clean'?'可读':'待更新'}`:''}</span>}<div className="actions">
    <button disabled={!editor||!!pending||busy||preparing||queue.state==='conflict'||commentSaving} onClick={analyze}>{batch?'重新分析草图':'AI 分析草图'}</button>
-   <button className="primary" disabled={!editor||!!pending||preparing} title="加入原生输入框，由你确认发送" onClick={()=>void run(async()=>{setPreparing(true);try{const scene=capture();queue.update({scene,goal:goalRef.current});await settle();const png=await exportScene(scene);const result=await stageImage(owner,png,await digest(scene));setMessage(stale&&batch?'参考图已更新；输入框中若有旧建议，请重新获取后替换。'+result:result);}finally{if(mounted.current)setPreparing(false);}})}>作为参考发送</button>
+   <button className="primary" disabled={!!owner.nodeId||!editor||!!pending||preparing} title="根草图可加入原生输入框，由你确认发送" onClick={()=>void run(async()=>{setPreparing(true);try{const scene=capture();queue.update({scene,goal:goalRef.current});await settle();const png=await exportScene(scene);const result=await stageImage(owner,png,await digest(scene));setMessage(stale&&batch?'参考图已更新；输入框中若有旧建议，请重新获取后替换。'+result:result);}finally{if(mounted.current)setPreparing(false);}})}>作为参考发送</button>
    <div className="more"><button aria-expanded={moreOpen} aria-label="更多操作" onClick={()=>setMoreOpen(v=>!v)}>···</button>{moreOpen&&<div className="moreMenu" role="group" aria-label="导出与模型选项">
     <button disabled={commentSaving||agent.saving||syncingComments} title="重新读取已保存批注，不调用模型" onClick={refreshComments}>{syncingComments?'正在同步批注…':'同步批注'}</button>
     {agent.available&&<><button disabled={!editor||!!pending||preparing} onClick={()=>focusSelection()}>选区作为重点</button><button disabled={!editor||!!pending||preparing} onClick={()=>focusSelection(true)}>清除选区重点</button></>}

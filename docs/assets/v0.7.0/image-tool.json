@@ -1,0 +1,22 @@
+{
+  "source": "Observed native DSH tool invocation in the dedicated real-model session, Windows 2026-10-15 18:58 Asia/Shanghai; extracted from the expanded UI, not a fixture response.",
+  "tool": "sketch_read_image",
+  "input": {
+    "nodeId": "adefb394-f13c-4ad5-a09d-db09c3547d49",
+    "revision": "94dd84b0-761b-4e51-b5a5-540e91c80fb9",
+    "scope": "all"
+  },
+  "output": {
+    "revision": "94dd84b0-761b-4e51-b5a5-540e91c80fb9",
+    "scope": "all",
+    "elementCount": 7,
+    "image": {
+      "attachmentId": "sha256:ff2dcae4de829319408395734f3232a15833027fd5a5c32c11b5bc767a6fdaf0",
+      "mediaType": "image/png",
+      "bytes": 50672,
+      "width": 724,
+      "height": 334
+    }
+  },
+  "boundary": "One successful real tool invocation after the dedicated host restarted with corrected tool instructions. Prior failures and corrective conversation are documented in validation-v0.7.0.md. This is not a model reliability benchmark."
+}

@@ -36,4 +36,5 @@ export class CommentRepository<T extends CommentRecord=Batch> {
   }).then(withComments);
  });}
  async drain(){await this.tail;}
+ prune(removed:(owner:Owner)=>boolean){return this.write(async()=>{for(const [key,value] of this.table.entries())if(removed(value.owner))await this.table.delete(key);});}
 }

@@ -12,6 +12,19 @@
 
 **Sketch, discuss and build in your workspace.** Sketch Reference brings Excalidraw into DeepSeek Harness. The native Agent can read your sketch on demand, anchor comments to shapes and propose canvas edits for your approval.
 
+**Development preview v0.7.0-alpha.1 — Sketch Graph.** Connect editable sketches from elements or selected regions, distinguish navigation from detail design, and switch between the existing side panel and fullscreen with movable native chat. Existing drawings remain the root document. [Scope and validation](docs/release-v0.7.0.md)
+
+![Actual Sketch Graph UI: split view, fullscreen, floating native chat and detail editor](docs/assets/v0.7.0/sketch-graph.gif)
+
+<details>
+<summary>Website built through real DeepSeek conversations</summary>
+
+![Browser interactions with the generated website: login, product details and cart](docs/assets/v0.7.0/agent-site.gif)
+
+Windows DSH alpha.2, DeepSeek-V4.1-Flash / High, four sketches, real native tool calls and corrective conversations. This edited GIF shows automated interactions with the final site, not a continuous recording of generation. [Evidence and failures](docs/validation-v0.7.0.md) · [Capture provenance](docs/assets/v0.7.0/README.md)
+
+</details>
+
 ![v0.6.5 canvas recording: native sketch-style layout, undo and redraw, PNG attachment, back to chat](docs/assets/v0.6.5/workflow.gif)
 
 *Sketch → adjust the layout → add a reference → return to chat. [Still image](docs/assets/v0.6.5/sketch.png)*

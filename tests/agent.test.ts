@@ -161,7 +161,7 @@ it('rejects a quoted null batch token without a write and accepts a corrected JS
 });
 it('uses the fixed DSH tool DSL and requires an owning Agent, never model-provided session identity',async()=>{
  const s=await setup(),tools=createSketchTools(s.agent,s.signal,p=>p);
- expect(tools.map(t=>t.name)).toEqual(['sketch_read','sketch_annotate']);
+ expect(tools.map(t=>t.name)).toEqual(['sketch_read','sketch_annotate','sketch_graph_read']);
  const exec={signal:s.signal,callId:'fixture'} as Parameters<typeof tools[0]['execute']>[1];
  await expect(tools[0]!.execute({},exec)).rejects.toThrow('owning Agent');
  const result=await tools[0]!.execute({}, {...exec,agent:{session:{header:session}}} as typeof exec);

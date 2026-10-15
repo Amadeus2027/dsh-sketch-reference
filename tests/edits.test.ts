@@ -39,7 +39,7 @@ it('returns a tiny unchanged response rather than retransmitting the recovery sn
 });
 it('exposes only a proposal tool, binds its owner to the official Agent execution context, and supplies no apply tool',async()=>{
  const s=await setup(),agent=new SketchAgent({snapshot:async(_session,signal)=>{signal.throwIfAborted();return {owner,drawing:s.drawings.get(owner)};},check:async(_owner,_revision,signal)=>signal.throwIfAborted(),changed:()=>{}},new CommentRepository(memory<AgentBatch>().table),s.edits);
- const tools=createSketchTools(agent,new AbortController().signal,p=>p);expect(tools.map(t=>t.name)).toEqual(['sketch_read','sketch_annotate','sketch_propose_edit']);
+ const tools=createSketchTools(agent,new AbortController().signal,p=>p);expect(tools.map(t=>t.name)).toEqual(['sketch_read','sketch_annotate','sketch_propose_edit','sketch_graph_read']);
  const exec={signal:new AbortController().signal,callId:'native'} as Parameters<typeof tools[0]['execute']>[1];
  await expect(tools[2]!.execute(s.input(),exec)).rejects.toThrow('owning Agent');
  await expect(tools[2]!.execute(s.input(),{...exec,agent:{session:{header:{id:owner.sessionId,createdAt:1,cwd:owner.cwd} as unknown as SessionHeader}}} as typeof exec)).resolves.toMatchObject({status:'pending'});

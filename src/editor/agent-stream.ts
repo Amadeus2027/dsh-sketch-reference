@@ -3,7 +3,7 @@ import type {Owner} from '../core/contracts.ts';
 
 /** Event-only transport. Retired connections cannot mutate a new board. */
 export function subscribeAgentComments(owner:Owner,changed:()=>void,failed:()=>void){
- const stream=new EventSource(`${AGENT_EVENTS}?${new URLSearchParams(owner)}`);
+ const stream=new EventSource(`${AGENT_EVENTS}?${new URLSearchParams({sessionId:owner.sessionId,createdAt:owner.createdAt,cwd:owner.cwd})}`);
  let active=true;
  const fail=()=>{if(!active)return;active=false;stream.close();failed();};
  stream.onmessage=event=>{if(active&&event.data==='changed')changed();};

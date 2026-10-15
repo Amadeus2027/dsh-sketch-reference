@@ -1,6 +1,6 @@
 {
   "name": "dsh-sketch-reference",
-  "version": "0.6.5",
+  "version": "0.7.0-alpha.1",
   "description": "DeepSeek Harness 原生可视化协作：可编辑草图、参考输入与 Agent 批注",
   "type": "module",
   "main": "lib/index.js",
@@ -25,6 +25,7 @@
     "third_party_licenses",
     "docs/usage.md",
     "docs/release-v0.6.5.md",
+    "docs/release-v0.7.0.md",
     "CONTRIBUTING.md",
     "docs/installation.md"
   ],
@@ -65,7 +66,9 @@
     "test:browser:visual": "node tests/browser-visual.mjs",
     "test:browser:compatibility": "node tests/browser-dsh-compatibility.mjs",
     "verify:distribution": "node build/check-distribution.mjs",
-    "prepack": "node build/check-distribution.mjs"
+    "prepack": "node build/check-distribution.mjs",
+    "test:browser:graph": "node --experimental-transform-types tests/browser-graph.mjs",
+    "test:browser:fullscreen": "node tests/browser-fullscreen.mjs"
   },
   "engines": {
     "node": "^22.19.0 || >=24.0.0"
@@ -179,7 +182,8 @@
     "@deepseek-ai/dsh-attachment": "0.2.1-alpha.1",
     "@deepseek-ai/dsh": "0.2.1-alpha.1",
     "@playwright/test": "1.58.2",
-    "@deepseek-ai/dsh-tools": "0.2.1-alpha.1"
+    "@deepseek-ai/dsh-tools": "0.2.1-alpha.1",
+    "@xyflow/react": "12.12.0"
   },
   "repository": {
     "type": "git",

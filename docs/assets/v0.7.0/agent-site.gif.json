@@ -1,0 +1,264 @@
+{
+  "capture": "Actual Edge browser screenshots during automated UI actions; approximately 4 fps, not OS video capture.",
+  "editing": "Selected segments joined in capture order; tool-call gaps and waits omitted. UI transitions between segments are cuts. No claim of continuous recording or model speed.",
+  "playbackSpeedWithinSegments": 1,
+  "fps": 4,
+  "maxWidth": 1280,
+  "syntheticFrames": 0,
+  "overlaidUiOrResponses": false,
+  "segments": [
+    {
+      "label": "site-home",
+      "duration": 1.808,
+      "frames": [
+        {
+          "file": "site-home-000.jpg",
+          "t": 0,
+          "duration": 0.294,
+          "sha256": "cfec421e71ae7799e99c56ad71471afca13fc09b0d29672dfa030d3663bc121e"
+        },
+        {
+          "file": "site-home-001.jpg",
+          "t": 0.294,
+          "duration": 0.31,
+          "sha256": "cfec421e71ae7799e99c56ad71471afca13fc09b0d29672dfa030d3663bc121e"
+        },
+        {
+          "file": "site-home-002.jpg",
+          "t": 0.604,
+          "duration": 0.30700000000000005,
+          "sha256": "cfec421e71ae7799e99c56ad71471afca13fc09b0d29672dfa030d3663bc121e"
+        },
+        {
+          "file": "site-home-003.jpg",
+          "t": 0.911,
+          "duration": 0.29400000000000004,
+          "sha256": "cfec421e71ae7799e99c56ad71471afca13fc09b0d29672dfa030d3663bc121e"
+        },
+        {
+          "file": "site-home-004.jpg",
+          "t": 1.205,
+          "duration": 0.30999999999999983,
+          "sha256": "cfec421e71ae7799e99c56ad71471afca13fc09b0d29672dfa030d3663bc121e"
+        },
+        {
+          "file": "site-home-005.jpg",
+          "t": 1.515,
+          "duration": 0.29300000000000015,
+          "sha256": "cfec421e71ae7799e99c56ad71471afca13fc09b0d29672dfa030d3663bc121e"
+        }
+      ]
+    },
+    {
+      "label": "site-home",
+      "duration": 1.792,
+      "frames": [
+        {
+          "file": "site-home-000.jpg",
+          "t": 0,
+          "duration": 0.308,
+          "sha256": "cfec421e71ae7799e99c56ad71471afca13fc09b0d29672dfa030d3663bc121e"
+        },
+        {
+          "file": "site-home-001.jpg",
+          "t": 0.308,
+          "duration": 0.295,
+          "sha256": "cfec421e71ae7799e99c56ad71471afca13fc09b0d29672dfa030d3663bc121e"
+        },
+        {
+          "file": "site-home-002.jpg",
+          "t": 0.603,
+          "duration": 0.29200000000000004,
+          "sha256": "cfec421e71ae7799e99c56ad71471afca13fc09b0d29672dfa030d3663bc121e"
+        },
+        {
+          "file": "site-home-003.jpg",
+          "t": 0.895,
+          "duration": 0.30899999999999994,
+          "sha256": "cfec421e71ae7799e99c56ad71471afca13fc09b0d29672dfa030d3663bc121e"
+        },
+        {
+          "file": "site-home-004.jpg",
+          "t": 1.204,
+          "duration": 0.29400000000000004,
+          "sha256": "cfec421e71ae7799e99c56ad71471afca13fc09b0d29672dfa030d3663bc121e"
+        },
+        {
+          "file": "site-home-005.jpg",
+          "t": 1.498,
+          "duration": 0.29400000000000004,
+          "sha256": "cfec421e71ae7799e99c56ad71471afca13fc09b0d29672dfa030d3663bc121e"
+        }
+      ]
+    },
+    {
+      "label": "site-login",
+      "duration": 1.785,
+      "frames": [
+        {
+          "file": "site-login-000.jpg",
+          "t": 0,
+          "duration": 0.287,
+          "sha256": "241e3174be8b9bb6f5442b605009360df32a7e43f12abe367a1c1499513b4bcb"
+        },
+        {
+          "file": "site-login-001.jpg",
+          "t": 0.287,
+          "duration": 0.294,
+          "sha256": "0185c3fa0b17f3d5e35c06a9f464113f9e6e975ec2b9099cc25f7a8830adab19"
+        },
+        {
+          "file": "site-login-002.jpg",
+          "t": 0.581,
+          "duration": 0.29100000000000004,
+          "sha256": "cd908ff26a0d358217f64fe718a226f208714c95ee2a2630d37cf6397cf17338"
+        },
+        {
+          "file": "site-login-003.jpg",
+          "t": 0.872,
+          "duration": 0.30799999999999994,
+          "sha256": "cd908ff26a0d358217f64fe718a226f208714c95ee2a2630d37cf6397cf17338"
+        },
+        {
+          "file": "site-login-004.jpg",
+          "t": 1.18,
+          "duration": 0.29200000000000004,
+          "sha256": "cd908ff26a0d358217f64fe718a226f208714c95ee2a2630d37cf6397cf17338"
+        },
+        {
+          "file": "site-login-005.jpg",
+          "t": 1.472,
+          "duration": 0.31299999999999994,
+          "sha256": "cd908ff26a0d358217f64fe718a226f208714c95ee2a2630d37cf6397cf17338"
+        }
+      ]
+    },
+    {
+      "label": "site-logged-in",
+      "duration": 1.785,
+      "frames": [
+        {
+          "file": "site-logged-in-000.jpg",
+          "t": 0,
+          "duration": 0.309,
+          "sha256": "a78e8d6d84dda9a957451fe8d5a8f393eeefc649db37903270fe62ccb31cd8b5"
+        },
+        {
+          "file": "site-logged-in-001.jpg",
+          "t": 0.309,
+          "duration": 0.295,
+          "sha256": "e001c0bcb61f191dc8d4a643cb5732ce4c219b9104af89ef3e2962723554c6d5"
+        },
+        {
+          "file": "site-logged-in-002.jpg",
+          "t": 0.604,
+          "duration": 0.29500000000000004,
+          "sha256": "a86d2dea540f33ba864031e6ec28da67cd1b17b02563c0a036f50ff5e0ea53e8"
+        },
+        {
+          "file": "site-logged-in-003.jpg",
+          "t": 0.899,
+          "duration": 0.29400000000000004,
+          "sha256": "7c45d35643f16c260d70d4c5d7cf28297e4fa27957f0851e49f5447ce7166d58"
+        },
+        {
+          "file": "site-logged-in-004.jpg",
+          "t": 1.193,
+          "duration": 0.29699999999999993,
+          "sha256": "4c8de7741d1ed9877bf5feaa25a61a8dda22be311eacb2e967ae0ed9ede8daf2"
+        },
+        {
+          "file": "site-logged-in-005.jpg",
+          "t": 1.49,
+          "duration": 0.29499999999999993,
+          "sha256": "5da3c1a3c591d2d672335a3d66a055c64679eb4a8d637dee13609b5eb94fd4c3"
+        }
+      ]
+    },
+    {
+      "label": "site-product",
+      "duration": 1.793,
+      "frames": [
+        {
+          "file": "site-product-000.jpg",
+          "t": 0,
+          "duration": 0.321,
+          "sha256": "39e7469b0a9f747d28f1fe384348d35282f620a8ee108656ed044728b8a6794a"
+        },
+        {
+          "file": "site-product-001.jpg",
+          "t": 0.321,
+          "duration": 0.296,
+          "sha256": "39e7469b0a9f747d28f1fe384348d35282f620a8ee108656ed044728b8a6794a"
+        },
+        {
+          "file": "site-product-002.jpg",
+          "t": 0.617,
+          "duration": 0.29600000000000004,
+          "sha256": "39e7469b0a9f747d28f1fe384348d35282f620a8ee108656ed044728b8a6794a"
+        },
+        {
+          "file": "site-product-003.jpg",
+          "t": 0.913,
+          "duration": 0.29600000000000004,
+          "sha256": "39e7469b0a9f747d28f1fe384348d35282f620a8ee108656ed044728b8a6794a"
+        },
+        {
+          "file": "site-product-004.jpg",
+          "t": 1.209,
+          "duration": 0.2909999999999999,
+          "sha256": "39e7469b0a9f747d28f1fe384348d35282f620a8ee108656ed044728b8a6794a"
+        },
+        {
+          "file": "site-product-005.jpg",
+          "t": 1.5,
+          "duration": 0.2929999999999999,
+          "sha256": "39e7469b0a9f747d28f1fe384348d35282f620a8ee108656ed044728b8a6794a"
+        }
+      ]
+    },
+    {
+      "label": "site-cart",
+      "duration": 1.766,
+      "frames": [
+        {
+          "file": "site-cart-000.jpg",
+          "t": 0,
+          "duration": 0.294,
+          "sha256": "1e6af47bd8dc9a25164cf1ffc30704a8aa9a7b0af23b916db97d5944ba0358c7"
+        },
+        {
+          "file": "site-cart-001.jpg",
+          "t": 0.294,
+          "duration": 0.294,
+          "sha256": "6c572a9f54e0659743822a6d5dad8ffaeac8e8f47ca18ad73ebdf305e59326fc"
+        },
+        {
+          "file": "site-cart-002.jpg",
+          "t": 0.588,
+          "duration": 0.29600000000000004,
+          "sha256": "267919e70bc0a64002115a0c9cd18cc49d91a094eb29902545a36604f9aaf737"
+        },
+        {
+          "file": "site-cart-003.jpg",
+          "t": 0.884,
+          "duration": 0.29300000000000004,
+          "sha256": "abaeaf0b4984b995405423765d3175d63c00e6919286b3c24fe97967ce59e7de"
+        },
+        {
+          "file": "site-cart-004.jpg",
+          "t": 1.177,
+          "duration": 0.29400000000000004,
+          "sha256": "505c8835c4eddd3803972ad85e76b6770f431df1f3a1e4eaa837fbd03f9e3e5c"
+        },
+        {
+          "file": "site-cart-005.jpg",
+          "t": 1.471,
+          "duration": 0.29499999999999993,
+          "sha256": "75303a02c8a3e6a2458788616e23dca80efab4f29d79a80f006b927b95dc267d"
+        }
+      ]
+    }
+  ],
+  "gifSha256": "cd59656c83182c590ebc6de5ac0e4aa22b85748696b032c6707f79b78eaf1136"
+}
