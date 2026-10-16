@@ -45,7 +45,7 @@
 
 最终连续原片 42.42 秒，GIF 42.38 秒；无剪辑、加速、合成 UI、模拟回答或发送消息。录制在无 mock 的实际安装 profile 中完成，自动化输入来源与原片 SHA256 见 [素材记录](assets/v0.6.5/README.md)。不声称命令运行／文件写入或多轮模型对话已拍摄；完整真人／真实 Agent Windows 录像按 [清单](demo-recording-v0.6.5.md)补齐。网页/PPT 真实效果沿用原版本历史证据。
 
-v0.6.5 Windows、真实模型／网络故障／429／超时、非默认工具模式与长期资源检查仍待验收，v0.6.4 的 [Windows 双宿主清单](windows-acceptance-v0.6.4.md)仍可用于基础回归，并补看通知颜色、原生 line/arrow 与安装包来源。未做正式 Release、npm 发布或比赛提交。
+v0.6.5 Windows、真实模型／网络故障／429／超时、非默认工具模式与长期资源检查仍待验收，v0.6.4 的 [Windows 双宿主清单](windows-acceptance-v0.6.4.md)仍可用于基础回归，并补看通知颜色、原生 line/arrow 与安装包来源。未做正式 Release、npm 发布。
 
 ## 源码 ZIP 目录安装补验（2026-10-12）
 

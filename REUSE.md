@@ -40,4 +40,4 @@
 
 `src/host/image-reference.ts` 和 `service.ts` 的图片工具输出、路线能力门禁模式改编自固定版 DSH [`packages/fs/tool-fs/src/read-image.ts`](https://github.com/deepseek-ai/deepseek-harness/blob/5badb15009ae1756c3afe0ae0cef1faafc290ccc/packages/fs/tool-fs/src/read-image.ts)。使用其公开 attachments/工具接口，沿用 DSH MIT 归属与许可；未复制文件路径读取能力。
 
-另外只参考 tldraw [`image-export.mdx`](https://github.com/tldraw/tldraw/blob/035b741dc331bf76a4cb9af27c346be10bba2a88/apps/docs/content/sdk-features/image-export.mdx) 的选区导出流程。其 SDK 许可证与 MIT 不同，没有复制代码、引入依赖或将其列为本包包含组件。详细取舍见 [0.3.2 实现说明](docs/submission-v0.3.2.md)。
+另外只参考 tldraw [`image-export.mdx`](https://github.com/tldraw/tldraw/blob/035b741dc331bf76a4cb9af27c346be10bba2a88/apps/docs/content/sdk-features/image-export.mdx) 的选区导出流程。其 SDK 许可证与 MIT 不同，没有复制代码、引入依赖或将其列为本包包含组件。详细取舍见 [0.3.2 实现说明](docs/implementation-v0.3.2.md)。

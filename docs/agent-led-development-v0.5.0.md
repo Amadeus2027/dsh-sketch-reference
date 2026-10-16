@@ -77,13 +77,15 @@ Windows AppContainer 中捕获式子进程 stdio 存在兼容问题：原生 she
 
 ## B. DeepSeek 原始审查与真实体验
 
+初始公开反馈及部分工具结果已移除不再适用的项目定位和材料说明，删节范围在文件头／事件的 `publicationRedacted` 字段标注。来源哈希与字符数仍标识清理前文本，不能用于证明删节后内容逐字不变；调用顺序、工具结果状态、模型错误与 usage 记录保留。固定源码快照清单中的历史路径也保持原样。
+
 2026-10-10 13:11（Asia/Shanghai），Codex 在真实 DSH 原生 Composer 中发送维护者指定的[完整初始任务](agent-led-v0.5.0/initial-task.txt)。主会话 session-afa4ba0f-29b0-403c-bda8-dde504e693d2。DeepSeek 自行选择模块并创建四个原生研究子会话，实际阅读插件源码、测试及固定宿主资料；这些不是 Codex 创建的替身 Agent。
 
-以下原文均直接从本次专用会话日志的 text block 导出，不是 Codex 改写。长源码工具返回仅保留明确标注的摘录、调用参数及原文 SHA256；插件工具结果和错误完整保存。导出省略 reasoning、系统提示、签名、密钥、图片 Base64 和无关私人会话。
+以下记录由本次专用会话日志的 text block 导出；初始公开版本的删节见上，其余复审原文保留。长源码工具返回仅保留明确标注的摘录、调用参数及原文 SHA256；插件工具结果和错误完整保存。导出省略 reasoning、系统提示、签名、密钥、图片 Base64 和无关私人会话。
 
-| 阶段 | 原始反馈与 Codex 原始提问 | 真实工具事件 | 宿主报告用量 |
+| 阶段 | 反馈记录与 Codex 提问 | 真实工具事件 | 宿主报告用量 |
 |---|---|---|---|
-| 初始自主研究，含四个 DeepSeek 原生子会话 | [原文](agent-led-v0.5.0/deepseek-original-feedback.md) | [事件](agent-led-v0.5.0/tool-events.jsonl) | [usage](agent-led-v0.5.0/session-metrics.json) |
+| 初始自主研究，含四个 DeepSeek 原生子会话 | [公开删节记录](agent-led-v0.5.0/deepseek-original-feedback.md) | [事件](agent-led-v0.5.0/tool-events.jsonl) | [usage](agent-led-v0.5.0/session-metrics.json) |
 | 第一轮修复后复审，session-cafd9cd0-1aa1-46dc-bdeb-5483789f9b56 | [原文](agent-led-v0.5.0/review/deepseek-original-feedback.md) | [事件](agent-led-v0.5.0/review/tool-events.jsonl) | [usage](agent-led-v0.5.0/review/session-metrics.json) |
 | 第二轮最终复审及交互回归，session-81de30b0-e09f-4773-b976-6d93d007e7d8 | [原文](agent-led-v0.5.0/final-review/deepseek-original-feedback.md) | [事件](agent-led-v0.5.0/final-review/tool-events.jsonl) | [usage](agent-led-v0.5.0/final-review/session-metrics.json) |
 
@@ -154,4 +156,4 @@ DeepSeek 保留的局限：固定 Web 未消费 presentResult；被过滤批注�
 
 从批注进入聊天已实际完成追问、纠正、新引用及修改提议路径；修改确认/撤销由 Codex 在隔离测试会话代用户操作并单独记录，不伪称 DeepSeek 自己应用了图形。最终回归范围和未覆盖项以 [Windows 验证](windows-validation-v0.5.0-20261010.md) 为准。
 
-本次提交只提供可审查版本和 PR，合并由维护者执行。不自动发布 Release、提交比赛作品或公开其他私人会话。
+本次提交只提供可审查版本和 PR，合并由维护者执行。不自动发布 Release 或公开其他私人会话。
