@@ -21,6 +21,7 @@ const envelopeBytes = 16_384;
 export const RPC_LIMITS = Object.freeze({
   envelopeBytes,
   adviceBodyBytes: 3 * MiB + envelopeBytes,
+  graphBodyBytes: 2 * MiB + envelopeBytes,
   ordinaryTimeoutMs: 20_000,
   // Fetch keepalive has a browser-wide 64 KiB budget; leave envelope headroom.
   keepaliveBodyBytes: 60 * 1024,
@@ -28,6 +29,7 @@ export const RPC_LIMITS = Object.freeze({
 export function requestBodyLimit(method: string): number {
   if (method === 'advice/generate' || method === 'visual/prepare') return RPC_LIMITS.adviceBodyBytes;
   if (method === 'drawing/save' || method === 'proposal/apply') return SCENE_LIMITS.maxSceneBytes + RPC_LIMITS.envelopeBytes;
+  if (method === 'graph/save') return RPC_LIMITS.graphBodyBytes;
   return RPC_LIMITS.envelopeBytes;
 }
 // Theme transport stays bounded; alpha.2 expands the computed fallback font list.

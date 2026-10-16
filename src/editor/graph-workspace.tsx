@@ -1,4 +1,4 @@
-import {useCallback,useEffect,useMemo,useRef,useState,type ReactNode} from 'react';
+import {memo,useCallback,useEffect,useMemo,useRef,useState,type ReactNode} from 'react';
 import {ReactFlow,Background,Controls,Handle,Position,MarkerType,applyNodeChanges,useUpdateNodeInternals,type Node,type NodeProps,type Connection,type Viewport,type ReactFlowInstance,type Edge} from '@xyflow/react';
 import {exportToBlob,getCommonBounds} from '@excalidraw/excalidraw';
 import type {NonDeletedExcalidrawElement} from '@excalidraw/excalidraw/element/types';
@@ -45,17 +45,19 @@ function Thumbnail({data,id}:NodeProps<SketchFlowNode>){
   return {left:(280-w*scale)/2+(x-left+32)*scale,top:(190-h*scale)/2+(y-top+32)*scale};
  };
  const locatePoint=data.locate?point(data.locate):null;
+ const anchoredEdges=data.edges.filter(edge=>edge.anchor.kind!=='node');
  return <div className="sketchGraphNode">
   <div className="sketchGraphNodeTitle"><strong>{data.node.name}</strong><span>{data.node.kind==='detail'?'细节':data.node.kind==='page'?'页面':'未分类'}</span></div>
   <div className="sketchGraphPreview">{url?<img src={url} alt={`${data.node.name}草图预览`}/>:<span>{error||(!drawing?.scene.elements.length?'空白草图':'正在生成预览…')}</span>}
-   {data.edges.map(edge=>{const p=point(edge.anchor),missing=anchorStatus(edge.anchor,drawing)==='missing';return <Handle key={edge.id} id={edge.id} type="source" position={Position.Right} className={`${edge.type} ${missing?'missing':''}`} style={p?{left:p.left,top:p.top,right:'auto'}:{top:18+data.edges.indexOf(edge)*16}} title={missing?'待重新绑定':edge.type==='detail'?'细节展开':'页面跳转'}/>;})}
+   {anchoredEdges.map((edge,index)=>{const p=point(edge.anchor),missing=anchorStatus(edge.anchor,drawing)==='missing';return <Handle key={edge.id} id={edge.id} type="source" position={Position.Right} className={`${edge.type} ${missing?'missing':''}`} style={p?{left:p.left,top:p.top,right:'auto'}:{top:18+index*16}} title={missing?'待重新绑定':edge.type==='detail'?'细节展开':'页面跳转'}/>;})}
    {documentLoaded&&data.edges.some(e=>anchorStatus(e.anchor,drawing)==='missing')&&<span className="graphAnchorWarning">关联来源已删除 · 请重新绑定</span>}
    {locatePoint&&<span className="graphLocate" style={{left:locatePoint.left,top:locatePoint.top}}/>}
   </div>
   <Handle id="node" type="source" position={Position.Right} style={{top:18}}/><Handle type="target" position={Position.Left} style={{top:18}}/>
  </div>;
 }
-const nodeTypes={sketch:Thumbnail};
+const nodeTypes={sketch:memo(Thumbnail,(a,b)=>a.id===b.id&&a.data.node===b.data.node&&a.data.owner===b.data.owner&&a.data.edges===b.data.edges&&a.data.locate===b.data.locate)};
+const emptyEdges:GraphEdge[]=[];
 
 export function GraphWorkspace({loaded,renderBoard,registerClose}:{loaded:Loaded;renderBoard:(loaded:Loaded,graph:GraphEditorProps,onReload:()=>void)=>ReactNode;registerClose:(handler:(()=>void)|null)=>void}){
  const appearance=useAppearance(),owner=loaded.owner;
@@ -97,8 +99,10 @@ export function GraphWorkspace({loaded,renderBoard,registerClose}:{loaded:Loaded
   await save(next);setRebind(null);setOverview(true);setPreviewEpoch(v=>v+1);
  };
  const graphProps:GraphEditorProps={content,nodeId,rebind,onBack:back,onLink:link,onLocate:id=>open(id)};
- const flowNodes=useMemo<SketchFlowNode[]>(()=>content.nodes.map(n=>({id:n.id,type:'sketch',width:300,height:253,position:n.position,data:{node:n,owner,edges:content.edges.filter(e=>e.sourceNodeId===n.id),locate:locate?.sourceNodeId===n.id?locate.anchor:null},selected:selectedNode===n.id})),[content,owner,locate,selectedNode]);
- const flowEdges:Edge[]=content.edges.map(e=>({id:e.id,zIndex:1001,source:e.sourceNodeId,target:e.targetNodeId,sourceHandle:e.anchor.kind==='node'?'node':e.id,label:e.label||(e.type==='detail'?'细节展开':'页面跳转'),selected:selected===e.id,markerEnd:{type:MarkerType.ArrowClosed,color:e.type==='detail'?'var(--sketch-detail)':'var(--sketch-blue)'},style:{stroke:e.type==='detail'?'var(--sketch-detail)':'var(--sketch-blue)',strokeWidth:2,...(e.type==='detail'?{strokeDasharray:'7 5'}:{})}}));
+ // Viewport changes do not change thumbnail data or connection handles.
+ const outgoing=useMemo(()=>{const map=new Map<string,GraphEdge[]>();for(const edge of content.edges){const edges=map.get(edge.sourceNodeId)??[];edges.push(edge);map.set(edge.sourceNodeId,edges);}return map;},[content.edges]);
+ const flowNodes=useMemo<SketchFlowNode[]>(()=>content.nodes.map(n=>({id:n.id,type:'sketch',width:300,height:253,position:n.position,data:{node:n,owner,edges:outgoing.get(n.id)??emptyEdges,locate:locate?.sourceNodeId===n.id?locate.anchor:null},selected:selectedNode===n.id})),[content.nodes,outgoing,owner,locate,selectedNode]);
+ const flowEdges=useMemo<Edge[]>(()=>content.edges.map(e=>({id:e.id,zIndex:1001,source:e.sourceNodeId,target:e.targetNodeId,sourceHandle:e.anchor.kind==='node'?'node':e.id,label:e.label||(e.type==='detail'?'细节展开':'页面跳转'),selected:selected===e.id,markerEnd:{type:MarkerType.ArrowClosed,color:e.type==='detail'?'var(--sketch-detail)':'var(--sketch-blue)'},style:{stroke:e.type==='detail'?'var(--sketch-detail)':'var(--sketch-blue)',strokeWidth:2,...(e.type==='detail'?{strokeDasharray:'7 5'}:{})}})),[content.edges,selected]);
  const changeNode=(change:Partial<GraphNode>)=>{if(!selectedNode)return;run(()=>save({...contentRef.current,nodes:contentRef.current.nodes.map(n=>n.id===selectedNode?{...n,...change}:n)}));};
  const connect=(c:Connection)=>run(async()=>{if(!c.source||!c.target)return;const previous=contentRef.current.edges.find(e=>e.id===c.sourceHandle);await save({...contentRef.current,edges:[...contentRef.current.edges,{id:crypto.randomUUID(),sourceNodeId:c.source,targetNodeId:c.target,type:previous?.type??'navigation',anchor:previous?.anchor??{kind:'node'},label:''}]});});
  const backup=async()=>{const docs=z.array(z.object({nodeId:z.string(),drawing:drawingSchema.nullable()})).parse(await rpc('graph/documents',owner,null));download(new Blob([JSON.stringify(backupSchema.parse({format:'dsh-sketch-graph',version:1,content:contentRef.current,documents:contentRef.current.nodes.map(n=>({nodeId:n.id,drawing:docs.find(d=>d.nodeId===n.id)?.drawing??null}))}),null,2)],{type:'application/json'}),'sketch-graph.json');};
@@ -131,7 +135,7 @@ export function GraphWorkspace({loaded,renderBoard,registerClose}:{loaded:Loaded
   {job&&<div className="notice">备份恢复尚未完成，已保留恢复任务。<button disabled={busy} onClick={()=>run(()=>continueImport(job))}>继续恢复</button><button disabled={busy} onClick={()=>{download(new Blob([JSON.stringify(job)],{type:'application/json'}),'sketch-graph-restore-task.json');}}>下载恢复任务</button><button disabled={busy} onClick={()=>{if(window.confirm('结束恢复任务？已恢复的节点保留，未完成节点可手动删除。'))run(async()=>{await recovery.clearImport(job.graph.mutationId);queue.reset(graphRef.current);setJob(null);});}}>结束恢复</button></div>}
   <div className="graphBody"><div className="graphCanvas">
    <ReactFlow onInit={instance=>{flow.current=instance;}} key={previewEpoch} colorMode={appearance.theme} nodes={flowNodes} edges={flowEdges} nodeTypes={nodeTypes} defaultViewport={content.viewport} onlyRenderVisibleElements nodesDraggable={!layoutLocked} nodesConnectable={!locked} elementsSelectable={!locked} deleteKeyCode={null}
-    onNodesChange={changes=>{if(layoutLocked||!changes.some(c=>c.type==='position'))return;const updated=applyNodeChanges(changes,flowNodes);const next={...contentRef.current,nodes:contentRef.current.nodes.map(n=>({...n,position:updated.find(u=>u.id===n.id)?.position??n.position}))};layout(next);}}
+    onNodesChange={changes=>{if(layoutLocked||!changes.some(c=>c.type==='position'))return;const updated=applyNodeChanges(changes,flowNodes);const next={...contentRef.current,nodes:contentRef.current.nodes.map(n=>{const position=updated.find(u=>u.id===n.id)?.position;return !position||(position.x===n.position.x&&position.y===n.position.y)?n:{...n,position};})};layout(next);}}
     onMove={(_event,viewport:Viewport)=>{if(!layoutLocked&&canonical(viewport)!==canonical(contentRef.current.viewport))layout({...contentRef.current,viewport});}}
     onNodeClick={(_e,n)=>{setSelectedNode(n.id);setSelected(null);}} onNodeDoubleClick={(_e,n)=>run(()=>open(n.id))} onEdgeClick={(_e,e)=>{setSelected(e.id);setSelectedNode(null);}} onPaneClick={()=>{setSelected(null);setSelectedNode(null);setLocate(null);}} onConnect={connect} edgesReconnectable={!locked} onReconnect={(old,c)=>run(async()=>{if(!c.source||!c.target)return;const anchor=c.source===old.source?(contentRef.current.edges.find(e=>e.id===old.id)?.anchor??{kind:'node' as const}):(contentRef.current.edges.find(e=>e.id===c.sourceHandle)?.anchor??{kind:'node' as const});await save({...contentRef.current,edges:contentRef.current.edges.map(e=>e.id===old.id?{...e,sourceNodeId:c.source!,targetNodeId:c.target!,anchor}:e)});})}>
     <Background/><Controls showInteractive={false}/>
