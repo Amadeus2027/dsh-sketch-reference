@@ -68,7 +68,8 @@
     "verify:distribution": "node build/check-distribution.mjs",
     "prepack": "node build/check-distribution.mjs",
     "test:browser:graph": "node --experimental-transform-types tests/browser-graph.mjs",
-    "test:browser:fullscreen": "node tests/browser-fullscreen.mjs"
+    "test:browser:fullscreen": "node tests/browser-fullscreen.mjs",
+    "test:browser:graph-stability": "node tests/browser-graph-stability.mjs"
   },
   "engines": {
     "node": "^22.19.0 || >=24.0.0"
