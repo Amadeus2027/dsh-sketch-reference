@@ -60,7 +60,7 @@ Zod 校验建议内容；锚点再校验结构与 ID 成员关系。无效、未
 
 执行 `pnpm run typecheck`、`pnpm test`、`pnpm run bundle` 和 `pnpm pack`。一般浏览器回归见 `docs/validation.md`。
 
-批注浏览器测试只在专用 profile 执行：以官方 web 模板初始化，安装本地构建包，将 `tests/browse-picker.overlay.yml`、`tests/mock-model.overlay.yml` 与 `fixtures/mock-sketch-model.mjs` 复制到隔离 profile 内并保持相对结构，再启动宿主（避免 overlay 改变客户端模块解析基址）。后者将 `llm.stream` 替换为固定模拟返回，并将超时设为 10 秒；禁止在日常或真实模型 profile 启用，禁止把模拟建议作为比赛模型效果证据。测试文件不包含在安装包中，也没有生产 mock 开关。
+批注浏览器测试只在专用 profile 执行：以官方 web 模板初始化，安装本地构建包，将 `tests/browse-picker.overlay.yml`、`tests/mock-model.overlay.yml` 与 `fixtures/mock-sketch-model.mjs` 复制到隔离 profile 内并保持相对结构，再启动宿主（避免 overlay 改变客户端模块解析基址）。后者将 `llm.stream` 替换为固定模拟返回，并将超时设为 10 秒；禁止在日常或真实模型 profile 启用，禁止把模拟建议作为真实模型效果证据。测试文件不包含在安装包中，也没有生产 mock 开关。
 
 ```sh
 dsh --profile sketch-test --from-default-profile web --dump-config > /临时目录/profile-config.yml
