@@ -1,0 +1,105 @@
+name: prepare-release-assets
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing draft release tag (vMAJOR.MINOR.PATCH)
+        required: true
+        type: string
+      source_run_id:
+        description: Successful main build-and-test run containing the installable artifact
+        required: true
+        type: string
+      source_sha:
+        description: Exact 40-character commit SHA of that CI run and draft release target
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ inputs.tag }}
+      SOURCE_RUN: ${{ inputs.source_run_id }}
+      SOURCE_SHA: ${{ inputs.source_sha }}
+    steps:
+      - name: Verify source and existing draft
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          [[ "$SOURCE_RUN" =~ ^[0-9]+$ ]]
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN" > run.json
+          gh api "repos/$GITHUB_REPOSITORY/releases" > releases.json
+          python - <<'PY'
+          import json,os
+          run=json.load(open('run.json'))
+          assert run['head_sha']==os.environ['SOURCE_SHA']
+          assert run['head_branch']=='main' and run['event']=='push' and run['conclusion']=='success'
+          assert run['repository']['full_name']==os.environ['GITHUB_REPOSITORY']
+          assert run['path']=='.github/workflows/ci.yml'
+          matches=[r for r in json.load(open('releases.json')) if r['tag_name']==os.environ['TAG']]
+          assert len(matches)==1 and matches[0]['draft'], 'Only an existing draft may receive assets'
+          assert matches[0]['target_commitish']==os.environ['SOURCE_SHA'], 'Draft target differs from tested build'
+          json.dump(matches[0],open('release.json','w'))
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          name: dsh-sketch-reference-installable
+          path: release-artifacts
+          run-id: ${{ inputs.source_run_id }}
+          github-token: ${{ github.token }}
+      - name: Verify package and prepare ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd release-artifacts
+          python - <<'PY'
+          import os,json,hashlib,tarfile,zipfile,pathlib
+          version=os.environ['TAG'][1:]
+          package=pathlib.Path(f'dsh-sketch-reference-{version}.tgz')
+          assert sorted(p.name for p in pathlib.Path('.').iterdir())==sorted([package.name,'SHA256SUMS.txt'])
+          with tarfile.open(package) as archive:
+              manifest=json.load(archive.extractfile('package/package.json'))
+              assert manifest['version']==version and manifest['name']=='dsh-sketch-reference'
+              for member in archive.getmembers():
+                  parts=pathlib.PurePosixPath(member.name).parts
+                  assert parts[0]=='package' and '..' not in parts
+                  assert not any(p in {'.git','node_modules','test-results'} or p.startswith('.env') for p in parts)
+          digest=hashlib.sha256(package.read_bytes()).hexdigest()
+          checksum=f'{digest}  {package.name}\n'
+          assert pathlib.Path('SHA256SUMS.txt').read_text().strip()==checksum.strip(), 'Source artifact checksum mismatch'
+          zipped=pathlib.Path(f'dsh-sketch-reference-{version}-installable.zip')
+          with zipfile.ZipFile(zipped,'w',zipfile.ZIP_DEFLATED) as out:
+              out.write(package,package.name)
+              out.writestr('SHA256SUMS.txt',checksum)
+          zip_digest=hashlib.sha256(zipped.read_bytes()).hexdigest()
+          pathlib.Path('SHA256SUMS.txt').write_text(checksum+f'{zip_digest}  {zipped.name}\n')
+          PY
+          sha256sum --check SHA256SUMS.txt
+      - name: Upload to draft and record provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Never publish automatically or replace assets on an existing public release.
+          RELEASE_ID=$(python -c 'import json; print(json.load(open("release.json"))["id"])')
+          gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" > current-release.json
+          python -c 'import json; assert json.load(open("current-release.json"))["draft"]'
+          gh release upload "$TAG" release-artifacts/*.tgz release-artifacts/*.zip release-artifacts/SHA256SUMS.txt --repo "$GITHUB_REPOSITORY" --clobber
+          python - <<'PY'
+          import json,os,pathlib
+          release=json.load(open('current-release.json'))
+          body=(release.get('body') or '').split('\n<!-- release-assets-provenance -->')[0]
+          repo=os.environ['GITHUB_REPOSITORY'];run=os.environ['SOURCE_RUN'];sha=os.environ['SOURCE_SHA']
+          sums=pathlib.Path('release-artifacts/SHA256SUMS.txt').read_text()
+          body+=f'\n<!-- release-assets-provenance -->\n\n## 发行资产来源\n\n来自 [CI #{run}](https://github.com/{repo}/actions/runs/{run})，源码 `{sha}`。公开资产使用此 CI 包；本地安装核对包的归档哈希不作替代。\n\n```text\n{sums}```\n'
+          json.dump({'body':body},open('release-update.json','w'))
+          PY
+          gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" --input release-update.json --silent
+          cat release-artifacts/SHA256SUMS.txt >> "$GITHUB_STEP_SUMMARY"

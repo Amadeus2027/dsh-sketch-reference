@@ -62,5 +62,6 @@
       "test:browser": true,
       "test:browser:fullscreen": true
     }
-  }
+  },
+  "packageRole": "Local validation build. Public distribution uses the matching successful main CI artifact with its own Release checksums."
 }
