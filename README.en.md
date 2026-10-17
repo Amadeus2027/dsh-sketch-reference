@@ -6,13 +6,13 @@
 
 [![Release](https://img.shields.io/github/v/release/Amadeus2027/dsh-sketch-reference?label=release&color=4176e6)](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) [![CI](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![Tested DSH](https://img.shields.io/badge/DSH-alpha.1_%7C_alpha.2-536DFE)](https://github.com/deepseek-ai/deepseek-harness) [![Ask DeepWiki](https://img.shields.io/badge/DeepWiki-Ask-20B8A5.svg)](https://deepwiki.com/Amadeus2027/dsh-sketch-reference)
 
-[**Download**](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) · [**Quick start**](#quick-start) · [**中文**](README.md) · [**DeepWiki**](https://deepwiki.com/Amadeus2027/dsh-sketch-reference)
+[**Download v0.7.0**](https://github.com/Amadeus2027/dsh-sketch-reference/releases/tag/v0.7.0) · [**Quick start**](#quick-start) · [**中文**](README.md) · [**DeepWiki**](https://deepwiki.com/Amadeus2027/dsh-sketch-reference)
 
 </div>
 
 **Sketch, discuss and build in your workspace.** Sketch Reference brings Excalidraw into DeepSeek Harness. The native Agent can read your sketch on demand, anchor comments to shapes and propose canvas edits for your approval.
 
-**Development preview v0.7.0-alpha.1 — Sketch Graph.** Connect editable sketches from elements or selected regions, distinguish navigation from detail design, and switch between the existing side panel and fullscreen with movable native chat. Existing drawings remain the root document. [Scope and validation](docs/release-v0.7.0.md)
+**v0.7.0 is out — Sketch Graph.** Connect editable sketches from elements or selected regions, distinguish navigation from detail design, and switch between the existing side panel and fullscreen with movable native chat. Existing drawings remain the root document. [Scope and validation](docs/release-v0.7.0.md)
 
 ![Actual Sketch Graph UI: split view, fullscreen, floating native chat and detail editor](docs/assets/v0.7.0/sketch-graph.gif)
 
@@ -25,12 +25,12 @@ Windows DSH alpha.2, DeepSeek-V4.1-Flash / High, four sketches, real native tool
 
 </details>
 
-![v0.6.5 canvas recording: native sketch-style layout, undo and redraw, PNG attachment, back to chat](docs/assets/v0.6.5/workflow.gif)
-
-*Sketch → adjust the layout → add a reference → return to chat. [Still image](docs/assets/v0.6.5/sketch.png)*
-
 <details>
-<summary>Demo and case notes</summary>
+<summary>Historical canvas demo and capture provenance</summary>
+
+![Historical v0.6.5 canvas recording: drawing, undo and PNG attachment](docs/assets/v0.6.5/workflow.gif)
+
+*Historical v0.6.5: sketch → adjust → add a reference → return to chat. [Still image](docs/assets/v0.6.5/sketch.png)*
 
 The v0.6.5 canvas recording uses automated inputs and shows drawing, saving, PNG attachments and returning to chat. It contains no model calls or sent chat messages. [Recording provenance](docs/assets/v0.6.5/README.md)
 
@@ -82,7 +82,7 @@ The plugin supplies editable sketches and reference images; **DSH Agent** contin
 
 ## Quick start
 
-Choose a version: `main`, its source ZIP and matching CI artifacts contain the **v0.7.0-alpha.1 development preview**. `releases/latest` currently provides **v0.6.5 stable**, without Sketch Graph.
+Current release: **[v0.7.0](https://github.com/Amadeus2027/dsh-sketch-reference/releases/tag/v0.7.0)**, including Sketch Graph. Download the [package](https://github.com/Amadeus2027/dsh-sketch-reference/releases/download/v0.7.0/dsh-sketch-reference-0.7.0.tgz), [installable ZIP](https://github.com/Amadeus2027/dsh-sketch-reference/releases/download/v0.7.0/dsh-sketch-reference-0.7.0-installable.zip), or [tagged source ZIP](https://github.com/Amadeus2027/dsh-sketch-reference/archive/refs/tags/v0.7.0.zip).
 
 **Install from a source ZIP or a prebuilt package.** Both use DSH’s official plugin manager. No separate Excalidraw installation is required.
 
@@ -102,13 +102,14 @@ DSH links this directory. Keep it, including `lib` and `node_modules`; rebuild a
 
 **Option 2: prebuilt package (no local build)**
 
-- **ZIP download remains available:** open a [successful build](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml), download the `dsh-sketch-reference-installable` ZIP artifact and extract the `.tgz` and `SHA256SUMS.txt`.
+- **Release ZIP:** download the installable ZIP above and extract its `.tgz` and matching checksum file; no build required.
+- **CI ZIP remains available:** open a [successful build](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml), download the `dsh-sketch-reference-installable` ZIP artifact and extract the `.tgz` and `SHA256SUMS.txt`.
 - **Direct download:** get the versioned `.tgz` and checksum file from [Releases](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest).
 
 Once you have the versioned `.tgz` and its matching `SHA256SUMS.txt`, save your work and exit the host, then run:
 
 ```sh
-dsh plugin --profile web add /absolute/path/dsh-sketch-reference-0.6.5.tgz
+dsh plugin --profile web add /absolute/path/dsh-sketch-reference-0.7.0.tgz
 ```
 
 Run `dsh web` to start. The prebuilt package includes the editor and fonts; no repository clone, separate Excalidraw installation or local build is needed.
@@ -124,13 +125,13 @@ The UI is Chinese. Models and authentication use your DSH configuration; image r
 <details>
 <summary>Compatibility, data and feature boundaries</summary>
 
-- v0.6.5 covers both Web hosts on isolated Linux installations, plus Windows alpha.2 installation, annotations/edits, live themes, split layout and migration from alpha.1 + v0.6.3. Agent regressions use scripted responses; no new real-model quality evaluation was performed. [Windows acceptance](docs/windows-validation-v0.6.5.md). Other host versions, mobile clients, non-default tool modes and every plugin combination are not claimed compatible.
+- The v0.7.0 runtime passed Linux installation, restart, graph/draft recovery, attachments and export regressions on both Web hosts, including 100 nodes / 300 edges; full graphs still drop frames. [Performance record](docs/review-graph-performance-20261017.md). Windows and real-model cases retain their development snapshot identities; the formal package has not repeated full Windows or real-model acceptance. Other hosts, mobile clients and all plugin combinations are not claimed compatible.
 - Uncertain anchors fall back to text. Models may misread sketches or return invalid arguments; mathematical correctness is not guaranteed. Focus is version-bound and does not restrict other host tools or erase chat history.
 - Canvas edits are allowlisted; arbitrary changes to locked, bound, grouped elements or styles are unsupported. Undo history is not restored across refreshes.
 - Drafts/images live in local DSH storage; model-visible data goes to the configured provider. Historical attachments are not automatically reclaimed. Export backups before upgrading or uninstalling.
 - After a synchronization disconnect, use **⋯ → 同步批注** or reopen. There is no bundled website/PPT generator or automatic drawing-to-code synchronization.
 
-[Host compatibility report](docs/dsh-compatibility.md) · [v0.6.5 validation scope](docs/validation-v0.6.5.md)
+[Host compatibility report](docs/dsh-compatibility.md) · [v0.7.0 validation](docs/validation-v0.7.0.md)
 
 </details>
 
@@ -151,7 +152,7 @@ pnpm run bundle
 pnpm pack
 ```
 
-[Contributing](CONTRIBUTING.md) · [v0.6.5 validation](docs/validation-v0.6.5.md) · [Reuse](REUSE.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
+[Contributing](CONTRIBUTING.md) · [v0.7.0 validation](docs/validation-v0.7.0.md) · [Reuse](REUSE.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
 
 Community plugin under [MIT](LICENSE), with drawing from Excalidraw and host capabilities from DeepSeek Harness. See the linked third-party licenses and validation records.
 

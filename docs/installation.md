@@ -7,7 +7,7 @@
 使用 DSH Web `0.2.1-alpha.1` / `0.2.1-alpha.2` 和可用的官方插件管理器。已保存并退出宿主后：
 
 ```sh
-dsh plugin --profile web add /绝对路径/dsh-sketch-reference-0.6.5.tgz
+dsh plugin --profile web add /绝对路径/dsh-sketch-reference-0.7.0.tgz
 dsh web
 ```
 
@@ -17,16 +17,17 @@ DSH npm CLI 两个固定版本本身会调用 pnpm。仅有 Node 和 CLI、PATH 
 
 ## 来源与校验
 
-- **ZIP 方式保留**：在对应版本提交或 PR 的成功 CI 页面，下载 Artifacts 下的 `dsh-sketch-reference-installable` ZIP。解压后得到 `.tgz` 和同次构建的 `SHA256SUMS.txt`，再按上方命令安装 `.tgz`。这是预构建包，无需构建源码或另装 Excalidraw；下载 CI artifact 通常需要登录 GitHub，过期产物需选择仍有效的构建。
+- **发行 ZIP**：在 [v0.7.0 Release](https://github.com/Amadeus2027/dsh-sketch-reference/releases/tag/v0.7.0) 下载 `dsh-sketch-reference-0.7.0-installable.zip`，解压得到 `.tgz` 和清单，安装步骤相同。
+- **CI ZIP 方式保留**：在对应版本提交或 PR 的成功 CI 页面，下载 Artifacts 下的 `dsh-sketch-reference-installable` ZIP。解压后得到 `.tgz` 和同次构建的 `SHA256SUMS.txt`，再按上方命令安装 `.tgz`。这是预构建包，无需构建源码或另装 Excalidraw；下载 CI artifact 通常需要登录 GitHub，过期产物需选择仍有效的构建。
 - **正式发布直接下载**：从 GitHub Releases 下载版本化 `.tgz` 与同次构建的 `SHA256SUMS.txt`，使用相同安装命令。
 - **源码 ZIP 目录安装**：通过仓库 Code → Download ZIP 或 Release 的 Source code ZIP 下载源码。解压后安装依赖并构建，再直接将项目目录加入 DSH，步骤见下方。不需要先打成 `.tgz`。
 - 尚未正式发布时，不使用不存在的 npm 包名或 Release URL。
 - CI 和本地 pack 可能具有不同归档元数据，校验必须与实际下载来源的清单配对，不能拿另一包的 SHA256 套用。
 
-DSH 官方插件管理器也接收 tgz URL；正式 v0.6.5 Release 的资产存在后可用：
+DSH 官方插件管理器也接收 tgz URL；v0.7.0 发行资产发布后可用：
 
 ```sh
-dsh plugin --profile web add https://github.com/Amadeus2027/dsh-sketch-reference/releases/download/v0.6.5/dsh-sketch-reference-0.6.5.tgz
+dsh plugin --profile web add https://github.com/Amadeus2027/dsh-sketch-reference/releases/download/v0.7.0/dsh-sketch-reference-0.7.0.tgz
 ```
 
 HTTP URL 依赖安装已在本地隔离服务器验证；这不是未发布 GitHub URL 的下载通过证明。安装过程中保留 pnpm 的输出；网络或兼容检查失败时不宣称已安装。
@@ -66,6 +67,6 @@ dsh web
 node build/check-distribution.mjs /路径/解包后的package
 ```
 
-CI 执行 frozen install、typecheck、单测、bundle、pack，自动生成与 tgz 配对的 SHA256 清单并上传产物。正式发布时，把这两个文件作为同一次构建的资产上传；发布后再核对默认 URL 安装。当前没有 npm 发布凭据或新版本 Release 上传完成记录，不能把文档命令当成正式发布。
+CI 执行 frozen install、typecheck、单测、bundle、pack，自动生成与 tgz 配对的 SHA256 清单并上传产物。正式发布时，把这两个文件作为同一次构建的资产上传；发布后再核对默认 URL 安装。GitHub Release 与 npm 发布是不同渠道；本项目在 GitHub 提供版本化安装包，不把安装命令示例当作 npm 已发布的证明。
 
 卸载前保存并退出宿主：`dsh plugin --profile web remove dsh-sketch-reference`。卸载不会主动清空草稿或宿主附件，也不作热卸载保证。

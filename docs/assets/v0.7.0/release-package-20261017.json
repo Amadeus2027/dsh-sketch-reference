@@ -1,0 +1,66 @@
+{
+  "version": "0.7.0",
+  "libFiles": 431,
+  "byteIdenticalFiles": 430,
+  "clientDifference": "Only property order in two CSS Module maps; targeted TypeScript AST normalization matches all other bytes.",
+  "runtimeBase": "80fa495cf8f255adc81f572419bbba8aa2822a7c",
+  "frozenPackageSha256": "e60a74a9cd1d4aaecbfa2243d48f7414f2fc3b2ff1cd8ebe63400552d34d085f",
+  "packageSha256": "a0ff55dd604cdaa9de0f896776522e0908419eabbb0f9d95b912b8316579706d",
+  "zipSha256": "5f45fd6b24e06057d777ec4c06786f03e23a77b37d4a269edaec54ed4aed8b5f",
+  "noPrivateFiles": true,
+  "unitTestFiles": 25,
+  "unitTests": 233,
+  "realModelCalls": 0,
+  "installed": {
+    "alpha1": {
+      "hostVersion": "0.2.1-alpha.1",
+      "matchingLibFiles": 431,
+      "graph": {
+        "ok": true,
+        "sourceVersion": "0.7.0",
+        "nodes": 100,
+        "edges": 300,
+        "slowSaveMs": 800,
+        "slowWrites": 8,
+        "maxActive": 1,
+        "warmPreviewReads": 0,
+        "changedPreviewReads": 1,
+        "processRestartVerified": false,
+        "cases": [
+          "native drawing saved",
+          "full graph HTTP save",
+          "drag and zoom while saving",
+          "transport failure retry and subsequent drag",
+          "same final viewport and persisted graph",
+          "close/reopen preserves graph and native input"
+        ],
+        "realModel": false,
+        "errors": []
+      },
+      "test:browser:native": true,
+      "test:browser": true
+    },
+    "alpha2": {
+      "hostVersion": "0.2.1-alpha.2",
+      "matchingLibFiles": 431,
+      "graph": {
+        "ok": true,
+        "cases": [
+          "default split retained",
+          "fullscreen fills viewport",
+          "same native composer and iframe DOM retained",
+          "draft retained",
+          "floating drag",
+          "collapse and expand",
+          "390px clamp",
+          "restore split and close"
+        ],
+        "errors": [],
+        "realModel": false
+      },
+      "test:browser:native": true,
+      "test:browser": true,
+      "test:browser:fullscreen": true
+    }
+  }
+}
