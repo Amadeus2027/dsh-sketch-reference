@@ -26,6 +26,12 @@
 
 两版 graph-stability／native／smoke 通过：100／300、缓存版本核对、800ms 延迟、失败重试、视口与关闭重开、禁止恢复存储时普通绘图保存、主题与会话隔离、PNG／可编辑备份、原生附件／输入保留、匿名拒绝。alpha.2 另通过 fullscreen 浮动聊天／390px／分屏恢复。无真实或模拟模型调用；本次不把该安装检查写成新版完整 Windows／真实模型验收。
 
-发行 tgz SHA256：`a0ff55dd604cdaa9de0f896776522e0908419eabbb0f9d95b912b8316579706d`。ZIP 内 tgz 与直接下载的包逐字节相同；[包身份与实装摘要](assets/v0.7.0/release-package-20261017.json) 不包含登录 URL、凭据或原始会话。
+本地正式化验收 tgz SHA256：`a0ff55dd604cdaa9de0f896776522e0908419eabbb0f9d95b912b8316579706d`。该哈希只标识本地验收包。公开发行采用对应源码 main 的成功 CI 包，归档元数据和 CSS 映射键顺序可能不同，必须使用 Release 自己的清单；运行源码保持冻结。每次发行 ZIP 内的 tgz 与同次直接发行的 tgz 逐字节相同；[包身份与实装摘要](assets/v0.7.0/release-package-20261017.json) 不包含登录 URL、凭据或原始会话。
 
 主页中英文经过 GitHub GFM 渲染，当前相对链接与折叠块配对已检查；旧版演示保留版本说明，新版主演示保持现有真实素材。
+
+## GitHub Actions 附件上传
+
+`prepare-release-assets` 仅手动触发。输入已有草稿 tag、成功 main CI 的 run ID 和完整 SHA；先核对主分支 push／成功状态／固定 CI 工作流／草稿目标，再读取其安装产物、验算清单和内部版本、生成预构建 ZIP 并上传到草稿。使用 GitHub 自带令牌，仅该 job 获得 actions:read／contents:write，不要求维护者提供额外 Token。
+
+该流程不修改公开 Release，不自动发布或设 Latest。上传后仍需核对三个附件、来源与校验清单，再执行发布。来源 CI 与实际公开包哈希追加在 Release 正文；不要拿本地验收包哈希替代。云端连接无法直接访问 uploads.github.com 的凭据时，继续使用此标准发行流程，不把令牌写进仓库。

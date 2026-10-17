@@ -60,7 +60,6 @@ jobs:
         run: |
           set -euo pipefail
           cd release-artifacts
-          sha256sum --check SHA256SUMS.txt
           python - <<'PY'
           import os,json,hashlib,tarfile,zipfile,pathlib
           version=os.environ['TAG'][1:]
@@ -75,6 +74,7 @@ jobs:
                   assert not any(p in {'.git','node_modules','test-results'} or p.startswith('.env') for p in parts)
           digest=hashlib.sha256(package.read_bytes()).hexdigest()
           checksum=f'{digest}  {package.name}\n'
+          assert pathlib.Path('SHA256SUMS.txt').read_text().strip()==checksum.strip(), 'Source artifact checksum mismatch'
           zipped=pathlib.Path(f'dsh-sketch-reference-{version}-installable.zip')
           with zipfile.ZipFile(zipped,'w',zipfile.ZIP_DEFLATED) as out:
               out.write(package,package.name)
