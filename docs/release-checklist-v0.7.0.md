@@ -35,3 +35,5 @@
 `prepare-release-assets` 仅手动触发。输入已有草稿 tag、成功 main CI 的 run ID 和完整 SHA；先核对主分支 push／成功状态／固定 CI 工作流／草稿目标，再读取其安装产物、验算清单和内部版本、生成预构建 ZIP 并上传到草稿。使用 GitHub 自带令牌，仅该 job 获得 actions:read／contents:write，不要求维护者提供额外 Token。
 
 该流程不修改公开 Release，不自动发布或设 Latest。上传后仍需核对三个附件、来源与校验清单，再执行发布。来源 CI 与实际公开包哈希追加在 Release 正文；不要拿本地验收包哈希替代。云端连接无法直接访问 uploads.github.com 的凭据时，继续使用此标准发行流程，不把令牌写进仓库。
+
+草稿尚无已创建的 Git tag 时，更新正文也显式携带 tag_name 和固定目标 SHA，保留版本身份；不能只依赖先前草稿中的临时 tag。

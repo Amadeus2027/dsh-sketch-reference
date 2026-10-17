@@ -99,7 +99,8 @@ jobs:
           repo=os.environ['GITHUB_REPOSITORY'];run=os.environ['SOURCE_RUN'];sha=os.environ['SOURCE_SHA']
           sums=pathlib.Path('release-artifacts/SHA256SUMS.txt').read_text()
           body+=f'\n<!-- release-assets-provenance -->\n\n## 发行资产来源\n\n来自 [CI #{run}](https://github.com/{repo}/actions/runs/{run})，源码 `{sha}`。公开资产使用此 CI 包；本地安装核对包的归档哈希不作替代。\n\n```text\n{sums}```\n'
-          json.dump({'body':body},open('release-update.json','w'))
+          # GitHub can assign an untagged name when a new draft is edited without tag_name.
+          json.dump({'body':body,'tag_name':os.environ['TAG'],'target_commitish':sha},open('release-update.json','w'))
           PY
           gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" --input release-update.json --silent
           cat release-artifacts/SHA256SUMS.txt >> "$GITHUB_STEP_SUMMARY"
