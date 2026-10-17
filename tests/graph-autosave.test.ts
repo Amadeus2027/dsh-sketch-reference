@@ -72,3 +72,8 @@ it('returns to clean without a write when a gesture ends at its original positio
  const write=vi.fn(),save=vi.fn(async(request:GraphPending['request'])=>graph(request)),changed=vi.fn(),queue=new GraphAutosave({write,clear:()=>{},save,saved:()=>{},changed});
  const c=initialGraph();queue.reset(graph({expectedRevision:null,mutationId:crypto.randomUUID(),content:c}));queue.stageLayout({...c,viewport:{...c.viewport,x:99}});queue.stageLayout(c);await queue.flush();expect(write).not.toHaveBeenCalled();expect(save).not.toHaveBeenCalled();expect(changed.mock.calls.at(-1)?.[0]).toBe('clean');queue.dispose();
 });
+it('rejects invalid layout coordinates before accepting them and can still save the last valid layout',async()=>{
+ vi.stubGlobal('localStorage',memoryStorage());const {queue,save}=fixture('a'),valid={...initialGraph(),viewport:{x:42,y:0,zoom:1}};queue.stageLayout(valid);
+ for(const viewport of [{x:100001,y:0,zoom:1},{x:0,y:NaN,zoom:1},{x:0,y:0,zoom:5}])expect(()=>queue.stageLayout({...valid,viewport})).toThrow();
+ expect(()=>queue.stageLayout({...valid,nodes:[{...valid.nodes[0]!,position:{x:Infinity,y:0}}]})).toThrow();await queue.flush();expect(save.mock.calls[0]?.[0].content).toEqual(valid);queue.dispose();
+});

@@ -92,7 +92,7 @@ export function GraphWorkspace({loaded,renderBoard,registerClose}:{loaded:Loaded
   menu.current?.removeAttribute('open');
   setError('');queue.update(next);contentRef.current=next;setContent(next);thumbnails.retain(new Map(next.nodes.map(n=>[n.id,revisions.get(n.id)])));return queue.flush();
  };
- const layout=(next:GraphContent)=>{try{queue.stageLayout(next);contentRef.current=next;setContent(next);}catch(e){setError(e instanceof Error?e.message:'工作流保存失败');}};
+ const layout=(next:GraphContent)=>{try{queue.stageLayout(next);contentRef.current=next;setContent(next);}catch(e){setContent({...contentRef.current,nodes:[...contentRef.current.nodes]});void flow.current?.setViewport(contentRef.current.viewport);setError(e instanceof Error?e.message:'工作流保存失败');}};
  const run=(work:()=>Promise<unknown>)=>{void work().catch(e=>setError(e instanceof Error?e.message:'操作失败'));};
  const open=async(id:string)=>{if(busy||pending||job)throw new Error('请先处理工作流保存或恢复');await queue.flush();const data=loadSchema.parse(await rpc('drawing/get',documentOwner(owner,id),{sessionId:owner.sessionId}));setRebind(null);setCurrent(data);setOverview(false);setEditorEpoch(v=>v+1);};
  const back=async()=>{await queue.flush();await loadGraph();setRebind(null);setOverview(true);};

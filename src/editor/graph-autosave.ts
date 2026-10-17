@@ -1,5 +1,5 @@
 import {canonical} from '../core/contracts.ts';
-import {graphContentSchema,type GraphContent,type SketchGraph} from '../core/graph.ts';
+import {graphContentSchema,graphNodeSchema,type GraphContent,type SketchGraph} from '../core/graph.ts';
 import type {GraphPending} from './graph-recovery.ts';
 
 export type GraphSavePhase='clean'|'dirty'|'saving'|'error';
@@ -23,6 +23,11 @@ export class GraphAutosave {
   * plus gesture end/navigation. Structural edits still use update immediately. */
  stageLayout(content:GraphContent){
   if(this.phase==='error')throw this.failure;
+  // Reject out-of-range coordinates before accepting UI state. Only changed
+  // positions need checking; full graph validation stays at the checkpoint.
+  graphContentSchema.shape.viewport.parse(content.viewport);
+  const previous=this.staged??this.record?.next??this.record?.request.content??this.graph?.content;
+  for(const [i,node] of content.nodes.entries())if(node.position!==previous?.nodes[i]?.position)graphNodeSchema.shape.position.parse(node.position);
   this.staged=content;this.cancelTimer();if(this.phase==='clean')this.changed('dirty');
   if(!this.layoutTimer)this.layoutTimer=setTimeout(()=>{try{this.checkpointLayout();}catch{/* changed reports and retains the failed record. */}},500);
  }
