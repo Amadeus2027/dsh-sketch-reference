@@ -46,8 +46,8 @@ export function installEditorInspection(){
   for(;fiber;fiber=fiber.return)for(const candidate of [fiber,fiber.alternate])for(let hook=candidate?.memoizedState;hook;hook=hook.next){const value=hook.memoizedState;if(value?.getSceneElements&&value?.updateScene)return value;}
   throw new Error('Editor API not ready');
  };
- window.__sketchMetrics={backups:0,longTasks:[],hashes:0,rasterizations:0};
- const original=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(key.startsWith('dsh-sketch:v1:'))window.__sketchMetrics.backups++;return original.call(this,key,value);};
+ window.__sketchMetrics={backups:0,graphBackups:0,longTasks:[],hashes:0,rasterizations:0};
+ const original=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(key.startsWith('dsh-sketch:v1:'))window.__sketchMetrics.backups++;if(key.startsWith('dsh-sketch-graph:v1:'))window.__sketchMetrics.graphBackups++;return original.call(this,key,value);};
  const rasterize=HTMLCanvasElement.prototype.toBlob;HTMLCanvasElement.prototype.toBlob=function(...args){window.__sketchMetrics.rasterizations++;return rasterize.apply(this,args);};
  const hash=crypto.subtle.digest.bind(crypto.subtle);crypto.subtle.digest=(...args)=>{window.__sketchMetrics.hashes++;return hash(...args);};
  new PerformanceObserver(list=>window.__sketchMetrics.longTasks.push(...list.getEntries().map(e=>({start:e.startTime,ms:e.duration})))).observe({type:'longtask',buffered:true});

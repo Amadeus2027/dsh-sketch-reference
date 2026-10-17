@@ -47,3 +47,33 @@ it('leaves replacement legacy mutations intact when clearing an older recovery',
  const storage=memoryStorage();vi.stubGlobal('localStorage',storage);const a=fixture('a');a.queue.update(initialGraph());const old=a.recovery.readPending()!;
  const legacy=a.recovery.pendingKey.split(':tab:')[0]!;storage.setItem(legacy,JSON.stringify({...old.request,mutationId:crypto.randomUUID()}));a.recovery.clearPending(old.request.mutationId);expect(storage.getItem(legacy)).not.toBeNull();a.queue.dispose();
 });
+it('checkpoints continuous layout at bounded intervals instead of serializing each frame',async()=>{
+ vi.useFakeTimers();const write=vi.fn(),save=vi.fn(async(request:GraphPending['request'])=>graph(request)),changed=vi.fn();
+ const queue=new GraphAutosave({write,clear:()=>{},save,saved:()=>{},changed});queue.reset(graph({expectedRevision:null,mutationId:crypto.randomUUID(),content:initialGraph()}));
+ for(let i=1;i<=120;i++){queue.stageLayout({...initialGraph(),viewport:{x:i,y:0,zoom:1}});await vi.advanceTimersByTimeAsync(16);}
+ expect(save).not.toHaveBeenCalled();queue.checkpointLayout();await queue.flush();
+ expect(write.mock.calls.length).toBeLessThanOrEqual(5);expect(save.mock.calls.at(-1)?.[0].content.viewport.x).toBe(120);expect(changed.mock.calls.filter(c=>c[0]==='dirty').length).toBeLessThan(12);queue.dispose();
+});
+it('flushes the latest staged layout on navigation and checkpoints on disposal without starting a request',async()=>{
+ vi.useFakeTimers();vi.stubGlobal('localStorage',memoryStorage());const a=fixture('a');a.queue.stageLayout({...initialGraph(),viewport:{x:42,y:0,zoom:2}});await a.queue.flush();expect(a.save.mock.calls[0]?.[0].content.viewport.x).toBe(42);
+ a.queue.stageLayout({...initialGraph(),viewport:{x:73,y:0,zoom:2}});a.queue.dispose();expect(a.recovery.readPending()?.request.content.viewport.x).toBe(73);await vi.advanceTimersByTimeAsync(1000);expect(a.save).toHaveBeenCalledTimes(1);
+});
+it('does not lose staged layout on a slow acknowledgement or failed request',async()=>{
+ vi.useFakeTimers();vi.stubGlobal('localStorage',memoryStorage());let release!:(v:SketchGraph)=>void;
+ const a=fixture('a',r=>a.save.mock.calls.length===1?new Promise(resolve=>{release=resolve;}):Promise.resolve(graph(r)));
+ a.queue.update(initialGraph());const flight=a.queue.flush();a.queue.stageLayout({...initialGraph(),viewport:{x:88,y:0,zoom:2}});release(graph(a.save.mock.calls[0]![0]));await flight;expect(a.save.mock.calls.at(-1)?.[0].content.viewport.x).toBe(88);expect(a.recovery.readPending()).toBeNull();a.queue.dispose();
+ const b=fixture('b',async()=>{throw Error('offline');});b.queue.update(initialGraph());const failed=b.queue.flush();b.queue.stageLayout({...initialGraph(),viewport:{x:99,y:0,zoom:2}});await expect(failed).rejects.toThrow('offline');expect(b.recovery.readPending()?.next?.viewport.x).toBe(99);expect(()=>b.queue.stageLayout(initialGraph())).toThrow('offline');b.queue.dispose();
+});
+it('retains staged content when recovery storage fails and retries before contacting the server',async()=>{
+ vi.useFakeTimers();const write=vi.fn().mockImplementationOnce(()=>{throw Error('quota');}),save=vi.fn(async(request:GraphPending['request'])=>graph(request));
+ const queue=new GraphAutosave({write,clear:()=>{},save,saved:()=>{},changed:()=>{}});queue.stageLayout({...initialGraph(),viewport:{x:64,y:0,zoom:1}});expect(()=>queue.checkpointLayout()).toThrow('quota');expect(save).not.toHaveBeenCalled();await queue.retry();expect(save.mock.calls[0]?.[0].content.viewport.x).toBe(64);expect(write).toHaveBeenCalledTimes(2);queue.dispose();
+});
+it('returns to clean without a write when a gesture ends at its original position',async()=>{
+ const write=vi.fn(),save=vi.fn(async(request:GraphPending['request'])=>graph(request)),changed=vi.fn(),queue=new GraphAutosave({write,clear:()=>{},save,saved:()=>{},changed});
+ const c=initialGraph();queue.reset(graph({expectedRevision:null,mutationId:crypto.randomUUID(),content:c}));queue.stageLayout({...c,viewport:{...c.viewport,x:99}});queue.stageLayout(c);await queue.flush();expect(write).not.toHaveBeenCalled();expect(save).not.toHaveBeenCalled();expect(changed.mock.calls.at(-1)?.[0]).toBe('clean');queue.dispose();
+});
+it('rejects invalid layout coordinates before accepting them and can still save the last valid layout',async()=>{
+ vi.stubGlobal('localStorage',memoryStorage());const {queue,save}=fixture('a'),valid={...initialGraph(),viewport:{x:42,y:0,zoom:1}};queue.stageLayout(valid);
+ for(const viewport of [{x:100001,y:0,zoom:1},{x:0,y:NaN,zoom:1},{x:0,y:0,zoom:5}])expect(()=>queue.stageLayout({...valid,viewport})).toThrow();
+ expect(()=>queue.stageLayout({...valid,nodes:[{...valid.nodes[0]!,position:{x:Infinity,y:0}}]})).toThrow();await queue.flush();expect(save.mock.calls[0]?.[0].content).toEqual(valid);queue.dispose();
+});

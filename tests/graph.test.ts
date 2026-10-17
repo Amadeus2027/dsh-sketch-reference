@@ -83,6 +83,9 @@ it('checks session and graph membership before reading or saving node content',a
  await expect(call(documentOwner(owner,randomUUID()))).rejects.toMatchObject({code:'NODE_NOT_FOUND'});
  await expect(call({...owner,createdAt:'replaced'})).rejects.toMatchObject({code:'SESSION_CHANGED'});
  const a=documentOwner(owner,c.nodes[1]!.id);await call(a,'drawing/save',{expectedRevision:null,mutationId:randomUUID(),scene,goal:'子草图'});expect(repo.get(owner)).toBeNull();expect(documents.get(a)?.goal).toBe('子草图');
+ const revisions=await call(owner,'graph/document-revisions');expect(revisions).toEqual(c.nodes.map(n=>({nodeId:n.id,revision:n.id===a.nodeId?documents.get(a)!.revision:null})));
+ expect(JSON.stringify(revisions)).not.toContain('子草图');expect(JSON.stringify(revisions)).not.toContain('elements');
+ await expect(call(a,'graph/document-revisions')).rejects.toMatchObject({code:'BAD_REQUEST'});await expect(call({...owner,createdAt:'replaced'},'graph/document-revisions')).rejects.toMatchObject({code:'SESSION_CHANGED'});
 });
 it('retains the previous graph when access is revoked during a save',async()=>{
  const repo=new GraphRepository(table<SketchGraph>());let calls=0;
