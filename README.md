@@ -6,13 +6,13 @@
 
 [![Release](https://img.shields.io/github/v/release/Amadeus2027/dsh-sketch-reference?label=release&color=4176e6)](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) [![CI](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![Tested DSH](https://img.shields.io/badge/DSH-alpha.1_%7C_alpha.2-536DFE)](https://github.com/deepseek-ai/deepseek-harness) [![Ask DeepWiki](https://img.shields.io/badge/DeepWiki-Ask-20B8A5.svg)](https://deepwiki.com/Amadeus2027/dsh-sketch-reference)
 
-[**下载插件**](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) · [**快速开始**](#快速开始) · [**使用指南**](docs/usage.md) · [**English**](https://github.com/Amadeus2027/dsh-sketch-reference/blob/main/README.en.md)
+[**下载 v0.7.0**](https://github.com/Amadeus2027/dsh-sketch-reference/releases/tag/v0.7.0) · [**快速开始**](#快速开始) · [**使用指南**](docs/usage.md) · [**English**](https://github.com/Amadeus2027/dsh-sketch-reference/blob/main/README.en.md)
 
 </div>
 
 **画布局、讨论细节、在工作区实现。** Sketch Reference 把 Excalidraw 接入 DeepSeek Harness，让 Agent 按需读取草图、定位批注、提出修改；画板修改先预览，再由你确认。
 
-**开发预览 v0.7.0-alpha.1：Sketch Graph。** 一张草图一个节点，从元素或框选区域连接页面与细节设计；保留右侧画板，新增全屏与可拖动的原生悬浮对话。旧草图继续作为根节点，无需覆盖迁移。[功能与验证边界](docs/release-v0.7.0.md)
+**v0.7.0 已发布：Sketch Graph。** 一张草图一个节点，从元素或框选区域连接页面与细节设计；保留右侧画板，新增全屏与可拖动的原生悬浮对话。旧草图继续作为根节点，无需覆盖迁移。[功能与验证边界](docs/release-v0.7.0.md)
 
 ![Sketch Graph 实际界面：分屏、全屏、悬浮对话与细节编辑](docs/assets/v0.7.0/sketch-graph.gif)
 
@@ -27,14 +27,14 @@ Windows DSH alpha.2 原生聊天使用 DeepSeek-V4.1-Flash / High，读取 4 张
 
 </details>
 
-**稳定版 v0.6.5** 支持 DSH Web `0.2.1-alpha.1` / `0.2.1-alpha.2`。Windows alpha.2 实机回归与旧数据升级核对见 [验收记录](docs/windows-validation-v0.6.5.md)。
-
-![v0.6.5 画板操作录屏：Excalidraw 手绘风格布局、撤销重画、PNG 附件与返回聊天](docs/assets/v0.6.5/workflow.gif)
-
-*画草图 → 调整布局 → 加入参考 → 回到聊天。[查看静态图](docs/assets/v0.6.5/sketch.png)*
+**DSH Web alpha.1 / alpha.2** · 内置 Excalidraw 与字体 · 不需要额外 AI 密钥。[本版更新与验证范围](docs/release-v0.7.0.md)
 
 <details>
-<summary>演示与案例说明</summary>
+<summary>历史画板演示与素材说明</summary>
+
+![v0.6.5 历史画板录屏：绘画、撤销重画与原生 PNG 附件](docs/assets/v0.6.5/workflow.gif)
+
+*历史 v0.6.5：画草图 → 调整布局 → 加入参考 → 回到聊天。[查看静态图](docs/assets/v0.6.5/sketch.png)*
 
 画板演示为 v0.6.5 连续录屏，输入由自动化驱动，展示绘画、保存、PNG 附件与返回聊天；未调用模型或发送聊天消息。[录制来源与参数](docs/assets/v0.6.5/README.md)
 
@@ -88,7 +88,7 @@ v0.6.3 菜单示例，批注为演示用固定样例。[素材说明](docs/asset
 
 **源码 ZIP 和预构建包两种方式都支持。** 都通过 DSH 官方管理器加入插件，无需提前单独安装 Excalidraw。
 
-选择版本：当前 `main`／源码 ZIP 和对应 CI 包是 **v0.7.0-alpha.1 开发预览**；`releases/latest` 目前提供 **v0.6.5 稳定版**，不包含 Sketch Graph。
+当前发行版：**[v0.7.0](https://github.com/Amadeus2027/dsh-sketch-reference/releases/tag/v0.7.0)**，包含 Sketch Graph。可下载 [安装包](https://github.com/Amadeus2027/dsh-sketch-reference/releases/download/v0.7.0/dsh-sketch-reference-0.7.0.tgz)、[安装 ZIP](https://github.com/Amadeus2027/dsh-sketch-reference/releases/download/v0.7.0/dsh-sketch-reference-0.7.0-installable.zip) 或 [固定版本源码 ZIP](https://github.com/Amadeus2027/dsh-sketch-reference/archive/refs/tags/v0.7.0.zip)。
 
 ### 1. 安装插件
 
@@ -108,13 +108,14 @@ dsh web
 
 **方式二：预构建安装包（无需本地构建）**
 
-- **ZIP 下载**：进入 [成功的构建记录](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml)，下载页面底部的 `dsh-sketch-reference-installable` ZIP，解压得到 `.tgz` 和 `SHA256SUMS.txt`。
+- **发行 ZIP**：下载上方安装 ZIP，解压得到 `.tgz` 和配套校验清单；无需本地构建。
+- **CI ZIP**：进入 [成功的构建记录](https://github.com/Amadeus2027/dsh-sketch-reference/actions/workflows/ci.yml)，下载页面底部的 `dsh-sketch-reference-installable` ZIP，解压得到 `.tgz` 和 `SHA256SUMS.txt`。
 - **直接下载**：从 [正式发行](https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest) 获取对应版本的 `.tgz` 和校验清单。
 
 取得对应版本的 `.tgz` 和同包 `SHA256SUMS.txt` 后，等待草图保存并退出宿主，然后执行：
 
 ```sh
-dsh plugin --profile web add /绝对路径/dsh-sketch-reference-0.6.5.tgz
+dsh plugin --profile web add /绝对路径/dsh-sketch-reference-0.7.0.tgz
 ```
 
 运行 `dsh web` 即可使用。预构建包已包含编辑器和字体，无需克隆源码、另装 Excalidraw 或手动构建。
@@ -132,13 +133,13 @@ dsh plugin --profile web add /绝对路径/dsh-sketch-reference-0.6.5.tgz
 <details>
 <summary>兼容性、数据与功能边界</summary>
 
-- v0.6.5 两版 Web 宿主已完成 Linux 隔离回归，Windows alpha.2 完成安装、批注／编辑闭环、主题、分栏和 alpha.1＋0.6.3 旧数据升级核对。Agent 自动回归使用固定响应，未新增真实模型质量验证。其他宿主版本、移动端、非默认工具模式和所有插件组合不作兼容承诺。
+- v0.7.0 运行代码已在两版 Web 宿主完成 Linux 实装、重启、图与草稿恢复、附件和导出回归；包含 100 节点／300 连线测试，满载仍可能掉帧。[专项记录](docs/review-graph-performance-20261017.md)。Windows／真实模型案例保留各自的开发快照身份，正式包未重做完整 Windows／真实模型验收。其他宿主版本、移动端和全部插件组合不作兼容承诺。
 - 无法可靠定位时保留文字建议，不猜测位置。模型可能误读草图或返回无效参数；数学正确性无保证。重点按版本绑定，不限制其他宿主工具或清除聊天历史。
 - 画板修改受图形白名单限制，不任意修改锁定、绑定、成组元素或样式；跨刷新撤销历史不保证恢复。
 - 草稿与图片在本地 DSH 存储；模型读取时发送至已配置的服务。历史附件尚无自动回收机制；升级／卸载前请导出草图备份。
 - 同步断线后用 **「⋯ → 同步批注」** 或重开画板。没有内置网页／PPT 生成器，也没有草图与代码自动双向绑定。
 
-[宿主兼容报告](docs/dsh-compatibility.md) · [v0.6.5 验证范围](docs/validation-v0.6.5.md)
+[宿主兼容报告](docs/dsh-compatibility.md) · [v0.7.0 验证记录](docs/validation-v0.7.0.md)
 
 </details>
 
@@ -159,7 +160,7 @@ pnpm run bundle
 pnpm pack
 ```
 
-[贡献流程](CONTRIBUTING.md) · [0.6.5 验证记录](docs/validation-v0.6.5.md) · [复用说明](REUSE.md) · [第三方许可](THIRD_PARTY_NOTICES.md)
+[贡献流程](CONTRIBUTING.md) · [0.7.0 验证记录](docs/validation-v0.7.0.md) · [复用说明](REUSE.md) · [第三方许可](THIRD_PARTY_NOTICES.md)
 
 社区插件，采用 [MIT](LICENSE)。绘图能力来自 Excalidraw，宿主能力来自 DeepSeek Harness；第三方许可与验证记录见上方链接。
 
