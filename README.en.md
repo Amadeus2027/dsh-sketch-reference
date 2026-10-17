@@ -82,6 +82,8 @@ The plugin supplies editable sketches and reference images; **DSH Agent** contin
 
 ## Quick start
 
+Choose a version: `main`, its source ZIP and matching CI artifacts contain the **v0.7.0-alpha.1 development preview**. `releases/latest` currently provides **v0.6.5 stable**, without Sketch Graph.
+
 **Install from a source ZIP or a prebuilt package.** Both use DSH’s official plugin manager. No separate Excalidraw installation is required.
 
 **Option 1: extract the source ZIP and add the project directory**

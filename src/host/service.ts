@@ -213,6 +213,11 @@ export class SketchService extends Service {
   const repository=this.drawings(owner);
   if(method==='document/get')return {drawing:repository.get(owner)};
   if(method==='graph/get')return {graph:this.graphs.get(owner)};
+  if(method==='graph/document-revisions'){
+   if(owner.nodeId)throw new SketchError('BAD_REQUEST','工作流操作需要会话身份');
+   const nodes=this.graphs.get(owner)?.content.nodes??initialGraph().nodes;
+   return nodes.map(n=>{const target=documentOwner(owner,n.id);return {nodeId:n.id,revision:this.drawings(target).get(target)?.revision??null};});
+  }
   if(method==='graph/save'){
    if(owner.nodeId)throw new SketchError('BAD_REQUEST','工作流操作需要会话身份');
    return this.saveGraph(owner,body.payload,check);

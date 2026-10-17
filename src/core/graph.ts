@@ -31,6 +31,7 @@ export type SketchGraph=z.infer<typeof graphSchema>;
 export type GraphContent=z.infer<typeof graphContentSchema>;
 export type GraphNode=z.infer<typeof graphNodeSchema>;
 export type GraphEdge=z.infer<typeof graphEdgeSchema>;
+export const graphDocumentRevisionsSchema=z.array(z.object({nodeId:nodeIdSchema,revision:z.uuid().nullable()}).strict()).max(100).refine(rows=>new Set(rows.map(r=>r.nodeId)).size===rows.length);
 export const graphSaveSchema=z.object({expectedRevision:z.uuid().nullable(),mutationId:z.uuid(),content:graphContentSchema}).strict();
 export const graphReadSchema=z.object({offset:z.number().int().min(0).max(400).default(0),revision:z.uuid().optional()}).strict();
 export function initialGraph():GraphContent{return {nodes:[{id:'root',name:'首页',kind:'page',position:{x:0,y:0}}],edges:[],viewport:{x:80,y:80,zoom:1}};}

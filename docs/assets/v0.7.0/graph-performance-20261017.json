@@ -1,0 +1,1114 @@
+{
+  "date": "2026-10-17",
+  "baselineCommit": "92216447db1d2021064092ae27988426bfa4c6be",
+  "version": "0.7.0-alpha.1",
+  "environment": {
+    "platform": "Linux cloud",
+    "node": "24.19.0",
+    "pnpm": "11.19.0",
+    "chromium": "151.0.7922.173",
+    "viewport": {
+      "width": 1440,
+      "height": 960
+    },
+    "excalidraw": "0.18.1",
+    "reactFlow": "12.12.0"
+  },
+  "comparison": {
+    "method": "Both runs use the original baseline browser-graph.mjs, production builds and isolated in-memory KV. No concurrent build or browser suite during samples. One run each; not Windows or installed-host FPS.",
+    "before": {
+      "nodes": 100,
+      "edges": 300,
+      "fullBodyBytes": 79080,
+      "slowSaveMs": 800,
+      "slowSaveWrites": 15,
+      "serializedSaveRequests": 17,
+      "maxConcurrentSaveRequests": 1,
+      "responsiveness": {
+        "frames": 330,
+        "p95FrameGapMs": 166.6999999999989,
+        "maxFrameGapMs": 666.6000000000022,
+        "longTasks": [
+          {
+            "start": 5275,
+            "ms": 54
+          },
+          {
+            "start": 5332.5,
+            "ms": 191
+          },
+          {
+            "start": 5571.100000000093,
+            "ms": 79
+          },
+          {
+            "start": 5654.199999999953,
+            "ms": 114
+          },
+          {
+            "start": 5822.300000000047,
+            "ms": 85
+          },
+          {
+            "start": 5968.40000000014,
+            "ms": 97
+          },
+          {
+            "start": 6150.600000000093,
+            "ms": 81
+          },
+          {
+            "start": 6269.699999999953,
+            "ms": 50
+          },
+          {
+            "start": 6323.100000000093,
+            "ms": 75
+          },
+          {
+            "start": 6430.199999999953,
+            "ms": 95
+          },
+          {
+            "start": 6586.5,
+            "ms": 74
+          },
+          {
+            "start": 6716.300000000047,
+            "ms": 103
+          },
+          {
+            "start": 6964.800000000047,
+            "ms": 100
+          },
+          {
+            "start": 7115,
+            "ms": 69
+          },
+          {
+            "start": 7211.40000000014,
+            "ms": 89
+          },
+          {
+            "start": 7301.90000000014,
+            "ms": 70
+          },
+          {
+            "start": 7958.40000000014,
+            "ms": 92
+          },
+          {
+            "start": 8053.40000000014,
+            "ms": 81
+          },
+          {
+            "start": 8209.800000000047,
+            "ms": 116
+          },
+          {
+            "start": 8433.600000000093,
+            "ms": 69
+          },
+          {
+            "start": 8504.40000000014,
+            "ms": 112
+          },
+          {
+            "start": 8701.90000000014,
+            "ms": 130
+          },
+          {
+            "start": 8917.699999999953,
+            "ms": 120
+          },
+          {
+            "start": 9165.40000000014,
+            "ms": 103
+          },
+          {
+            "start": 9332.90000000014,
+            "ms": 117
+          },
+          {
+            "start": 9456.800000000047,
+            "ms": 86
+          },
+          {
+            "start": 9584,
+            "ms": 52
+          },
+          {
+            "start": 9636.199999999953,
+            "ms": 76
+          },
+          {
+            "start": 9782.90000000014,
+            "ms": 103
+          },
+          {
+            "start": 9964.5,
+            "ms": 86
+          },
+          {
+            "start": 10133.600000000093,
+            "ms": 78
+          },
+          {
+            "start": 10264.699999999953,
+            "ms": 109
+          },
+          {
+            "start": 10588.90000000014,
+            "ms": 92
+          },
+          {
+            "start": 10747.100000000093,
+            "ms": 77
+          },
+          {
+            "start": 10885.800000000047,
+            "ms": 89
+          },
+          {
+            "start": 11081.199999999953,
+            "ms": 142
+          },
+          {
+            "start": 11290.800000000047,
+            "ms": 63
+          },
+          {
+            "start": 11354.600000000093,
+            "ms": 74
+          },
+          {
+            "start": 11510.600000000093,
+            "ms": 82
+          },
+          {
+            "start": 11669.199999999953,
+            "ms": 94
+          },
+          {
+            "start": 11839.5,
+            "ms": 86
+          },
+          {
+            "start": 11995.800000000047,
+            "ms": 92
+          },
+          {
+            "start": 12181.800000000047,
+            "ms": 102
+          },
+          {
+            "start": 12353.699999999953,
+            "ms": 81
+          },
+          {
+            "start": 12494.300000000047,
+            "ms": 96
+          },
+          {
+            "start": 12793.90000000014,
+            "ms": 68
+          },
+          {
+            "start": 12931.600000000093,
+            "ms": 121
+          },
+          {
+            "start": 13108.300000000047,
+            "ms": 68
+          },
+          {
+            "start": 13212.40000000014,
+            "ms": 73
+          },
+          {
+            "start": 13340,
+            "ms": 94
+          },
+          {
+            "start": 13490.90000000014,
+            "ms": 81
+          },
+          {
+            "start": 13647.100000000093,
+            "ms": 95
+          },
+          {
+            "start": 13790.5,
+            "ms": 96
+          },
+          {
+            "start": 13951.699999999953,
+            "ms": 87
+          },
+          {
+            "start": 14130.5,
+            "ms": 103
+          },
+          {
+            "start": 14260.40000000014,
+            "ms": 50
+          },
+          {
+            "start": 14315.40000000014,
+            "ms": 73
+          },
+          {
+            "start": 14465.600000000093,
+            "ms": 98
+          },
+          {
+            "start": 14564.40000000014,
+            "ms": 52
+          },
+          {
+            "start": 14618.300000000047,
+            "ms": 105
+          },
+          {
+            "start": 15019.199999999953,
+            "ms": 86
+          },
+          {
+            "start": 15178,
+            "ms": 88
+          },
+          {
+            "start": 15339.100000000093,
+            "ms": 74
+          },
+          {
+            "start": 15487.90000000014,
+            "ms": 91
+          },
+          {
+            "start": 15653.199999999953,
+            "ms": 107
+          },
+          {
+            "start": 15828.100000000093,
+            "ms": 80
+          },
+          {
+            "start": 15983.600000000093,
+            "ms": 98
+          },
+          {
+            "start": 16145,
+            "ms": 109
+          },
+          {
+            "start": 16331.199999999953,
+            "ms": 72
+          },
+          {
+            "start": 16483.600000000093,
+            "ms": 104
+          },
+          {
+            "start": 16712.300000000047,
+            "ms": 86
+          },
+          {
+            "start": 16851,
+            "ms": 98
+          },
+          {
+            "start": 17128.90000000014,
+            "ms": 55
+          },
+          {
+            "start": 17184.5,
+            "ms": 164
+          },
+          {
+            "start": 17417,
+            "ms": 108
+          },
+          {
+            "start": 17531,
+            "ms": 173
+          },
+          {
+            "start": 17750.300000000047,
+            "ms": 102
+          },
+          {
+            "start": 17855.699999999953,
+            "ms": 176
+          },
+          {
+            "start": 18117.199999999953,
+            "ms": 65
+          },
+          {
+            "start": 18217.5,
+            "ms": 149
+          },
+          {
+            "start": 18428.199999999953,
+            "ms": 92
+          },
+          {
+            "start": 18525.300000000047,
+            "ms": 169
+          },
+          {
+            "start": 18742.5,
+            "ms": 83
+          },
+          {
+            "start": 18830.40000000014,
+            "ms": 181
+          },
+          {
+            "start": 19065.90000000014,
+            "ms": 100
+          },
+          {
+            "start": 19170.5,
+            "ms": 191
+          },
+          {
+            "start": 19487.300000000047,
+            "ms": 499
+          },
+          {
+            "start": 20011.800000000047,
+            "ms": 158
+          },
+          {
+            "start": 20179.800000000047,
+            "ms": 76
+          },
+          {
+            "start": 20255.800000000047,
+            "ms": 61
+          },
+          {
+            "start": 20357.40000000014,
+            "ms": 114
+          },
+          {
+            "start": 20475,
+            "ms": 182
+          },
+          {
+            "start": 20785.90000000014,
+            "ms": 154
+          },
+          {
+            "start": 21041.600000000093,
+            "ms": 69
+          },
+          {
+            "start": 21129.199999999953,
+            "ms": 118
+          }
+        ]
+      },
+      "transportRetry": true,
+      "reloadViewportVerified": true,
+      "noModelCalls": true
+    },
+    "after": {
+      "nodes": 100,
+      "edges": 300,
+      "fullBodyBytes": 79078,
+      "slowSaveMs": 800,
+      "slowSaveWrites": 8,
+      "serializedSaveRequests": 10,
+      "maxConcurrentSaveRequests": 1,
+      "responsiveness": {
+        "frames": 267,
+        "p95FrameGapMs": 83.30000000000018,
+        "maxFrameGapMs": 233.30000000000018,
+        "longTasks": [
+          {
+            "start": 2243,
+            "ms": 70
+          },
+          {
+            "start": 2342.399999999907,
+            "ms": 69
+          },
+          {
+            "start": 2460.399999999907,
+            "ms": 61
+          },
+          {
+            "start": 2548.100000000093,
+            "ms": 63
+          },
+          {
+            "start": 2639.5,
+            "ms": 78
+          },
+          {
+            "start": 2753.7999999998137,
+            "ms": 75
+          },
+          {
+            "start": 2873.899999999907,
+            "ms": 63
+          },
+          {
+            "start": 2963.2999999998137,
+            "ms": 67
+          },
+          {
+            "start": 3075.5,
+            "ms": 66
+          },
+          {
+            "start": 3201.7999999998137,
+            "ms": 91
+          },
+          {
+            "start": 3321.2000000001863,
+            "ms": 62
+          },
+          {
+            "start": 3840.399999999907,
+            "ms": 66
+          },
+          {
+            "start": 3932.2000000001863,
+            "ms": 61
+          },
+          {
+            "start": 4014.100000000093,
+            "ms": 69
+          },
+          {
+            "start": 4125.600000000093,
+            "ms": 64
+          },
+          {
+            "start": 4214.600000000093,
+            "ms": 65
+          },
+          {
+            "start": 4304.5,
+            "ms": 61
+          },
+          {
+            "start": 4397.200000000186,
+            "ms": 57
+          },
+          {
+            "start": 4493.399999999907,
+            "ms": 65
+          },
+          {
+            "start": 4582.200000000186,
+            "ms": 58
+          },
+          {
+            "start": 4667.299999999814,
+            "ms": 65
+          },
+          {
+            "start": 4746,
+            "ms": 66
+          },
+          {
+            "start": 4989.799999999814,
+            "ms": 61
+          },
+          {
+            "start": 5076.399999999907,
+            "ms": 63
+          },
+          {
+            "start": 5163.799999999814,
+            "ms": 68
+          },
+          {
+            "start": 5256.700000000186,
+            "ms": 82
+          },
+          {
+            "start": 5413.799999999814,
+            "ms": 59
+          },
+          {
+            "start": 5519.700000000186,
+            "ms": 58
+          },
+          {
+            "start": 5601.700000000186,
+            "ms": 65
+          },
+          {
+            "start": 5683.399999999907,
+            "ms": 74
+          },
+          {
+            "start": 5795.700000000186,
+            "ms": 63
+          },
+          {
+            "start": 5868.200000000186,
+            "ms": 64
+          },
+          {
+            "start": 5979.899999999907,
+            "ms": 62
+          },
+          {
+            "start": 6190.399999999907,
+            "ms": 73
+          },
+          {
+            "start": 6299.799999999814,
+            "ms": 66
+          },
+          {
+            "start": 6392.200000000186,
+            "ms": 63
+          },
+          {
+            "start": 6470.600000000093,
+            "ms": 206
+          },
+          {
+            "start": 6711.100000000093,
+            "ms": 69
+          },
+          {
+            "start": 6822,
+            "ms": 71
+          },
+          {
+            "start": 6932.799999999814,
+            "ms": 56
+          },
+          {
+            "start": 7010.5,
+            "ms": 64
+          },
+          {
+            "start": 7099.299999999814,
+            "ms": 64
+          },
+          {
+            "start": 7190.299999999814,
+            "ms": 67
+          },
+          {
+            "start": 7277.799999999814,
+            "ms": 61
+          },
+          {
+            "start": 7507,
+            "ms": 56
+          },
+          {
+            "start": 7580.100000000093,
+            "ms": 59
+          },
+          {
+            "start": 7657,
+            "ms": 60
+          },
+          {
+            "start": 7745.299999999814,
+            "ms": 59
+          },
+          {
+            "start": 7821.299999999814,
+            "ms": 57
+          },
+          {
+            "start": 7896.5,
+            "ms": 59
+          },
+          {
+            "start": 7996.899999999907,
+            "ms": 67
+          },
+          {
+            "start": 8082,
+            "ms": 61
+          },
+          {
+            "start": 8195.700000000186,
+            "ms": 91
+          },
+          {
+            "start": 8316.700000000186,
+            "ms": 61
+          },
+          {
+            "start": 8418.5,
+            "ms": 61
+          },
+          {
+            "start": 8590.5,
+            "ms": 59
+          },
+          {
+            "start": 8682.899999999907,
+            "ms": 61
+          },
+          {
+            "start": 8775,
+            "ms": 59
+          },
+          {
+            "start": 8859.100000000093,
+            "ms": 63
+          },
+          {
+            "start": 8945.200000000186,
+            "ms": 61
+          },
+          {
+            "start": 9047.399999999907,
+            "ms": 62
+          },
+          {
+            "start": 9134.899999999907,
+            "ms": 59
+          },
+          {
+            "start": 9224.399999999907,
+            "ms": 73
+          },
+          {
+            "start": 9318.899999999907,
+            "ms": 68
+          },
+          {
+            "start": 9410,
+            "ms": 75
+          },
+          {
+            "start": 9527.600000000093,
+            "ms": 63
+          }
+        ]
+      },
+      "transportRetry": true,
+      "reloadViewportVerified": true,
+      "noModelCalls": true
+    }
+  },
+  "extendedRegression": {
+    "nodes": 100,
+    "edges": 300,
+    "fullBodyBytes": 79078,
+    "slowSaveMs": 800,
+    "slowSaveWrites": 8,
+    "checkpointWrites": 4,
+    "gestureTicks": 20,
+    "serializedSaveRequests": 10,
+    "maxConcurrentSaveRequests": 1,
+    "responsiveness": {
+      "frames": 292,
+      "p95FrameGapMs": 83.30000000000109,
+      "maxFrameGapMs": 416.6999999999998,
+      "longTasks": [
+        {
+          "start": 5091.800000000279,
+          "ms": 90
+        },
+        {
+          "start": 5182.700000000186,
+          "ms": 83
+        },
+        {
+          "start": 5302.399999999907,
+          "ms": 77
+        },
+        {
+          "start": 5437.800000000279,
+          "ms": 68
+        },
+        {
+          "start": 5557.100000000093,
+          "ms": 112
+        },
+        {
+          "start": 5748.5,
+          "ms": 124
+        },
+        {
+          "start": 5873.300000000279,
+          "ms": 282
+        },
+        {
+          "start": 6235.200000000186,
+          "ms": 82
+        },
+        {
+          "start": 6322.100000000093,
+          "ms": 64
+        },
+        {
+          "start": 6398.300000000279,
+          "ms": 119
+        },
+        {
+          "start": 6578.200000000186,
+          "ms": 68
+        },
+        {
+          "start": 6667.200000000186,
+          "ms": 65
+        },
+        {
+          "start": 6765.399999999907,
+          "ms": 60
+        },
+        {
+          "start": 6837.800000000279,
+          "ms": 67
+        },
+        {
+          "start": 7322.300000000279,
+          "ms": 61
+        },
+        {
+          "start": 7403.300000000279,
+          "ms": 73
+        },
+        {
+          "start": 7494.899999999907,
+          "ms": 63
+        },
+        {
+          "start": 7576.899999999907,
+          "ms": 58
+        },
+        {
+          "start": 7654.399999999907,
+          "ms": 57
+        },
+        {
+          "start": 7739.700000000186,
+          "ms": 62
+        },
+        {
+          "start": 7822.600000000093,
+          "ms": 63
+        },
+        {
+          "start": 7903.300000000279,
+          "ms": 64
+        },
+        {
+          "start": 7982.600000000093,
+          "ms": 70
+        },
+        {
+          "start": 8077.899999999907,
+          "ms": 61
+        },
+        {
+          "start": 8163.300000000279,
+          "ms": 61
+        },
+        {
+          "start": 8355.700000000186,
+          "ms": 56
+        },
+        {
+          "start": 8433.700000000186,
+          "ms": 63
+        },
+        {
+          "start": 8512,
+          "ms": 63
+        },
+        {
+          "start": 8595.100000000093,
+          "ms": 60
+        },
+        {
+          "start": 8672.200000000186,
+          "ms": 55
+        },
+        {
+          "start": 8740.700000000186,
+          "ms": 64
+        },
+        {
+          "start": 8853.30000000028,
+          "ms": 98
+        },
+        {
+          "start": 8983.5,
+          "ms": 76
+        },
+        {
+          "start": 9117.80000000028,
+          "ms": 59
+        },
+        {
+          "start": 9226.5,
+          "ms": 57
+        },
+        {
+          "start": 9305.899999999907,
+          "ms": 65
+        },
+        {
+          "start": 9506.200000000186,
+          "ms": 70
+        },
+        {
+          "start": 9602.100000000093,
+          "ms": 60
+        },
+        {
+          "start": 9687.80000000028,
+          "ms": 62
+        },
+        {
+          "start": 9775.30000000028,
+          "ms": 56
+        },
+        {
+          "start": 9855.899999999907,
+          "ms": 61
+        },
+        {
+          "start": 9955.399999999907,
+          "ms": 65
+        },
+        {
+          "start": 10043.399999999907,
+          "ms": 61
+        },
+        {
+          "start": 10130.80000000028,
+          "ms": 59
+        },
+        {
+          "start": 10210.899999999907,
+          "ms": 64
+        },
+        {
+          "start": 10299.200000000186,
+          "ms": 57
+        },
+        {
+          "start": 10388.600000000093,
+          "ms": 56
+        },
+        {
+          "start": 10638.899999999907,
+          "ms": 62
+        },
+        {
+          "start": 10718.700000000186,
+          "ms": 61
+        },
+        {
+          "start": 10805.30000000028,
+          "ms": 59
+        },
+        {
+          "start": 10887,
+          "ms": 55
+        },
+        {
+          "start": 10958.100000000093,
+          "ms": 60
+        },
+        {
+          "start": 11041.5,
+          "ms": 62
+        },
+        {
+          "start": 11119.399999999907,
+          "ms": 57
+        },
+        {
+          "start": 11191.700000000186,
+          "ms": 58
+        },
+        {
+          "start": 11281.80000000028,
+          "ms": 58
+        },
+        {
+          "start": 11358.5,
+          "ms": 61
+        },
+        {
+          "start": 11438.899999999907,
+          "ms": 59
+        },
+        {
+          "start": 11623.100000000093,
+          "ms": 119
+        },
+        {
+          "start": 11774.5,
+          "ms": 65
+        },
+        {
+          "start": 11873.700000000186,
+          "ms": 63
+        },
+        {
+          "start": 11963.200000000186,
+          "ms": 62
+        },
+        {
+          "start": 12052.100000000093,
+          "ms": 81
+        },
+        {
+          "start": 12147.899999999907,
+          "ms": 65
+        },
+        {
+          "start": 12249.399999999907,
+          "ms": 92
+        },
+        {
+          "start": 12372.200000000186,
+          "ms": 66
+        },
+        {
+          "start": 12459.899999999907,
+          "ms": 66
+        },
+        {
+          "start": 12549.600000000093,
+          "ms": 71
+        },
+        {
+          "start": 12642.600000000093,
+          "ms": 64
+        }
+      ]
+    },
+    "transportRetry": true,
+    "reloadViewportVerified": true,
+    "noModelCalls": true
+  },
+  "installed": {
+    "packageSha256": "59423bcce71f31f40d06525118897236df6172f149b2a7cd5c2272e44fb1d219",
+    "matchingLibFiles": 431,
+    "realModelCalls": 0,
+    "alpha1": {
+      "hostVersion": "0.2.1-alpha.1",
+      "initial": {
+        "ok": true,
+        "sourceVersion": "0.7.0-alpha.1",
+        "nodes": 100,
+        "edges": 300,
+        "slowSaveMs": 800,
+        "slowWrites": 8,
+        "maxActive": 1,
+        "warmPreviewReads": 0,
+        "changedPreviewReads": 1,
+        "processRestartVerified": false,
+        "cases": [
+          "native drawing saved",
+          "full graph HTTP save",
+          "drag and zoom while saving",
+          "transport failure retry and subsequent drag",
+          "same final viewport and persisted graph",
+          "close/reopen preserves graph and native input"
+        ],
+        "realModel": false,
+        "errors": []
+      },
+      "restart": {
+        "ok": true,
+        "sourceVersion": "0.7.0-alpha.1",
+        "nodes": 100,
+        "edges": 300,
+        "slowSaveMs": 800,
+        "slowWrites": 10,
+        "maxActive": 1,
+        "warmPreviewReads": 0,
+        "changedPreviewReads": 1,
+        "processRestartVerified": true,
+        "cases": [
+          "native drawing saved",
+          "full graph HTTP save",
+          "drag and zoom while saving",
+          "transport failure retry and subsequent drag",
+          "same final viewport and persisted graph",
+          "close/reopen preserves graph and native input"
+        ],
+        "realModel": false,
+        "errors": []
+      },
+      "nativePassed": true,
+      "smokePassed": true,
+      "removal": {
+        "officialRemove": true,
+        "restartedWithoutPlugin": true,
+        "entryCount": 0,
+        "assetsStatus": 404
+      }
+    },
+    "alpha2": {
+      "hostVersion": "0.2.1-alpha.2",
+      "initial": {
+        "ok": true,
+        "sourceVersion": "0.7.0-alpha.1",
+        "nodes": 100,
+        "edges": 300,
+        "slowSaveMs": 800,
+        "slowWrites": 12,
+        "maxActive": 1,
+        "warmPreviewReads": 0,
+        "changedPreviewReads": 1,
+        "processRestartVerified": false,
+        "cases": [
+          "native drawing saved",
+          "full graph HTTP save",
+          "drag and zoom while saving",
+          "transport failure retry and subsequent drag",
+          "same final viewport and persisted graph",
+          "close/reopen preserves graph and native input"
+        ],
+        "realModel": false,
+        "errors": []
+      },
+      "restart": {
+        "ok": true,
+        "sourceVersion": "0.7.0-alpha.1",
+        "nodes": 100,
+        "edges": 300,
+        "slowSaveMs": 800,
+        "slowWrites": 7,
+        "maxActive": 1,
+        "warmPreviewReads": 0,
+        "changedPreviewReads": 1,
+        "processRestartVerified": true,
+        "cases": [
+          "native drawing saved",
+          "full graph HTTP save",
+          "drag and zoom while saving",
+          "transport failure retry and subsequent drag",
+          "same final viewport and persisted graph",
+          "close/reopen preserves graph and native input"
+        ],
+        "realModel": false,
+        "errors": []
+      },
+      "nativePassed": true,
+      "smokePassed": true,
+      "removal": {
+        "officialRemove": true,
+        "restartedWithoutPlugin": true,
+        "entryCount": 0,
+        "assetsStatus": 404
+      }
+    }
+  }
+}

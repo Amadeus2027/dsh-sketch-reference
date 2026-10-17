@@ -88,6 +88,8 @@ v0.6.3 菜单示例，批注为演示用固定样例。[素材说明](docs/asset
 
 **源码 ZIP 和预构建包两种方式都支持。** 都通过 DSH 官方管理器加入插件，无需提前单独安装 Excalidraw。
 
+选择版本：当前 `main`／源码 ZIP 和对应 CI 包是 **v0.7.0-alpha.1 开发预览**；`releases/latest` 目前提供 **v0.6.5 稳定版**，不包含 Sketch Graph。
+
 ### 1. 安装插件
 
 **方式一：源码 ZIP 解压后加入 DSH**
