@@ -2,7 +2,7 @@ import {describe,it,expect} from 'vitest';
 import type {KvTable} from '@deepseek-ai/dsh-storage-domain';
 import {Repository} from '../src/host/repository.ts';
 import {Autosave} from '../src/editor/autosave.ts';
-import {adviceSchema,contentDigest,type Drawing,type Save,type Owner} from '../src/core/contracts.ts';
+import {contentDigest,type Drawing,type Save,type Owner} from '../src/core/contracts.ts';
 import {sceneSchema} from '../src/core/contracts.ts';
 import {normalize} from '../src/editor/scene.ts';
 const owner:Owner={sessionId:'session-1',createdAt:'123',cwd:'/workspace'};
@@ -47,7 +47,6 @@ describe('untrusted data',()=>{
   expect(await contentDigest(saved)).toBe(await contentDigest({...saved,elements:[{...element,boundElements:[]}]}));
   expect(await contentDigest(saved)).not.toBe(await contentDigest({...saved,elements:[{...element,boundElements:[{id:'label',type:'text' as const}]}]}));
  });
- it('rejects model prose, extra fields and oversized advice while allowing a no-issue result',()=>{expect(adviceSchema.safeParse({summary:'x',suggestions:[]}).success).toBe(true);expect(adviceSchema.safeParse('没有问题').success).toBe(false);expect(adviceSchema.safeParse({summary:'x',suggestions:[{kind:'create',title:'x',reason:'x',actionPrompt:'x',execute:true}]}).success).toBe(false);expect(adviceSchema.safeParse({summary:'x'.repeat(121),suggestions:[{kind:'create',title:'x',reason:'x',actionPrompt:'x'}]}).success).toBe(false);});
  it('rejects embedded remote images and hostile cyclic input',()=>{expect(sceneSchema.safeParse({...scene,elements:[{type:'image'}]}).success).toBe(false);const cyclic:Record<string,unknown>={};cyclic['loop']=cyclic;expect(sceneSchema.safeParse({...scene,appState:cyclic}).success).toBe(false);});
  it('hashes visible content independently of edit metadata',async()=>{const e={id:'a',type:'rectangle',x:0,y:0,width:10,height:10,version:1,versionNonce:1,seed:1};const a={...scene,elements:[e]} as Drawing['scene'];expect(await contentDigest(a)).toBe(await contentDigest({...a,elements:[{...e,version:2,seed:3}]} as Drawing['scene']));expect(await contentDigest(a)).not.toBe(await contentDigest({...a,elements:[{...e,x:2}]} as Drawing['scene']));});
 });

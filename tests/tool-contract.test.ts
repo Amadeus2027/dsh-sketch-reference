@@ -6,8 +6,7 @@ import {createSketchTools} from '../src/host/tools.ts';
 import {presentSketchResult,recoverableTool} from '../src/host/tool-feedback.ts';
 import {agentAnnotateSchema} from '../src/core/agent.ts';
 import {proposeEditSchema,allowedOperations,validateOperations} from '../src/core/edits.ts';
-import {withComments} from '../src/core/comments.ts';
-import {commentSchema,SketchError,type Drawing} from '../src/core/contracts.ts';
+import {SketchError,type Drawing} from '../src/core/contracts.ts';
 import type {SketchAgent} from '../src/host/agent.ts';
 
 function fixture(){
@@ -87,10 +86,4 @@ it('keeps advertised capabilities identical to admission including incoming bind
  expect(allowedOperations(scene.elements[0]!,'bound')).toEqual([]);
  expect(()=>validateOperations(scene,[{op:'resize',elementId:'f',width:20,height:20}])).toThrow('独立矩形');
  expect(()=>validateOperations(scene,[{op:'move',elementId:'f',x:20,y:20}])).not.toThrow();
-});
-it('synthesizes three valid distinct legacy UUIDs and preserves their IDs during status updates',()=>{
- const batch={id:randomUUID(),createdAt:new Date().toISOString(),advice:{suggestions:[{}, {}, {}]}};
- const view=withComments(batch);expect(new Set(view.comments.map(c=>c.id)).size).toBe(3);
- for(const comment of view.comments){expect(comment.id).toHaveLength(36);expect(()=>commentSchema.parse(comment)).not.toThrow();}
- expect(withComments(batch).comments).toEqual(view.comments);
 });

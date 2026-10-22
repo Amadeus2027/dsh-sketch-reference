@@ -18,7 +18,7 @@ export const anchorSchema=z.object({type:z.literal('element'),elementId:z.string
 export type Anchor=z.infer<typeof anchorSchema>;
 export const adviceSchema = z.object({summary: text(120).refine(v => !!v.trim()), suggestions: z.array(z.object({kind:z.enum(['clarify','improve','create']),title:text(24).refine(v => !!v.trim()),reason:text(100).refine(v => !!v.trim()),actionPrompt:text(500).refine(v => !!v.trim()),anchor:anchorSchema.optional()}).strict())}).strict();
 export type Advice = z.infer<typeof adviceSchema>;
-export const commentStatusSchema=z.enum(['open','resolved','ignored']);
+const commentStatusSchema=z.enum(['open','resolved','ignored']);
 export type CommentStatus=z.infer<typeof commentStatusSchema>;
 export const commentSchema=z.object({id:z.uuid(),suggestionIndex:z.number().int().nonnegative().safe(),status:commentStatusSchema,createdAt:z.string()}).strict();
 export const commentUpdateSchema=z.object({batchId:z.uuid(),expectedRevision:z.uuid(),mutationId:z.uuid(),commentId:z.uuid(),status:commentStatusSchema}).strict();
@@ -38,7 +38,6 @@ export type Save = z.infer<typeof saveSchema>;
 export const generateSchema = z.object({revision:z.uuid(),pngBase64:z.string().max(IMAGE_LIMITS.maxBase64Chars),route:routeSchema,inputMode:analysisModeSchema.default('hybrid')}).strict().superRefine((input,ctx)=>{
  if(input.inputMode==='structure'&&input.pngBase64!=='')ctx.addIssue({code:'custom',path:['pngBase64'],message:'纯结构分析不接受图片，请使用空字符串'});
 });
-export const modelSchema = routeSchema;
 export const loadSchema = z.object({owner:ownerSchema,drawing:drawingSchema.nullable(),latestAdvice:batchSchema.nullable(),routes:z.array(routeOptionSchema)}).strict();
 export const resultSchema = z.discriminatedUnion('ok',[
  z.object({ok:z.literal(true),requestId:z.uuid(),value:z.unknown()}).strict(),

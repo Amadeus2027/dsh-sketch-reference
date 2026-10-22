@@ -1,7 +1,7 @@
 // Adapted from dsh-diagram v0.6.1 (MIT). See REUSE.md.
 import { z } from "zod";
 import {SCENE_LIMITS} from "./limits.ts";
-export interface ScenePolicy { maxSceneBytes: number; maxSceneElements: number; maxElementTextChars: number }
+interface ScenePolicy { maxSceneBytes: number; maxSceneElements: number; maxElementTextChars: number }
 export const scenePolicy: ScenePolicy = SCENE_LIMITS;
 /** JSON data accepted by persisted scene fields. */
 export type JsonValue =
@@ -13,7 +13,7 @@ export type JsonValue =
   | { [key: string]: JsonValue };
 
 /** Editable Excalidraw primitives accepted by durable storage. */
-export const EDITABLE_SCENE_ELEMENT_TYPES = [
+const EDITABLE_SCENE_ELEMENT_TYPES = [
   "rectangle",
   "diamond",
   "ellipse",
@@ -24,7 +24,7 @@ export const EDITABLE_SCENE_ELEMENT_TYPES = [
 ] as const;
 
 /** Non-configurable limits that prevent hostile scene data from exhausting parsers. */
-export const SCENE_PROTOCOL_SECURITY_LIMITS = Object.freeze({
+const SCENE_PROTOCOL_SECURITY_LIMITS = Object.freeze({
   maxJsonDepth: 64,
   maxJsonValues: 100_000,
   maxAbsoluteJsonNumber: 1_000_000_000_000_000,
@@ -606,6 +606,3 @@ function bindingElementId(
   const elementId = value.elementId;
   return typeof elementId === "string" ? elementId : undefined;
 }
-
-/** A validated, editable scene whose elements are the current diagram state. */
-export type PersistedScene = z.infer<ReturnType<typeof createSceneSchema>>;

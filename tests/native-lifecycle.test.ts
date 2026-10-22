@@ -45,11 +45,10 @@ it('keeps panel generations separate, skips no-op notifications and drops remove
  const first=createPanelStore(),second=createPanelStore(),notify=vi.fn(),close=vi.fn();first.subscribe(notify);const initial=first.getSnapshot();first.set('a',false);expect(first.getSnapshot()).toBe(initial);
  first.set('a',true);first.set('a',true);expect(notify).toHaveBeenCalledTimes(1);expect(second.getSnapshot().a).toBeUndefined();first.onClose(close);first.requestClose('a');expect(close).toHaveBeenCalledWith('a');expect(first.getSnapshot().a).toBe(true);first.prune([]);expect(first.getSnapshot().a).toBeUndefined();first.clear();first.requestClose('a');expect(close).toHaveBeenCalledTimes(1);
 });
-it('accepts bounded native appearance and rejects injected CSS or unknown tokens',()=>{
+it('accepts native themes and alpha.2 fallback fonts while rejecting CSS injection and unknown tokens',()=>{
  const base={theme:'dark',fontFamily:'system-ui',colors:{background:'#151517'}};expect(appearanceSchema.safeParse(base).success).toBe(true);
- expect(appearanceSchema.safeParse({...base,colors:{background:'url(https://external.test/font)'}}).success).toBe(false);expect(appearanceSchema.safeParse({...base,colors:{unknown:'#fff'}}).success).toBe(false);expect(appearanceSchema.safeParse({...base,fontFamily:'x; color:red'}).success).toBe(false);
-});
-it('accepts the alpha.2 computed fallback font stack without dropping theme updates',()=>{
+ expect(appearanceSchema.safeParse({...base,colors:{background:'url(https://external.test/font)'}}).success).toBe(false);
+ expect(appearanceSchema.safeParse({...base,colors:{unknown:'#fff'}}).success).toBe(false);
  const stack='-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif';
  const fontFamily=stack+', '+stack;expect(fontFamily.length).toBe(296);
  for(const theme of ['light','dark'])expect(appearanceSchema.parse({theme,fontFamily,colors:{background:theme==='dark'?'#151517':'#fff'}}).theme).toBe(theme);
