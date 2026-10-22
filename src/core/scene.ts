@@ -606,4 +606,3 @@ function bindingElementId(
   const elementId = value.elementId;
   return typeof elementId === "string" ? elementId : undefined;
 }
-
