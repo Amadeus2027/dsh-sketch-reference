@@ -3,7 +3,7 @@ import type {KvTable} from '@deepseek-ai/dsh-storage-domain';
 import {randomUUID} from 'node:crypto';
 import {Repository} from '../src/host/repository.ts';
 import {EditRepository} from '../src/host/edit-repository.ts';
-import {EDIT_LIMITS,proposeEditSchema,proposalSchema,validateOperations,validateEditScene,createdElementId,type EditProposal,type EditOperation} from '../src/core/edits.ts';
+import {proposalLabel,EDIT_LIMITS,proposeEditSchema,proposalSchema,validateOperations,validateEditScene,createdElementId,type EditProposal,type EditOperation} from '../src/core/edits.ts';
 import {canonical,ownerKey,type Drawing,type Owner} from '../src/core/contracts.ts';
 import {Autosave} from '../src/editor/autosave.ts';
 import {requestBodyLimit,SCENE_LIMITS,RPC_LIMITS} from '../src/core/limits.ts';
@@ -147,4 +147,17 @@ it('checks growing confirmation and dismissal receipts before writing or changin
  await expect(s.edits.dismiss(owner,p.id,s.check)).rejects.toMatchObject({code:'STORAGE_FULL'});
  expect(s.drawings.get(owner)).toEqual(s.drawing);expect(s.store.rows.get(ownerKey(owner))?.status).toBe('pending');
  s.store.rows.delete('history');await expect(s.edits.apply(owner,p.id,scene,s.check)).resolves.toMatchObject({mutationId:p.id});
+});
+
+it('separates preview, stale, dismissed and historical applied receipts after undo',()=>{
+ const pending={status:'pending',baseRevision:'before'} as EditProposal;
+ expect(proposalLabel(pending,'before',false,false)).toBe('待预览');
+ expect(proposalLabel(pending,'before',false,true)).toBe('已预览 · 待确认');
+ expect(proposalLabel(pending,'before',true,true)).toBe('需重新提议');
+ expect(proposalLabel(pending,'other',false,true)).toBe('需重新提议');
+ expect(proposalLabel({...pending,status:'dismissed'},'other',false,true)).toBe('已忽略');
+ const applied={...pending,status:'applied' as const,resultRevision:'after'};
+ expect(proposalLabel(applied,'after',false,true)).toBe('已应用（历史记录）');
+ expect(proposalLabel(applied,'after',true,true)).toBe('曾应用 · 画板已变化');
+ expect(proposalLabel(applied,'undo',false,true)).toBe('曾应用 · 画板已变化');
 });

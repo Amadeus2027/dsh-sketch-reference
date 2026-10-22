@@ -10,7 +10,6 @@ export interface CommentRecord {
  id:string;owner:Batch['owner'];createdAt:string;commentRevision?:string|undefined;comments?:NonNullable<Batch['comments']>|undefined;commentMutation?:Batch['commentMutation'];
  advice:{suggestions:readonly unknown[]};
 }
-export type CommentBatch=Batch&{commentRevision:string;comments:NonNullable<Batch['comments']>};
 /** Pure legacy view: stable IDs and CAS token, without rewriting the stored batch on reads. */
 export function withComments<T extends Pick<CommentRecord,'id'|'createdAt'|'commentRevision'|'comments'|'advice'>>(batch:T):T&{commentRevision:string;comments:NonNullable<Batch['comments']>} {
  // Preserve the original IDs for indices 0–15; carry into the UUID tail for

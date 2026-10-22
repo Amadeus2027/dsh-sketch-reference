@@ -2,9 +2,7 @@ import { realpathSync } from "node:fs";
 import { readFile, realpath } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { extname, isAbsolute, relative, resolve, sep } from "node:path";
-
-/** Public URL prefix for the editor document and its built assets. */
-export const DIAGRAM_ASSETS_PATH = "/sketch-reference-assets";
+import { ASSETS } from "../core/contracts.ts";
 
 const EDITOR_CSP = [
   "default-src 'none'",
@@ -62,8 +60,8 @@ export function createEditorAssetsHandler(
       return;
     }
     const pathname = new URL(req.url ?? "/", "http://dsh.local").pathname;
-    if (pathname !== DIAGRAM_ASSETS_PATH
-      && !pathname.startsWith(`${DIAGRAM_ASSETS_PATH}/`)) {
+    if (pathname !== ASSETS
+      && !pathname.startsWith(`${ASSETS}/`)) {
       res.writeHead(404, SECURITY_HEADERS);
       res.end();
       return;
@@ -71,7 +69,7 @@ export function createEditorAssetsHandler(
 
     let suffix: string;
     try {
-      suffix = decodeURIComponent(pathname.slice(DIAGRAM_ASSETS_PATH.length));
+      suffix = decodeURIComponent(pathname.slice(ASSETS.length));
     } catch {
       res.writeHead(400, SECURITY_HEADERS);
       res.end();

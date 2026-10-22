@@ -23,6 +23,7 @@ describe('model anchors and bounded scene input',()=>{
   const extended={...original,advice:{...advice,suggestions}},view=withComments(extended);
   expect(view.comments.slice(0,3).map(c=>c.id)).toEqual([0,1,2].map(i=>original.id.slice(0,-1)+i));
   expect(new Set(view.comments.map(c=>c.id)).size).toBe(32);expect(batchSchema.parse(view).comments).toHaveLength(32);
+  expect(withComments(extended).comments).toEqual(view.comments);
   const saved=await s.repo.put(extended,async()=>{});expect(s.repo.get(owner)?.comments).toEqual(saved.comments);
   expect(()=>batchSchema.parse({...view,comments:view.comments.map((c,i)=>i===31?{...c,suggestionIndex:32}:c)})).toThrow();
  });
@@ -69,6 +70,8 @@ describe('model anchors and bounded scene input',()=>{
   const {anchor:_,...global}=advice.suggestions[0]!;
   expect(parseAdvice(JSON.stringify({...advice,suggestions:[global]})).suggestions[0]?.anchor).toBeUndefined();
   expect(()=>parseAdvice('{broken')).toThrow('格式不完整');
+  expect(()=>parseAdvice('这里是您的建议')).toThrow();
+  expect(parseAdvice('```json\n'+JSON.stringify(advice)+'\n```',describeScene(scene).elements)).toEqual(advice);
   expect(()=>parseAdvice(JSON.stringify({...advice,suggestions:[{...global,tool:'execute'}]}))).toThrow('格式或长度');
  });
  it('limits structure size and element count and excludes unrelated state',()=>{

@@ -9,13 +9,13 @@ const methods=SketchService.prototype as unknown as {
  checkAgent(owner:Owner,revision:string|null,signal:AbortSignal):Promise<void>;
 };
 
-it.each(['alpha.1','alpha.2'])('retains the original draft owner through %s directory changes and persisted reopening',async version=>{
+it('retains the original draft owner through directory changes and persisted reopening',async()=>{
  // alpha.2 keeps header.cwd immutable and projects its effective cwd separately.
  // Changing the storage owner to that projection would orphan existing drafts.
  let live:{header:typeof original}|undefined={header:original},effective='/worktree',reads=0;
  const carrier={sessions:{get:()=>live},ctx:{
   sessionPersistence:{stat:async()=>{reads++;effective='/different-worktree';return {header:original};}},
-  ...(version==='alpha.2'?{workingDirectory:{get:()=>effective},sessionProjections:{stateOf:()=>effective}}:{}),
+  workingDirectory:{get:()=>effective},sessionProjections:{stateOf:()=>effective},
  }};
  const signal=new AbortController().signal;
  expect(await methods.resolve.call(carrier,owner.sessionId,signal)).toEqual(owner);

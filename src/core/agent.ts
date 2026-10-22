@@ -13,10 +13,9 @@ export const agentReadSchema=z.object({nodeId:nodeIdSchema.optional(),mode:z.enu
 export const focusSchema=z.object({revision:z.uuid(),elementIds:z.array(z.string().min(1).max(256)).max(AGENT_LIMITS.maxElements)}).strict().refine(v=>new Set(v.elementIds).size===v.elementIds.length,'重点元素不能重复');
 export type SketchFocus=z.infer<typeof focusSchema>;
 export const focusResultSchema=z.object({count:z.number().int().min(0).max(AGENT_LIMITS.maxElements),revision:z.uuid(),persisted:z.literal(false),message:z.string().max(200)}).strict();
-export const agentSuggestionSchema=z.object({title:text(60),reason:text(1000),anchor:anchorSchema.optional()}).strict();
+const agentSuggestionSchema=z.object({title:text(60),reason:text(1000),anchor:anchorSchema.optional()}).strict();
 export const agentAnnotateSchema=z.object({revision:z.uuid(),expectedBatchId:z.uuid().nullable(),summary:text(240),comments:z.array(agentSuggestionSchema).min(1)}).strict().refine(v=>new TextEncoder().encode(JSON.stringify(v)).byteLength<=AGENT_LIMITS.maxAnnotationBytes,'批注输入超过 64 KiB，请保留最有价值的内容');
 export type AgentRead=z.infer<typeof agentReadSchema>;
-export type AgentAnnotate=z.infer<typeof agentAnnotateSchema>;
 export const agentBatchSchema=z.object({
  id:z.uuid(),source:z.literal('agent'),owner:ownerSchema,analysisRevision:z.uuid(),contentDigest:z.string(),goal:drawingSchema.shape.goal,
  advice:z.object({summary:text(240),suggestions:z.array(agentSuggestionSchema).min(1)}).strict(),

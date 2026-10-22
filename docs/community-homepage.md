@@ -1,58 +1,19 @@
-# 社区展示与仓库 About
+# 仓库主页维护
 
-主页采用中文默认入口与英文 README。首屏用一句用途说明和约 42 秒的 v0.6.5 连续屏幕录制，展示 Excalidraw 原生手绘风格布局、一次撤销调整 → 原生 PNG 附件 → 输入未发送需求 → 重开草图。首屏文案说明画图、调整与返回聊天的操作流程；输入来源、模型调用范围与案例版本收进 README 的「演示与案例说明」。保留静态图入口，批注菜单样例放入折叠区。来源、编码和边界详见 [素材记录](assets/v0.6.5/README.md)。
+当前主页采用中英文、短定位、演示、任务案例与快速安装的顺序。默认展示 v0.7.0 Sketch Graph；旧版素材及真实／脚本输入来源留在各自证据文档，不把旧 UI 当成当前界面。
 
-新增「使用前与使用后」表格，以仅原生聊天＋普通 PNG 为基线，比较草图保存、局部讨论、版本读取及受限编辑。没有把普通 DSH 描述成无法理解图片，也没有声称生成质量、速度或 Token 消耗优于基线。历史网页/PPT 案例与旧界面保留在原证据文档中。
+## 展示参考
 
-## 参考的开源主页
+2026-10-22 阅读 [Archify](https://github.com/tt-a1i/archify) 的 README，参考演示靠前、明确下一步和渐进展开的组织方式。早期还参考 Excalidraw、tldraw、Cline、Dyad。未复制其图片、文案或运行代码，未增加依赖，也没有 Star 增长对照结论。
 
-2026-10-12 阅读以下项目当前 README，只借鉴展示组织方式，没有复制文案、图片、代码或引入依赖；它们的功能、许可证和适配范围不作为本插件能力。
+## 官方徽章
 
-| 项目 | 主页做法 | 本仓库采用 |
-| --- | --- | --- |
-| [Excalidraw](https://github.com/excalidraw/excalidraw/blob/master/README.md) | 产品展示靠前，编辑器与应用能力分开说明 | 当前版本真实界面，明确插件与 DSH Agent 的职责 |
-| [tldraw](https://github.com/tldraw/tldraw/blob/main/README.md) | 简短定位，文档／示例／上手入口突出 | 标题与首屏更短，提供下载、指南、静态图入口 |
-| [Cline](https://github.com/cline/cline/blob/main/README.md) | 一句话定位，不同入口给出具体下一步 | 从草图起步的三个步骤，原生聊天仍为主入口 |
-| [Dyad](https://github.com/dyad-sh/dyad/blob/main/README.md) | 展示、少量特性和下载优先，社区入口集中 | 短交互动图、三种协作方式与单一反馈入口 |
+采用 DSH 官方 [`dsh-badge` 资源说明](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/packages/experimental/skill-badge/assets/dsh-badge.md) 中的完整 Markdown，保留文字、颜色、logo 和项目链接，放在 README 末尾。[官方徽章技能说明](https://github.com/deepseek-ai/deepseek-harness/blob/687f282e8625c6b8d11ff58211a90524be2e4317/packages/experimental/badge-skill-bundle/README.zh.md)
 
-这是展示结构参考，不是 Star 增长实验；没有可量化的增长结论。
+该徽章是 DSH 署名，不代表官方认证或推荐。这里只引用官方远程图片，不安装额外运行插件、不改变用户 profile。
 
-## About 设置
+## 历史维护记录
 
-本轮更新仓库设置时，GitHub API 返回 `HTTP 403: Resource not accessible by integration`。因此 About/Topics **尚未自动写入**；以下是可由仓库所有者在主页右侧 About 齿轮处填入的内容。
+v0.6.5 时的首页布局、About／Topics 建议值已经过时；当时 API 写设置返回 `403`，并未成功改写设置。[压缩前记录](https://github.com/Amadeus2027/dsh-sketch-reference/blob/114f3bf4ede6230c9bcabbd4a1eec13a72129b22/docs/community-homepage.md)
 
-Description：
-
-```text
-DSH 原生可视化协作：画草图、锚点批注、确认修改。Draw, discuss and approve edits with DeepSeek Harness + Excalidraw.
-```
-
-Website：
-
-```text
-https://github.com/Amadeus2027/dsh-sketch-reference/releases/latest
-```
-
-Topics（每项单独添加）：
-
-```text
-deepseek
-deepseek-harness
-dsh
-excalidraw
-ai-agent
-visual-collaboration
-human-in-the-loop
-ui-design
-pptx
-typescript
-```
-
-原 About 介绍是“DeepSeek Harness 手绘参考板插件，支持自由绘图、原生视觉建议和参考图输入。”，Website 为空，Topics 未设置。没有改动仓库权限、可见性或发布设置。
-
-## 主页内容组织
-
-- 首屏素材更新为 v0.6.5；历史 v0.6.3 批注截图保留版本标注，不当作本次版本证据。
-- v0.6.5 保留两版 Web 宿主支持；v0.6.3 的原包门禁失败仍作为历史记录保留在 [兼容说明](dsh-compatibility.md)。
-- 首屏突出操作和用途，录制来源与测试范围使用折叠说明及链接呈现；原素材记录、失败事实、许可与真实模型证据保持原样，不把固定样例或自动化输入标为真人／真实 DeepSeek 执行。
-- 增加 Star 关注入口及问题反馈入口，未代用户到 DSH 社区发帖，也没有发送推广消息。
+后续维护以当前页面与实际权限为准。不虚构使用量、认证、性能或模型效果，不自动向社区发送推广。
