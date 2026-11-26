@@ -16,13 +16,14 @@ try{
  assert(clientVerified,'Browser must execute the installed client artifact');report.installedClientMatched=true;
  await hostContext(page,'create',process.env.DSH_TEST_WORKSPACE??process.cwd());
  const stats=()=>page.evaluate(async()=>{const response=await fetch('/sketch-reference-test-agent-stats');if(!response.ok)throw new Error('Native fixture missing');return response.json();});
- const baseline=(await stats()).calls.length;assert.deepEqual((await stats()).registered,[true,true]);
+ const initialStats=await stats();assert.equal(initialStats.scripted,true,'Scripted profile required');const baseline=initialStats.calls.length;assert.deepEqual(initialStats.registered,[true,true]);
  const button=page.getByRole('button',{name:'打开手绘参考板'}),input=page.locator('[contenteditable=true]');await input.fill('原生输入保留');await button.click();let frame=await editorFrame(page);
  const ready=()=>frame.waitForFunction(()=>{try{return !!window.__sketchEditor();}catch{return false;}});await ready();
  const call=(method,owner,payload)=>frame.evaluate(async({method,owner,payload})=>{const r=await fetch(`/sketch-reference-rpc/v1/${method}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({protocolVersion:1,requestId:crypto.randomUUID(),owner,payload})});const body=await r.json();if(!body.ok)throw new Error(body.error.code);return body.value;},{method,owner,payload});
  const load=()=>call('drawing/get',null,{sessionId:new URL(frame.url()).searchParams.get('sessionId')});
  await frame.evaluate(()=>{const base={x:120,y:160,width:180,height:100,angle:0,strokeColor:'#1e1e1e',backgroundColor:'transparent',fillStyle:'solid',strokeWidth:1,strokeStyle:'solid',roughness:1,opacity:100,groupIds:[],frameId:null,roundness:null,seed:1,isDeleted:false,boundElements:null,updated:1,link:null,locked:false,version:1,versionNonce:1};window.__sketchEditor().updateScene({elements:[{...base,id:'agent-rect',type:'rectangle'},{...base,id:'agent-free',type:'freedraw',x:400,y:160,width:90,height:100,points:[[0,0],[50,40],[90,100]],pressures:[],simulatePressure:true,lastCommittedPoint:null}]});});
  await frame.getByLabel('这张图准备用来做什么？').fill('讨论几何和自由手绘物品');await frame.getByRole('status').filter({hasText:'已保存'}).waitFor();const first=await load();
+ await hostContext(page,'selectModel',{sessionId:first.owner.sessionId,provider:'deepseek-official',model:'deepseek-flash'});
  await frame.getByRole('button',{name:'作为参考发送',exact:true}).click();await frame.getByRole('alert').filter({hasText:'参考图已加入'}).waitFor();assert((await input.innerText()).includes('原生输入保留'));
  await input.fill('SKETCH_AGENT_TEST ANNOTATE：解释并标注草图。');await input.press('Enter');
  await page.getByText('SKETCH_AGENT_DONE：模拟原生回答与批注已完成。',{exact:true}).waitFor();
@@ -47,6 +48,7 @@ try{
  await frame.evaluate(()=>{const api=window.__sketchEditor();api.updateScene({elements:api.getSceneElements().map(e=>e.id==='agent-rect'?{...e,x:e.x+80,version:e.version+1}:e)});});await frame.getByText('较早版本',{exact:true}).waitFor();await frame.getByRole('status').filter({hasText:'已保存'}).waitFor();
  await frame.getByRole('button',{name:'更多操作',exact:true}).click();await Promise.all([page.waitForEvent('download'),frame.getByRole('button',{name:'导出 PNG',exact:true}).click()]);
  await hostContext(page,'create',process.env.DSH_TEST_WORKSPACE??process.cwd());await page.locator('iframe[title="手绘参考板"]').waitFor({state:'detached'});await button.click();frame=await editorFrame(page);await ready();const second=await load();assert.notEqual(second.owner.sessionId,first.owner.sessionId);assert.equal((await call('agent/get',second.owner,null)).batch,null);
+ await hostContext(page,'selectModel',{sessionId:second.owner.sessionId,provider:'deepseek-official',model:'deepseek-flash'});
  await hostContext(page,'open',first.owner.sessionId);frame=await editorFrame(page);await ready();assert.equal((await call('agent/get',first.owner,null)).batch.id,agent.batch.id);
  const protectedDrawing=(await load()).drawing;
  await input.fill('SKETCH_AGENT_TEST FAIL：模拟模型失败。');await input.press('Enter');await page.getByText('Synthetic native model failure',{exact:false}).first().waitFor();

@@ -260,7 +260,7 @@ Runtime non-MIT license expressions: `(MPL-2.0 OR Apache-2.0)`, `0BSD`, `Apache-
 | vscode-uri | 3.0.8 | MIT | https://github.com/microsoft/vscode-uri.git | `npm/vscode-uri/3.0.8/LICENSE.md` |  |
 | webworkify | 1.5.0 | MIT | git://github.com/substack/webworkify.git | `npm/webworkify/1.5.0/LICENSE` |  |
 | which | 2.0.2 | ISC | git://github.com/isaacs/node-which.git | `npm/which/2.0.2/LICENSE` |  |
-| zod | 4.6.5 | MIT | https://github.com/colinhacks/zod.git | `npm/zod/4.6.5/LICENSE` |  |
+| zod | 4.6.6 | MIT | https://github.com/colinhacks/zod.git | `npm/zod/4.6.6/LICENSE` |  |
 | zustand | 4.5.7 | MIT | https://github.com/pmndrs/zustand.git | `npm/zustand/4.5.7/LICENSE` |  |
 
 ## Self-Hosted Fonts
@@ -10850,9 +10850,9 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
 
-### zod@4.6.5
+### zod@4.6.6
 
-File: `npm/zod/4.6.5/LICENSE`
+File: `npm/zod/4.6.6/LICENSE`
 
 ```text
 MIT License

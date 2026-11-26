@@ -4,6 +4,8 @@
 
 ## 当前版本
 
+- [当前 DSH 适配、性能维护与模块职责](maintenance-current-dsh-20261126.md)
+
 - [使用指南](usage.md) · [安装与升级](installation.md)
 - [v0.7.0 发行说明](release-v0.7.0.md) · [发行核对](release-checklist-v0.7.0.md)
 - [功能与真实模型验证](validation-v0.7.0.md)

@@ -1,5 +1,7 @@
 # 安装与发行
 
+当前源码新增 DSH Web `0.2.2-rc.5` / `0.2.3-alpha.2` 适配，见[本轮验证](maintenance-current-dsh-20261126.md)。正式 Latest 仍为旧版 v0.7.0；新宿主需使用包含本次改动的源码或成功 CI 包，不能用旧 Release 代替。构建当前源码使用 Node 24.22.3 或满足所选 DSH 引擎要求的更新版本；无需升级 Excalidraw。
+
 ## 预构建包安装
 
 插件编辑器、React 绘图运行代码、Excalidraw 和九个字体族都在预构建 tgz 里。**不要单独安装 Excalidraw，也不用克隆仓库或运行构建。** 仅宿主 Zod 依赖由 DSH 官方插件管理器按声明解析安装；不增加模型服务或独立密钥。

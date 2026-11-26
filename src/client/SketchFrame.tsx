@@ -17,6 +17,7 @@ export function SketchFrame({ctx,props,onClose,appearance,subscribeClose}:{ctx:C
  const initialTheme=useRef(appearance.theme);
  latest.current=props;
  const ids=props.useInput(s=>s?.attachmentIds??[]);
+ const uploadImages=props.useSession(s=>s?.subagent===null);
  interface ModelState {current:{provider:string;model:string}|null;status:string}
  interface ModelDirectories {directoryFor(id:NonNullable<typeof props.sessionId>):{store:{getSnapshot():ModelState;subscribe(callback:()=>void):()=>void}}}
  const modelSource=useMemo(()=>{
@@ -26,7 +27,7 @@ export function SketchFrame({ctx,props,onClose,appearance,subscribeClose}:{ctx:C
  },[ctx,props.sessionId]);
  const modelState=useSyncExternalStore(modelSource.subscribe,modelSource.get);
  const selection=modelState.status==='selecting'?null:modelState.current;
- const live=useRef({selection,ids,onClose});live.current={selection,ids,onClose};
+ const live=useRef({selection,ids,onClose,uploadImages});live.current={selection,ids,onClose,uploadImages};
  const nonce=useMemo(()=>crypto.randomUUID(),[props.sessionId]);
  useEffect(()=>{connection.current?.postMessage({type:'APPEARANCE',value:appearance});},[appearance]);
  useEffect(()=>{
@@ -80,7 +81,7 @@ export function SketchFrame({ctx,props,onClose,appearance,subscribeClose}:{ctx:C
      if(latest.current.sessionId!==props.sessionId || signal.aborted || live.current.selection?.provider!==chosen?.provider || live.current.selection?.model!==chosen?.model)throw new Error('会话或模型已变化');
      const bridge=draftBridge(ctx);
      if(!bridge)throw new Error('当前宿主未提供附件注册，请先下载 PNG 手工加入');
-     const id=bridge.stage(props.sessionId,message.bytes,actions,()=>!signal.aborted && latest.current.sessionId===props.sessionId);
+     const id=bridge.stage(props.sessionId,message.bytes,actions,()=>!signal.aborted && latest.current.sessionId===props.sessionId,live.current.uploadImages);
      staged.set(message.digest,id);reply(true,'参考图已加入左侧输入框，请使用原有发送按钮');
     })().catch(error=>reply(false,error instanceof Error?error.message:'操作失败')).finally(()=>{processing=false;});
    };

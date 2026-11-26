@@ -4,8 +4,8 @@ export const inject=['llm','sketchReference','webServer','connection'];
 export function apply(ctx){
  console.log('MOCK_SKETCH_MODEL_DEADLINE_MS',ctx.get('sketchReference').config.adviceDeadlineMs);
  const calls=[];
- ctx.effect(()=>ctx.webServer.register({kind:'prefix',path:'/sketch-reference-test-model-stats',handler:(req,res)=>{
-  const rejected=ctx.connection.requestRejection(req);if(rejected){res.writeHead(rejected);res.end();return;}
+ ctx.effect(()=>ctx.webServer.register({kind:'prefix',path:'/sketch-reference-test-model-stats',auth:'required',handler:(req,res,peer)=>{
+  const rejected='requestRejection' in ctx.connection?ctx.connection.requestRejection(req):!peer||peer.signal.aborted?401:undefined;if(rejected){res.writeHead(rejected);res.end();return;}
   res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});res.end(JSON.stringify({calls}));
  }}));
  const original=ctx.llm.stream;
