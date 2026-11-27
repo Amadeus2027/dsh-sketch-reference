@@ -10,8 +10,22 @@
 @media(max-width:700px){.graphSidebar{width:180px;padding:10px}.graphLegend{font-size:10px;right:4px;bottom:4px}.graphWorkspace header{gap:6px}.graphToolRow input{max-width:110px}}
 @media(max-width:450px){.graphBody{flex-direction:column}.graphSidebar{width:auto;max-height:180px;border-left:0;border-top:1px solid var(--sketch-border)}.graphCanvas{min-height:220px}.graphToolbar>span{margin-left:0}}
 
-.graphCreateToggle{margin-left:auto}.graphCurrentMode{color:var(--sketch-accent);font-weight:600}.graphBreadcrumb{margin-bottom:0}.graphToolRow:not([hidden]){margin-top:8px}.graphWorkspace button:focus-visible,.graphWorkspace input:focus-visible,.graphWorkspace select:focus-visible,.graphEditorTools button:focus-visible,.graphEditorTools input:focus-visible,.graphEditorTools select:focus-visible{outline:2px solid var(--sketch-accent);outline-offset:2px}
+.graphCreateToggle{margin-left:auto}.graphBreadcrumb{margin-bottom:0}.graphToolRow:not([hidden]){margin-top:8px}.graphWorkspace button:focus-visible,.graphWorkspace input:focus-visible,.graphWorkspace select:focus-visible,.graphEditorTools button:focus-visible,.graphEditorTools input:focus-visible,.graphEditorTools select:focus-visible{outline:2px solid var(--sketch-accent);outline-offset:2px}
 
 .graphMore{position:relative}.graphMore>summary{list-style:none;cursor:pointer;border:.5px solid var(--sketch-border);border-radius:8px;padding:4px 10px;font-size:12px;min-height:28px}.graphMore>div{position:absolute;top:calc(100% + 6px);left:0;z-index:10;display:grid;gap:6px;min-width:150px;padding:8px;background:var(--sketch-surface);border:.5px solid var(--sketch-border);border-radius:8px;box-shadow:0 3px 14px #0002}.graphSelectionHint{font-size:11px;color:var(--sketch-muted)}
 
 .graphCrumb{border:0!important;background:transparent!important;padding:0 2px!important;min-height:0!important;color:var(--sketch-accent)!important}.graphAnchorWarning{position:absolute;bottom:0;left:0;background:var(--sketch-surface);color:var(--sketch-error)!important;padding:3px 5px;font-size:11px}
+
+.graphCanvasLoading { height:100%; display:grid; place-content:center; justify-items:center; gap:8px; color:var(--sketch-muted) }
+.graphBreadcrumb { flex-wrap:nowrap; min-width:0; gap:6px }
+.graphBreadcrumb>button { flex:none }
+.graphPath { min-width:0; white-space:nowrap; overflow:auto; scrollbar-width:thin; color:var(--sketch-muted) }
+.graphPath>span:last-child { color:var(--sketch-text); font-weight:550 }
+.graphLegend { display:flex; gap:14px; align-items:center; border:1px solid var(--sketch-border); border-radius:20px; padding:4px 10px; color:var(--sketch-muted); background:var(--sketch-background) }
+.graphLegend span { display:inline-flex; align-items:center; gap:5px }
+.graphLegend span::before { content:""; width:14px; border-top:2px solid var(--sketch-blue) }
+.graphLegend span:last-child::before { border-top:2px dashed var(--sketch-detail) }
+.sketchGraphNodeTitle span { padding:1px 7px; border-radius:5px; background:var(--sketch-background) }
+.graphWorkspace .graphModes { align-items:center; gap:2px; padding:2px; border-radius:8px; background:var(--sketch-hover) }
+.graphModes button { border:0; background:transparent; border-radius:6px }
+.graphWorkspace .graphModes button[aria-pressed=true] { background:var(--sketch-background); color:var(--sketch-text); box-shadow:0 1px 3px #0002 }

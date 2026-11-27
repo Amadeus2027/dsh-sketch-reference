@@ -53,3 +53,17 @@
 
 .commentPopover>div:first-child>.commentMenuTrigger{display:inline-flex;align-items:center;justify-content:center;flex:none;width:26px;height:24px;min-height:24px;padding:3px;border:0;border-radius:5px;margin-left:auto;color:var(--sketch-muted);background:transparent}.commentPopover strong{flex:1}
 .commentCarousel{display:flex;align-items:stretch;gap:5px;min-width:0}.commentCarousel>.cards{flex:1;min-width:0}.advice .commentPage{display:flex;align-items:center;justify-content:center;flex:none;width:24px;padding:0;border-radius:6px;background:var(--sketch-surface);color:var(--sketch-muted)}.advice .commentPage:hover:not(:disabled){background:var(--sketch-hover);color:var(--sketch-accent)}.advice .commentPage:focus-visible{outline-offset:-2px}
+
+.boardContext { display:grid; grid-template-columns:minmax(0,1fr); align-items:start; flex:none; border-bottom:1px solid var(--sketch-border); background:var(--sketch-surface); max-height:34%; overflow:auto }
+.boardContext .graphEditorTools { min-width:0; border:0; padding:5px 10px }
+.boardContext .intent { min-width:0; padding:0 10px 6px }
+.boardContext .intent input { height:30px; background:var(--sketch-background) }
+.board>header .save { display:inline-flex; align-items:center; gap:5px; white-space:nowrap; font-variant-numeric:tabular-nums }
+.save::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor }
+.save.clean::before { background:color-mix(in srgb,var(--sketch-muted) 60%,transparent) }
+.save.saving,.save.dirty { color:var(--sketch-blue) }
+.board>footer .actions>button { min-height:32px; padding-inline:12px }
+@media(min-width:660px) {
+ .boardContext { grid-template-columns:minmax(0,1fr) minmax(220px,40%); align-items:start }
+ .boardContext .intent { padding:5px 10px 5px 0 }
+}
