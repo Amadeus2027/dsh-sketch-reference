@@ -23,6 +23,16 @@ it('flushes the latest coalesced snapshot on teardown and accepts same-version r
  vi.useFakeTimers();const apply=vi.fn(),updates=new SceneUpdates(apply),element={id:'a',version:1};
  updates.accept([element],{});updates.flush();expect(updates.accept([{...element}],{})).toBe(true);updates.dispose();expect(apply).toHaveBeenCalledTimes(2);expect(updates.accept([],{})).toBe(false);expect(vi.getTimerCount()).toBe(0);
 });
+it('detects in-place revisions, deletion and reordering between viewport events',()=>{
+ const apply=vi.fn(),updates=new SceneUpdates(apply),a={id:'a',version:1,versionNonce:2,isDeleted:false},b={...a,id:'b'};
+ const elements=[a,b];
+ updates.accept(elements,{});updates.flush();
+ for(const edit of [()=>{a.version++;},()=>{a.versionNonce++;},()=>{a.isDeleted=true;},()=>elements.reverse()]){
+  edit();expect(updates.accept(elements,{})).toBe(true);updates.flush();
+  expect(updates.accept(elements,{scrollY:10})).toBe(false);
+ }
+ updates.dispose();expect(apply).toHaveBeenCalledTimes(5);
+});
 it('defers only the public in-progress single-point line/arrow draft, then flushes its completed gesture',()=>{
  vi.useFakeTimers();const apply=vi.fn(),updates=new SceneUpdates(apply),existing={id:'saved',version:1},draft={id:'new',version:1};
  updates.accept([existing],{});updates.flush();

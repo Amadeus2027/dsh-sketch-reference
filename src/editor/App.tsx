@@ -112,12 +112,19 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose,graph}:
   return shutdown;
  },[queue,updates,owner]);
  useEffect(()=>{
-  const dirty=canonical(queue.current())!==canonical({scene:initial?.scene??{elements:[],appState:{viewBackgroundColor:'#ffffff'},files:{}},goal:initial?.goal??''});
-  if(pending && !dirty && canonical({scene:pending.draft.scene,goal:pending.draft.goal})===canonical(queue.current())){
-   // The initial server snapshot already confirms this exact recovered content.
-   try{consumePending(owner,pending);recoveredPending.current=null;}catch{setBackupUnavailable(true);}setPending(null);
-  }
-  if(queue.state==='clean' && (!pending || canonical({scene:pending.draft.scene,goal:pending.draft.goal})===canonical(queue.current()))){try{clearPending(owner);}catch{setBackupUnavailable(true);}}
+  try {
+   if(!pending){
+    if(queue.state==='clean')clearPending(owner);
+    return;
+   }
+   const current=canonical(queue.current());
+   if(canonical({scene:pending.draft.scene,goal:pending.draft.goal})!==current)return;
+   const initialDraft={scene:initial?.scene??{elements:[],appState:{viewBackgroundColor:'#ffffff'},files:{}},goal:initial?.goal??''};
+   if(current===canonical(initialDraft)){
+    try{consumePending(owner,pending);recoveredPending.current=null;}finally{setPending(null);}
+   }
+   if(queue.state==='clean')clearPending(owner);
+  }catch{setBackupUnavailable(true);}
  },[queue.state,owner,initial,pending]);
  const updateStale=(scene:Drawing['scene'],currentGoal:string)=>{
   if((!batch&&!agent.batch)||!mounted.current)return;
@@ -128,7 +135,13 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose,graph}:
   try{const scene=normalize(elements,state,queue.current().scene);sceneError.current=null;if(queue.update({scene,goal:goalRef.current}))updateStale(scene,goalRef.current);}
   catch(error){sceneError.current=error instanceof Error?error.message:'草图超出限制';if(mounted.current){setMessageInfo(false);setMessage(sceneError.current);}}
  };
- const updated=(elements:readonly ExcalidrawElement[],appState:AppState)=>{lastView.current=captureView(appState);if(!pending)updates.accept(elements,appState as unknown as Record<string,unknown>);};
+ const updated=(elements:readonly ExcalidrawElement[],appState:AppState)=>{
+  const previous=lastView.current;
+  if(!previous||previous.zoom.value!==appState.zoom.value||previous.scrollX!==appState.scrollX||previous.scrollY!==appState.scrollY){
+   lastView.current=captureView(appState);
+  }
+  if(!pending)updates.accept(elements,appState as unknown as Record<string,unknown>);
+ };
  const capture=()=>{
   if(!api.current)throw new Error('画板尚未就绪');updates.accept(api.current.getSceneElements(),api.current.getAppState() as unknown as Record<string,unknown>);updates.flush();
   if(sceneError.current)throw new Error(sceneError.current);return queue.current().scene;
@@ -258,10 +271,12 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose,graph}:
  const initialData={elements:(initial?.scene.elements??[]) as unknown as ExcalidrawElement[],appState:{...(initial?.scene.appState??{}),...initialView,viewBackgroundColor:'#ffffff',currentItemFontFamily:1} as Partial<AppState>};
  return <main className="board">
   <header><div><h1>手绘参考板</h1><span className={`save ${queue.state}`} role="status" title={labels[queue.state]}>{labels[queue.state]}</span>{exporting&&<span role="status">正在导出…</span>}</div><button onClick={close}>返回聊天 ×</button></header>
+  <div className="boardContext">
   <GraphEditorTools graph={graph} api={editor} disabled={preparing||busy||!!pending||editUncertain||!!pendingComment.current||!!agent.pending} beforeAction={settle}/>
-  {owner.nodeId&&<div className="notice info">Agent 可按节点读取本草图；聊天批注、修改提案及直接发送参考图目前仅支持根草图。</div>}
   <section className="intent"><label className="srOnly" htmlFor="goal">这张图准备用来做什么？</label><input id="goal" maxLength={2000} value={goal} disabled={preparing||!!pending} placeholder="用途：例如识别物品、解释几何图形或讨论流程" onChange={e=>{const value=e.target.value;void run(async()=>{const scene=api.current?capture():queue.current().scene;setGoal(value);goalRef.current=value;queue.update({scene,goal:value});updateStale(scene,value);});}} />
   </section>
+  </div>
+  {owner.nodeId&&<div className="notice info">Agent 可按节点读取本草图；聊天批注、修改提案及直接发送参考图目前仅支持根草图。</div>}
   {(batch||agent.batch||busy)&&<section className="advice" aria-label="AI 建议与批注">
    <div className="adviceTitle">
     <button className="adviceDisclosure" aria-controls="comment-details" aria-expanded={adviceOpen} aria-label={adviceOpen?'收起建议与批注':'展开建议与批注'} onClick={()=>{setAdviceOpen(v=>!v);setHovered(null);}}>建议与批注{displayBatch&&<span className="commentCount">{displayBatch.advice.suggestions.length}</span>}<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" style={{transform:adviceOpen?'rotate(180deg)':undefined}}><path d="m4 6 4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>

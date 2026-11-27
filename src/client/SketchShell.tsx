@@ -5,6 +5,7 @@ import type {ConversationSlotProps} from '@deepseek-ai/dsh-client-ui-conversatio
 import type {PropsRenderSlots,PropsRuntime,SnapshotSelectorHook} from '@deepseek-ai/dsh-client-ui-slots';
 import type {Appearance} from '../core/appearance.ts';
 import {HEADER} from './header-adapter.tsx';
+import {PanelDivider} from './PanelDivider.tsx';
 import {SketchFrame} from './SketchFrame.tsx';
 import {ConversationWidthControls} from './ConversationWidthControls.tsx';
 import original from './ConversationRoot.module.css';
@@ -27,7 +28,7 @@ export function SketchShell({ctx,props}:{ctx:Context;props:Omit<ConversationSlot
  const appearance=props.useHostAppearance(s=>s);
  const sessions=props.useSessions(s=>({ids:s.ids,phase:s.phase}),(a,b)=>a.ids===b.ids&&a.phase===b.phase);
  useEffect(()=>{if(sessions.phase==='ready')props.prunePanels(sessions.ids);},[sessions,props.prunePanels]);
- const [ratio,setRatio]=useState(40);
+ const ratio=useRef(40);
  const [fullscreen,setFullscreen]=useState(false),[collapsed,setCollapsed]=useState(false),[floating,setFloating]=useState({x:24,y:100});
  const chat=useRef<HTMLDivElement>(null),drag=useRef<{x:number;y:number;left:number;top:number}|null>(null);
  useEffect(()=>{setFullscreen(false);setCollapsed(false);},[open,props.sessionId]);
@@ -39,11 +40,11 @@ export function SketchShell({ctx,props}:{ctx:Context;props:Omit<ConversationSlot
  const summaryBlank=props.useSessions(s=>props.sessionId===undefined?undefined:s.byId[props.sessionId]?.blank);
  const {phase,hero}=conversationLayout(session,conversation,props.sessionId,summaryBlank,typeof props.openWorkspace==='function');
  return <div ref={shell} className={css.shell} data-sketch-open={open} data-sketch-fullscreen={open&&fullscreen}>
-  <div ref={chat} className={`${original.root} ${css.chat}`} data-phase={phase} data-collapsed={collapsed} style={open&&fullscreen?{left:floating.x,top:floating.y}:open?{flexBasis:`${ratio}%`}:undefined}>
+  <div ref={chat} className={`${original.root} ${css.chat}`} data-phase={phase} data-collapsed={collapsed} style={open&&fullscreen?{left:floating.x,top:floating.y}:open?{flexBasis:'var(--sketch-chat-width,40%)'}:undefined}>
    <div className={css.floatingHeader} hidden={!open||!fullscreen}>
     <div className={css.floatingDrag} role="toolbar" aria-label="移动悬浮对话" tabIndex={0}
      onKeyDown={e=>{if(e.target!==e.currentTarget)return;const delta={ArrowLeft:[-16,0],ArrowRight:[16,0],ArrowUp:[0,-16],ArrowDown:[0,16]}[e.key];if(delta){e.preventDefault();setFloating(p=>clamp(p.x+delta[0]!,p.y+delta[1]!));}}}
-     onPointerDown={e=>{drag.current={x:e.clientX,y:e.clientY,left:floating.x,top:floating.y};e.currentTarget.setPointerCapture(e.pointerId);}}
+     onPointerDown={e=>{if(!e.isPrimary||e.button!==0)return;drag.current={x:e.clientX,y:e.clientY,left:floating.x,top:floating.y};e.currentTarget.setPointerCapture(e.pointerId);}}
      onPointerMove={e=>{const start=drag.current;if(start&&e.currentTarget.hasPointerCapture(e.pointerId))setFloating(clamp(start.left+e.clientX-start.x,start.top+e.clientY-start.y));}}
      onPointerUp={e=>{drag.current=null;if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);}}
      onPointerCancel={()=>{drag.current=null;}}>原生对话</div>
@@ -52,11 +53,7 @@ export function SketchShell({ctx,props}:{ctx:Context;props:Omit<ConversationSlot
    {props.renderSlot(HEADER,{})}
    {props.renderFactorySlot('conversation.content',{variant:'main',phase,hero,onWorkspaceSelected:props.openWorkspace},{slots:{widthControls:ConversationWidthControls}})}
   </div>
-  {open&&!session?.removed && <><div className={css.divider} role="separator" aria-label="调整聊天和画板宽度" aria-orientation="vertical" aria-valuemin={30} aria-valuemax={60} aria-valuenow={ratio} tabIndex={0}
-   onKeyDown={e=>{if(e.key==='ArrowLeft')setRatio(v=>Math.max(30,v-2));if(e.key==='ArrowRight')setRatio(v=>Math.min(60,v+2));}}
-   onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);}}
-   onPointerMove={e=>{if(e.currentTarget.hasPointerCapture(e.pointerId)){const r=e.currentTarget.parentElement!.getBoundingClientRect();setRatio(Math.max(30,Math.min(60,(e.clientX-r.left)/r.width*100)));}}}
-   onPointerUp={e=>{if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);}} />
+  {open&&!session?.removed && <><PanelDivider shell={shell} preference={ratio}/>
    <aside className={css.panel}><Button size="sm" variant="toolbar" className={css.fullscreenToggle} aria-label={fullscreen?'退出画板全屏':'画板全屏'} title={fullscreen?'恢复右侧画板':'全屏画板与悬浮对话'} onClick={toggleFullscreen}>{fullscreen?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M4 10h6V4m10 10h-6v6M10 10 3 3m11 11 7 7"/></svg>:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M9 3H3v6m12 12h6v-6M3 3l7 7m11 11-7-7"/></svg>}</Button><SketchFrame key={`${props.sessionId}:${workspace??''}`} ctx={ctx} props={props} appearance={appearance} subscribeClose={props.subscribePanelClose} onClose={()=>{if(props.sessionId)props.setPanel(props.sessionId,false);}} /></aside></>}
  </div>;
 }

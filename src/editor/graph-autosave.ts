@@ -27,7 +27,9 @@ export class GraphAutosave {
   // positions need checking; full graph validation stays at the checkpoint.
   graphContentSchema.shape.viewport.parse(content.viewport);
   const previous=this.staged??this.record?.next??this.record?.request.content??this.graph?.content;
-  for(const [i,node] of content.nodes.entries())if(node.position!==previous?.nodes[i]?.position)graphNodeSchema.shape.position.parse(node.position);
+  if(content.nodes!==previous?.nodes){
+   for(const [i,node] of content.nodes.entries())if(node.position!==previous?.nodes[i]?.position)graphNodeSchema.shape.position.parse(node.position);
+  }
   this.staged=content;this.cancelTimer();if(this.phase==='clean')this.changed('dirty');
   if(!this.layoutTimer)this.layoutTimer=setTimeout(()=>{try{this.checkpointLayout();}catch{/* changed reports and retains the failed record. */}},500);
  }

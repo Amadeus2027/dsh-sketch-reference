@@ -47,7 +47,11 @@ const overview=async()=>{await page.getByRole('button',{name:'工作流总览',e
 const saved=async()=>{await page.waitForFunction(()=>document.querySelector('.graphToolbar [role="status"]')?.textContent.startsWith('已保存'));};
 const editNode=async id=>{const n=page.locator(`.react-flow__node[data-id="${id}"]`);await n.dblclick();await page.locator('.excalidraw').waitFor();};
 try{
- await page.goto(url);await page.getByLabel('这张图准备用来做什么？').waitFor();await overview();
+ await page.goto(url);await page.getByLabel('这张图准备用来做什么？').waitFor();
+ assert.equal(revisionRequests,0,'Ordinary drawing must not fetch overview preview metadata');
+ const graphChunks=()=>page.evaluate(()=>performance.getEntriesByType('resource').filter(e=>/\/graph-canvas-[^/]+\.js$/.test(e.name)).length);
+ assert.equal(await graphChunks(),0,'The board must not load the graph renderer');
+ await overview();assert.equal(await graphChunks(),1);
  await page.locator('.sketchGraphPreview img').waitFor();assert.equal(graphRows.size,0,'Opening overview must not migrate or overwrite the old drawing');
  for(let i=0;i<4;i++){await page.getByRole('button',{name:'＋ 新建草图'}).click();await saved();const name=page.getByLabel('草图名称',{exact:true});await name.fill(`页面 ${i+1}`);await name.press('Tab');await saved();}
  const initial=service.graphs.get(owner);assert.equal(initial.content.nodes.length,5);const child=initial.content.nodes[1].id;

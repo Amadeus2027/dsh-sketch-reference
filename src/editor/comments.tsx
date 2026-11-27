@@ -1,7 +1,7 @@
 import {useEffect,useId,useLayoutEffect,useRef,useState} from 'react';
 import {getCommonBounds,sceneCoordsToViewportCoords} from '@excalidraw/excalidraw';
 import type {ExcalidrawImperativeAPI} from '@excalidraw/excalidraw/types';
-import {anchorTarget,type CommentView} from '../core/comments.ts';
+import {type CommentView} from '../core/comments.ts';
 import type {CommentStatus} from '../core/contracts.ts';
 import type {CommentRequest} from '../core/comment-context.ts';
 
@@ -94,15 +94,15 @@ export function CommentOverlay({api,batch,selected,hovered,stale,saving,shown,sh
    const markers:Marker[]=[],missing=new Set<string>(),stacked=new Map<string,number>();let globalIndex=0;
    for(const comment of batch.comments){
     const anchor=batch.advice.suggestions[comment.suggestionIndex]?.anchor;
-    const element=anchorTarget(anchor,elements);
+    const element=anchor?map.get(anchor.elementId):undefined;
     if(anchor&&!element)missing.add(comment.id);
     if(comment.status==='ignored')continue;
     if(!element){const columns=Math.max(1,Math.floor((rect.width-48)/32)),slot=globalIndex++;markers.push({id:comment.id,index:comment.suggestionIndex,x:Math.max(16,rect.width-32-(slot%columns)*32),y:66+Math.floor(slot/columns)*32,left:0,top:0,width:0,height:0,status:comment.status,kind:anchor?'missing':'global',outside:false});continue;}
     const [left,top,right,bottom]=getCommonBounds([element],map);
     const start=sceneCoordsToViewportCoords({sceneX:left,sceneY:top},state),end=sceneCoordsToViewportCoords({sceneX:right,sceneY:bottom},state);
-    const position=sceneCoordsToViewportCoords({sceneX:right,sceneY:top},state);
+
     const ordinal=stacked.get(element.id)??0;stacked.set(element.id,ordinal+1);
-    const rawX=position.x-rect.left,rawY=position.y-rect.top,outside=rawX<14||rawY<14||rawX>rect.width-14||rawY>rect.height-14;
+    const rawX=end.x-rect.left,rawY=start.y-rect.top,outside=rawX<14||rawY<14||rawX>rect.width-14||rawY>rect.height-14;
     const edgeX=Math.max(14,Math.min(rawX,rect.width-14));
     const x=Math.max(14,Math.min(outside?edgeX+(edgeX<rect.width/2?ordinal*30:-ordinal*30):rawX-ordinal*30,rect.width-14)),y=Math.max(14,Math.min(rawY,rect.height-14));
     markers.push({id:comment.id,index:comment.suggestionIndex,x,y,left:start.x-rect.left,top:start.y-rect.top,width:end.x-start.x,height:end.y-start.y,status:comment.status,kind:'element',outside});
