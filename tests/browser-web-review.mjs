@@ -34,15 +34,25 @@ try{
  await expect(button).toHaveCSS('background-color','rgb(80, 120, 90)',{timeout:15000});await expect(submit).toBeDisabled();
  await writeFile(file,html('查找商品'));await expect(button).toHaveText('查找商品',{timeout:15000});
  assert.equal(await review.getByLabel('修改意见').inputValue(),'将搜索按钮移到右侧');
- await select();await submit.click();await expect(page.locator('iframe[title="手绘参考板"]')).toHaveCount(0);
+ await select();
+ await mkdir(out,{recursive:true});await review.screenshot({path:join(out,'web-review-wide.png')});
+ await page.setViewportSize({width:390,height:844});await expect(submit).toBeDisabled();await select();await expect(submit).toBeEnabled();
+ await hostContext(page,'theme','dark');
+ await expect.poll(()=>review.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+ await review.screenshot({path:join(out,'web-review-narrow-dark.png')});await hostContext(page,'theme','light');
+ await submit.click();await expect(page.locator('iframe[title="手绘参考板"]')).toHaveCount(0);
  const text=await input.innerText();for(const expected of ['已有任务文字',path,'search','查找商品','将搜索按钮移到右侧','SHA-256'])assert(text.includes(expected),expected);
- await open();await expect(button).toHaveText('查找商品');await expect(review.getByLabel('修改意见')).toHaveValue('将搜索按钮移到右侧');
+ await page.setViewportSize({width:1500,height:900});await open();await expect(button).toHaveText('查找商品');await expect(review.getByLabel('修改意见')).toHaveValue('将搜索按钮移到右侧');
  await mkdir(out,{recursive:true});await page.screenshot({path:join(out,'web-review.png')});
  await review.getByRole('button',{name:'返回草图'}).click();
  const board=await editorFrame(page);await board.getByRole('button',{name:'返回聊天 ×'}).click();
  await expect(page.locator('iframe[title="手绘参考板"]')).toHaveCount(0);
  await hostContext(page,'create',workspace);await open();
- await expect(pathname).toHaveValue('index.html');await expect(review.getByLabel('修改意见')).toHaveValue('');
+ await expect(pathname).toHaveValue('index.html');
+ // Load the same file for this session before checking its independent feedback draft.
+ await pathname.fill(path);await review.getByRole('button',{name:'打开网页'}).click();
+ await expect(button).toHaveText('查找商品');await expect(review.getByLabel('修改意见')).toHaveValue('');
+ await expect(submit).toBeDisabled();
  await hostContext(page,'open',first);await expect(input).toContainText('将搜索按钮移到右侧');
  console.log('PASS: workspace HTML/CSS, static isolation, circle selection, stale rejection, preserved note, native unsent draft and session reopen. No model call.');
 }finally{await browser.close();}

@@ -1,0 +1,48 @@
+.webReview {
+  --line: var(--dsw-alias-border-l3, #dcdfe5);
+  --surface: var(--dsw-alias-bg-base, #fff);
+  --layer: var(--dsw-alias-bg-layer-1, #f5f6f9);
+  --ink: var(--dsw-alias-label-primary, #25272b);
+  --muted: var(--dsw-alias-label-secondary, #606673);
+  --accent: var(--dsw-alias-link, #4176e6);
+  position: absolute; inset: 0; z-index: 5;
+  display: flex; flex-direction: column; min-width: 0;
+  container: web-review / inline-size;
+  background: var(--surface); color: var(--ink); font: inherit; font-size: 13px;
+}
+.webReview header, .location, .composer, .statusRow, .webModes {
+  display: flex; align-items: center; gap: 8px; min-width: 0;
+}
+.webReview header { padding: 8px 12px; border-bottom: 1px solid var(--line); gap: 14px }
+.webReview header strong { font-size: 14px; font-weight: 600; white-space: nowrap }
+.webReview button, .webReview input {
+  box-sizing: border-box; min-width: 0; font: inherit; color: inherit;
+  border: 1px solid var(--line); border-radius: 7px; background: var(--surface);
+}
+.webReview input { flex: 1; height: 34px; padding: 5px 10px }
+.webReview button { min-height: 32px; padding: 4px 10px; cursor: pointer; white-space: nowrap }
+.webReview button:hover:enabled { background: var(--layer) }
+.webReview :is(button, input):focus-visible { outline: 2px solid var(--accent); outline-offset: 1px }
+.webReview button:disabled { opacity: .5; cursor: default }
+.webModes { gap: 2px; padding: 2px; background: var(--layer); border-radius: 7px }
+.webModes button { background: transparent; border: 0; min-height: 28px; color: var(--muted) }
+.webModes button[aria-pressed=true] { color: var(--ink); background: var(--surface); box-shadow: 0 1px 3px #0002 }
+.back { margin-inline-start: auto }
+.location { padding: 6px 12px; background: var(--layer); border-bottom: 1px solid var(--line) }
+.webViewport { position: relative; flex: 1; min-height: 0; overflow: hidden; background: white }
+.empty { height:100%; display:grid; place-items:center; padding-inline:16px; text-align:center; color:var(--muted); background:var(--layer) }
+.webViewport iframe, .webOverlay { position: absolute; inset: 0; width: 100%; height: 100%; border: 0 }
+.webOverlay { touch-action: none; cursor: crosshair }
+.webOverlay ellipse { fill: #4176e61a; stroke: #4176e6; stroke-width: 3; pointer-events: none }
+.webReview footer { padding: 8px 12px; border-top: 1px solid var(--line); display: grid; gap: 5px }
+.webReview footer label { font-weight: 550; font-size: 12px }
+.webReview button.primary { background: var(--dsw-alias-button-info-fill,#4176e6); border-color: transparent; color: white }
+.webReview button.primary:hover:enabled { filter: brightness(.94) }
+.statusRow { justify-content: space-between; flex-wrap: wrap; gap: 2px 8px }
+.statusRow small { font-size: 11px; line-height: 16px; color: var(--muted); overflow-wrap: anywhere }
+.statusRow [data-error=true] { color: var(--ink) }
+@container web-review (max-width: 410px) {
+ .webReview header { gap: 6px; padding-inline: 8px }
+ .webReview button { padding-inline: 7px }
+ .location, .webReview footer { padding-inline: 8px }
+}
