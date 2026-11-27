@@ -22,7 +22,7 @@ import {RPC_LIMITS} from '../core/limits.ts';
 import {writePending,clearPending,consumePending,recoverPending} from './pending.ts';
 import {pngExport,download,downloadScene,base64} from './export.ts';
 import {createSceneExport} from './scene-export.ts';
-import {startBridge,stageImage,insertAdvice,insertComment,closeBoard} from './bridge.ts';
+import {startBridge,stageImage,insertAdvice,insertComment,openWebReview,closeBoard} from './bridge.ts';
 import type {CommentRequest} from '../core/comment-context.ts';
 import {GraphWorkspace} from './graph-workspace.tsx';
 import {GraphEditorTools,type GraphEditorProps} from './graph-tools.tsx';
@@ -272,7 +272,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose,graph}:
  return <main className="board">
   <header><div><h1>手绘参考板</h1><span className={`save ${queue.state}`} role="status" title={labels[queue.state]}>{labels[queue.state]}</span>{exporting&&<span role="status">正在导出…</span>}</div><button onClick={close}>返回聊天 ×</button></header>
   <div className="boardContext">
-  <GraphEditorTools graph={graph} api={editor} disabled={preparing||busy||!!pending||editUncertain||!!pendingComment.current||!!agent.pending} beforeAction={settle}/>
+  <GraphEditorTools onReview={()=>openWebReview(owner)} graph={graph} api={editor} disabled={preparing||busy||!!pending||editUncertain||!!pendingComment.current||!!agent.pending} beforeAction={settle}/>
   <section className="intent"><label className="srOnly" htmlFor="goal">这张图准备用来做什么？</label><input id="goal" maxLength={2000} value={goal} disabled={preparing||!!pending} placeholder="用途：例如识别物品、解释几何图形或讨论流程" onChange={e=>{const value=e.target.value;void run(async()=>{const scene=api.current?capture():queue.current().scene;setGoal(value);goalRef.current=value;queue.update({scene,goal:value});updateStale(scene,value);});}} />
   </section>
   </div>

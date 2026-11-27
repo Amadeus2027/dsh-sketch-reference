@@ -35,3 +35,5 @@ export async function stageImage(owner:Owner,blob:Blob,digest:string){const byte
 export function insertAdvice(owner:Owner,batchId:string,index:number){return send({type:'INSERT_ADVICE',owner,batchId,index});}
 export function insertComment(owner:Owner,request:CommentRequest){return send({type:'INSERT_COMMENT',owner,request});}
 export function closeBoard(){return send({type:'CLOSE'});}
+
+export function openWebReview(owner:Owner){return send({type:'OPEN_WEB_REVIEW',owner});}

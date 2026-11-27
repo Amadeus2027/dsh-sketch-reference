@@ -5,6 +5,7 @@ import type {ConversationSlotProps} from '@deepseek-ai/dsh-client-ui-conversatio
 import type {PropsRenderSlots,PropsRuntime,SnapshotSelectorHook} from '@deepseek-ai/dsh-client-ui-slots';
 import type {Appearance} from '../core/appearance.ts';
 import {HEADER} from './header-adapter.tsx';
+import type {WebFiles} from './web-files.ts';
 import {PanelDivider} from './PanelDivider.tsx';
 import {SketchFrame} from './SketchFrame.tsx';
 import {ConversationWidthControls} from './ConversationWidthControls.tsx';
@@ -21,7 +22,7 @@ export function SketchButton(props:PropsRuntime<'conversation.input.right'>&Pane
  const open=props.useSketchPanel(s=>!!s[props.sessionId]);
  return <Button type="button" size="sm" variant="toolbar" className={css.button} aria-label="打开手绘参考板" aria-pressed={open} title={open?'保存并返回聊天':'绘制参考草图'} onClick={()=>open?props.requestPanelClose(props.sessionId):props.setPanel(props.sessionId,true)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m14 4 6 6M4 20l4-1 13-13-3-3L5 16z"/></svg><span>参考板</span></Button>;
 }
-export function SketchShell({ctx,props}:{ctx:Context;props:Omit<ConversationSlotProps,'renderSlot'|'__renders'>&PropsRenderSlots<'sketch-reference.header'>&PanelProps&{useHostAppearance:SnapshotSelectorHook<Appearance>}}) {
+export function SketchShell({ctx,props,readWebFile}:{readWebFile:WebFiles;ctx:Context;props:Omit<ConversationSlotProps,'renderSlot'|'__renders'>&PropsRenderSlots<'sketch-reference.header'>&PanelProps&{useHostAppearance:SnapshotSelectorHook<Appearance>}}) {
  const open=props.useSketchPanel(s=>!!props.sessionId&&!!s[props.sessionId]);
  const shell=useRef<HTMLDivElement>(null);
  useLayoutEffect(()=>{if(open&&shell.current)return clipHostViewport(shell.current);},[open]);
@@ -54,6 +55,6 @@ export function SketchShell({ctx,props}:{ctx:Context;props:Omit<ConversationSlot
    {props.renderFactorySlot('conversation.content',{variant:'main',phase,hero,onWorkspaceSelected:props.openWorkspace},{slots:{widthControls:ConversationWidthControls}})}
   </div>
   {open&&!session?.removed && <><PanelDivider shell={shell} preference={ratio}/>
-   <aside className={css.panel}><Button size="sm" variant="toolbar" className={css.fullscreenToggle} aria-label={fullscreen?'退出画板全屏':'画板全屏'} title={fullscreen?'恢复右侧画板':'全屏画板与悬浮对话'} onClick={toggleFullscreen}>{fullscreen?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M4 10h6V4m10 10h-6v6M10 10 3 3m11 11 7 7"/></svg>:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M9 3H3v6m12 12h6v-6M3 3l7 7m11 11-7-7"/></svg>}</Button><SketchFrame key={`${props.sessionId}:${workspace??''}`} ctx={ctx} props={props} appearance={appearance} subscribeClose={props.subscribePanelClose} onClose={()=>{if(props.sessionId)props.setPanel(props.sessionId,false);}} /></aside></>}
+   <aside className={css.panel}><Button size="sm" variant="toolbar" className={css.fullscreenToggle} aria-label={fullscreen?'退出画板全屏':'画板全屏'} title={fullscreen?'恢复右侧画板':'全屏画板与悬浮对话'} onClick={toggleFullscreen}>{fullscreen?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M4 10h6V4m10 10h-6v6M10 10 3 3m11 11 7 7"/></svg>:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M9 3H3v6m12 12h6v-6M3 3l7 7m11 11-7-7"/></svg>}</Button><SketchFrame readWebFile={readWebFile} key={`${props.sessionId}:${workspace??''}`} ctx={ctx} props={props} appearance={appearance} subscribeClose={props.subscribePanelClose} onClose={()=>{if(props.sessionId)props.setPanel(props.sessionId,false);}} /></aside></>}
  </div>;
 }

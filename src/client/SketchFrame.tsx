@@ -1,7 +1,7 @@
-import {useEffect,useRef,useMemo,useSyncExternalStore} from 'react';
+import {useEffect,useState,useRef,useMemo,useSyncExternalStore} from 'react';
 import type {Context} from '@deepseek-ai/cordis';
 import type {ConversationSlotProps} from '@deepseek-ai/dsh-client-ui-conversation/client';
-import {ASSETS,loadSchema,batchSchema,routeSchema,sameOwner} from '../core/contracts.ts';
+import {ASSETS,type Owner,loadSchema,batchSchema,routeSchema,sameOwner} from '../core/contracts.ts';
 import {bridgeMessage} from '../core/bridge.ts';
 import {agentBatchSchema} from '../core/agent.ts';
 import {withComments} from '../core/comments.ts';
@@ -10,8 +10,11 @@ import {insertCommentText} from './comment-insertion.ts';
 import {rpc} from '../editor/rpc.ts';
 import {draftBridge} from './harness-draft-bridge.ts';
 import type {Appearance} from '../core/appearance.ts';
+import {WebReview} from './WebReview.tsx';
+import type {WebFiles} from './web-files.ts';
 import css from './SketchShell.module.css';
-export function SketchFrame({ctx,props,onClose,appearance,subscribeClose}:{ctx:Context;props:Omit<ConversationSlotProps,'renderSlot'|'__renders'>;onClose:()=>void;appearance:Appearance;subscribeClose:(listener:(id:string)=>void)=>()=>void}) {
+export function SketchFrame({ctx,props,onClose,appearance,subscribeClose,readWebFile}:{readWebFile:WebFiles;ctx:Context;props:Omit<ConversationSlotProps,'renderSlot'|'__renders'>;onClose:()=>void;appearance:Appearance;subscribeClose:(listener:(id:string)=>void)=>()=>void}) {
+ const [review,setReview]=useState<Owner|null>(null);
  const frame=useRef<HTMLIFrameElement>(null),latest=useRef(props);
  const connection=useRef<MessagePort|null>(null),announce=useRef<()=>void>(()=>{}),nativeAppearance=useRef(appearance);nativeAppearance.current=appearance;
  const initialTheme=useRef(appearance.theme);
@@ -54,6 +57,10 @@ export function SketchFrame({ctx,props,onClose,appearance,subscribeClose}:{ctx:C
      const agentState=message.type==='INSERT_COMMENT'&&message.request.source==='agent'?await rpc('agent/get',message.owner,null,signal) as {batch:unknown}:null;
      const loaded=loadSchema.parse(await rpc('drawing/get',message.owner,{sessionId:props.sessionId},signal));
      if(!sameOwner(loaded.owner,message.owner))throw new Error('会话已变化');
+     if(message.type==='OPEN_WEB_REVIEW'){
+      if(signal.aborted||latest.current.sessionId!==props.sessionId)throw new Error('会话已变化');
+      setReview(loaded.owner);reply(true,'已打开网页批注');return;
+     }
      const actions=latest.current.inputActions;
      if(!actions)throw new Error('输入框尚未就绪');
      if(message.type==='INSERT_COMMENT'){
@@ -94,5 +101,14 @@ export function SketchFrame({ctx,props,onClose,appearance,subscribeClose}:{ctx:C
   announce.current();
   return()=>{abort.abort();bridgeAbort.abort();port?.close();connection.current=null;announce.current=()=>{};unsubscribeClose();window.removeEventListener('message',onMessage);};
  },[ctx,nonce,props.sessionId,subscribeClose]);
- return <iframe ref={frame} className={css.frame} title="手绘参考板" onLoad={()=>announce.current()} src={`${ASSETS}/index.html?sessionId=${encodeURIComponent(props.sessionId??'')}&nonce=${nonce}&theme=${initialTheme.current}`} />;
+ const insertReview=async(text:string,signal:AbortSignal)=>{
+  if(!review||latest.current.sessionId!==review.sessionId)throw new Error('会话已变化');
+  const loaded=loadSchema.parse(await rpc('drawing/get',review,{sessionId:review.sessionId},signal));
+  const actions=latest.current.inputActions;
+  if(!actions||!sameOwner(loaded.owner,review))throw new Error('会话或输入框已变化');
+  insertCommentText(actions,text,()=>!signal.aborted&&latest.current.sessionId===review.sessionId);
+  setReview(null);connection.current?.postMessage({type:'REQUEST_CLOSE'});
+ };
+ return <><iframe style={review?{visibility:'hidden'}:undefined} ref={frame} className={css.frame} title="手绘参考板" onLoad={()=>announce.current()} src={`${ASSETS}/index.html?sessionId=${encodeURIComponent(props.sessionId??'')}&nonce=${nonce}&theme=${initialTheme.current}`} />
+ {review&&<WebReview owner={review} read={readWebFile} onBack={()=>setReview(null)} onInsert={insertReview}/>}</>;
 }
