@@ -4,10 +4,14 @@ export async function prepareHost(page,url){
  for(let i=0;i<5;i++){
   await page.waitForTimeout(300);
   for(const name of ['Continue','Configure later']){const b=page.getByRole('button',{name,exact:true});if(await b.isVisible().catch(()=>false)&&await b.isEnabled().catch(()=>false))await b.click({timeout:2000}).catch(async error=>{if(await b.isVisible().catch(()=>false)&&await b.isEnabled().catch(()=>false))throw error;});}
+  // Current hosts use a dismissible account dialog instead of Configure later.
+  if(await page.getByText('Get started',{exact:true}).isVisible().catch(()=>false)){
+   const close=page.getByRole('button',{name:'Close',exact:true});if(await close.isVisible())await close.click();
+  }
  }
  const choose=page.getByRole('button',{name:'Choose workspace',exact:true});
  if(await choose.isVisible()){
-  await choose.click();const existing=page.getByRole('menuitem',{name:'dsh-sketch-reference',exact:true});
+  await choose.click();const existing=page.getByRole('menuitem',{name:'dsh-sketch-reference',exact:true});await existing.waitFor({state:'visible',timeout:1000}).catch(()=>{});
   if(await existing.isVisible())await existing.click();else{await page.getByRole('button',{name:'Edit path',exact:true}).click();const path=page.getByRole('textbox',{name:'Edit path',exact:true});await path.fill(process.cwd());await path.press('Enter');await page.getByRole('button',{name:'Open',exact:true}).click();}
  }
  await page.getByRole('button',{name:'打开手绘参考板'}).waitFor();
@@ -18,6 +22,7 @@ export async function hostContext(page,operation,arg){
   for(;fiber;fiber=fiber.return)if(fiber.memoizedProps?.ctx){ctx=fiber.memoizedProps.ctx;break;}
   if(!ctx)throw new Error('Pinned fixture context unavailable');
   if(operation==='theme'){ctx.get('theme').setTheme(arg);return;}
+  if(operation==='selectModel'){const {sessionId,...selection}=arg;return ctx.get('modelDirectories').directoryFor(sessionId).select(selection);}
   const ui=ctx.get('uiWorkspace');
   if(operation==='create'){
    const workspace=ui.workspaces.list.getSnapshot().items.find(w=>w.path===arg);

@@ -20,7 +20,7 @@
 
 `tests/browse-picker.overlay.yml` 改编自官方 Web 自动化测试覆盖层。
 
-`src/client/ConversationWidthControls.tsx`、`ConversationRoot.module.css` 来自官方会话组件，前者修改为分栏宽度约束。`SketchShell.tsx` 的会话阶段计算依据官方 `ConversationMainPanel`。附件桥针对这个版本控制器已导出的 `createDrafts/releaseDraftAttachment` 适配，不代表所有 DSH 版本均有相同接口。
+`src/client/ConversationWidthControls.tsx`、`ConversationRoot.module.css` 来自官方会话组件，前者修改为分栏宽度约束。`SketchShell.tsx` 与 `conversation-layout.ts` 的会话阶段计算依据官方 `ConversationMainPanel`。附件桥针对这个版本控制器已导出的 `createDrafts/releaseDraftAttachment` 适配，不代表所有 DSH 版本均有相同接口。
 
 修改这些复用文件时保留上游归属；未来升级需要重新检查接口、许可证和回归。生成的第三方清单保守涵盖运行时依赖树，部分包属于未执行的动态可选能力。
 

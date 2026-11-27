@@ -2,6 +2,7 @@
 import {chromium} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {mkdir,readFile} from 'node:fs/promises';
+import {prepareHost,hostContext} from './fixtures/browser-session.mjs';
 const url=process.env.DSH_SMOKE_URL;
 if(!url)throw new Error('Set DSH_SMOKE_URL to the authenticated local Web URL. Use a dedicated test profile.');
 const storageFailure=process.env.DSH_SMOKE_STORAGE;
@@ -23,15 +24,7 @@ try {
  page.on('pageerror',e=>errors.push(e.message));
  page.on('request',r=>{if(/https:\/\/esm.sh\//.test(r.url()))remoteFonts.push(r.url());});
  page.on('response',async r=>{if(r.url().includes('/drawing/save')&&r.status()===200)latestDrawing=(await r.json()).value;});
- await page.goto(url);
- for(let round=0;round<5;round++){
-  await page.waitForTimeout(500);
-  for(const name of ['Continue','Configure later']){const b=page.getByRole('button',{name,exact:true});if(await b.isVisible().catch(()=>false)){await b.click();await page.waitForTimeout(500);}}
- }
- const choose=page.getByRole('button',{name:'Choose workspace',exact:true});
- if(await choose.isVisible()){
-  await choose.click();const existing=page.getByRole('menuitem',{name:'dsh-sketch-reference',exact:true});if(await existing.isVisible()){await existing.click();}else{await page.getByRole('button',{name:'Edit path',exact:true}).click();const path=page.getByRole('textbox',{name:'Edit path',exact:true});await path.fill(process.cwd());await path.press('Enter');await page.getByRole('button',{name:'Open',exact:true}).click();}
- }
+ await prepareHost(page,url);
  const input=page.locator('[contenteditable=true]');await input.fill('保留已有文字');
  console.log('opening board');await page.getByRole('button',{name:'打开手绘参考板'}).click();let frame=page.frameLocator('iframe[title="手绘参考板"]');
  await frame.getByLabel('这张图准备用来做什么？').fill('根据草图制作中文首页');
@@ -48,6 +41,10 @@ try {
  const editable=JSON.parse(await readFile('test-results/reference.excalidraw','utf8'));assert.equal(editable.type,'excalidraw');assert.equal(editable.version,2);assert.deepEqual(editable.files,{});
  assert.deepEqual(editable.elements.map(e=>e.id),latestDrawing.scene.elements.map(e=>e.id));
  for(const expected of latestDrawing.scene.elements){const actual=editable.elements.find(e=>e.id===expected.id);for(const key of ['type','x','y','width','height','text'])assert.deepEqual(actual[key],expected[key]);}
+ if(process.env.DSH_TEST_SCRIPTED==='1'){
+  const fixture=await page.evaluate(async()=>{const response=await fetch('/sketch-reference-test-agent-stats');if(!response.ok)throw Error('Scripted profile required');return response.json();});assert.equal(fixture.scripted,true);
+  await hostContext(page,'selectModel',{sessionId:latestDrawing.owner.sessionId,provider:'deepseek-official',model:'deepseek-flash'});
+ }
  await page.locator('input[type=file]').setInputFiles({name:'existing.png',mimeType:'image/png',buffer:bytes});
  console.log('staging image');await frame.getByRole('button',{name:'作为参考发送',exact:true}).click();await frame.getByRole('alert').filter({hasText:'参考图已加入左侧输入框'}).waitFor();
  assert((await input.innerText()).includes('保留已有文字'));await page.getByRole('img',{name:'existing.png',exact:true}).waitFor();await page.getByRole('img',{name:'sketch-reference.png',exact:true}).first().waitFor();

@@ -8,13 +8,12 @@ import { SessionId,type SessionHeader } from '@deepseek-ai/dsh-session';
 import type {} from '@deepseek-ai/dsh-session-persistence';
 import type {} from '@deepseek-ai/dsh-host-webserver';
 import type {} from '@deepseek-ai/dsh-client-connection';
-import { ASSETS,RPC,MAX_PNG,SketchError,drawingSchema,batchSchema,saveSchema,generateSchema,routeSchema,routeOptionSchema,commentUpdateSchema,ownerKey,sameOwner,type Owner,type Drawing,type Batch,type RouteOption,envelopeSchema } from '../core/contracts.ts';
+import { MAX_PNG,SketchError,drawingSchema,batchSchema,saveSchema,generateSchema,routeSchema,routeOptionSchema,commentUpdateSchema,ownerKey,sameOwner,type Owner,type Drawing,type Batch,type RouteOption,envelopeSchema } from '../core/contracts.ts';
 import { Repository } from './repository.ts';
 import {CommentRepository} from './comment-repository.ts';
-import { handler } from './http.ts';
 import { checkRoute,generateAdvice } from './advice.ts';
-import { createEditorAssetsHandler } from './static.ts';
-import {agentBatchSchema,AGENT_EVENTS,type AgentBatch} from '../core/agent.ts';
+import {registerTransport} from './transport.ts';
+import {agentBatchSchema,type AgentBatch} from '../core/agent.ts';
 import {SketchAgent} from './agent.ts';
 import {createSketchTools} from './tools.ts';
 import {AgentEvents} from './agent-events.ts';
@@ -71,24 +70,11 @@ export class SketchService extends Service {
   this.ctx.effect(()=>async()=>{
    this.lifetime.abort();this.events.close();await Promise.allSettled([...this.tasks]);await this.repository.drain();await this.documents.drain();await this.graphs.drain();await this.advice.drain();await graphDomain.close();await domain.close();
   });
-  this.ctx.effect(()=>this.ctx.webServer.register({kind:'prefix',path:ASSETS,handler:(req,res)=>{const rejection=this.ctx.connection.requestRejection(req);if(rejection){res.writeHead(rejection);res.end('unauthorized');return;}return createEditorAssetsHandler(this.root)(req,res);}}));
-  this.ctx.effect(()=>this.ctx.webServer.register({kind:'prefix',path:RPC,handler:(req,res)=>{const rejection=this.ctx.connection.requestRejection(req);if(rejection){res.writeHead(rejection);res.end('unauthorized');return;}return handler((method,body,signal)=>{
-   const task=this.operation(method,body,AbortSignal.any([signal,this.lifetime.signal]));
-   this.tasks.add(task);void task.finally(()=>this.tasks.delete(task)).catch(()=>{});return task;
-  },error=>this.ctx.logger.error(error))(req,res);}}));
-  this.ctx.effect(()=>this.ctx.webServer.register({kind:'exact',path:AGENT_EVENTS,handler:(req,res)=>{
-   const rejection=this.ctx.connection.requestRejection(req);if(rejection){res.writeHead(rejection);res.end('unauthorized');return;}
-   if(req.method!=='GET'){res.writeHead(405);res.end();return;}
-   const abort=new AbortController(),closed=()=>abort.abort();res.on('close',closed);
-   const signal=AbortSignal.any([abort.signal,this.lifetime.signal]);
-   return this.track((async()=>{
-    const params=new URL(req.url??'', 'http://127.0.0.1').searchParams;
-    const owner=schema.object({sessionId:schema.string().min(1).max(200),createdAt:schema.string().min(1).max(100),cwd:schema.string().max(4096)}).strict().parse(Object.fromEntries(params));
-    if(!this.agent)throw new SketchError('AGENT_UNAVAILABLE','Agent 工具暂不可用',503);
-    if(!sameOwner(owner,await this.resolve(owner.sessionId,signal)))throw new SketchError('SESSION_CHANGED','会话已变化',409);
-    signal.throwIfAborted();this.events.connect(owner,res);
-   })().catch(error=>{if(!res.headersSent){res.writeHead(error instanceof SketchError?error.status:400);res.end('annotation stream unavailable');}}));
-  }}));
+  this.ctx.effect(()=>registerTransport(this.ctx,{
+   root:this.root,signal:this.lifetime.signal,run:(method,body,signal)=>this.operation(method,body,signal),
+   resolve:(sessionId,signal)=>this.resolve(sessionId,signal),track:this.track,
+   connect:(owner,res)=>{if(!this.agent)throw new SketchError('AGENT_UNAVAILABLE','Agent 工具暂不可用',503);this.events.connect(owner,res);},
+  }));
   this.ctx.inject(['tools'],async toolCtx=>{
    const abort=new AbortController();
    const unregister:Array<()=>void>=[];

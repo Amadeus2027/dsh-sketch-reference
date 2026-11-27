@@ -10,6 +10,7 @@ import {ConversationWidthControls} from './ConversationWidthControls.tsx';
 import original from './ConversationRoot.module.css';
 import css from './SketchShell.module.css';
 import {clipHostViewport} from './host-viewport.ts';
+import {conversationLayout} from './conversation-layout.ts';
 interface PanelProps {
  useSketchPanel:SnapshotSelectorHook<Readonly<Record<string,boolean>>>;
  setPanel:(id:string,value:boolean)=>void;requestPanelClose:(id:string)=>void;
@@ -36,13 +37,7 @@ export function SketchShell({ctx,props}:{ctx:Context;props:Omit<ConversationSlot
  const session=props.useSession(s=>s),conversation=props.useConversation(s=>s);
  const workspace=props.useSessions(s=>props.sessionId===undefined?undefined:s.byId[props.sessionId]?.cwd);
  const summaryBlank=props.useSessions(s=>props.sessionId===undefined?undefined:s.byId[props.sessionId]?.blank);
- // Adapted phase logic from the pinned official ConversationMainPanel (MIT).
- const active=!!session && !!conversation && (conversation.activeTargets.size>0 || (!session.blank&&!session.awaitingFirstTurn) || session.running);
- const blank=!active && !session?.promptAttempted;
- const pending=session?.subagent?.address.mode==='continuable' && session.subagent.parentAvailable===undefined;
- const settling=props.sessionId!==undefined && ((blank && session?.openState==='loading' && summaryBlank!==true) || pending);
- const hero=props.sessionId===undefined || (blank && (session?.openState==='open' || summaryBlank===true));
- const phase=settling?'settling':hero?'hero':'active';
+ const {phase,hero}=conversationLayout(session,conversation,props.sessionId,summaryBlank,typeof props.openWorkspace==='function');
  return <div ref={shell} className={css.shell} data-sketch-open={open} data-sketch-fullscreen={open&&fullscreen}>
   <div ref={chat} className={`${original.root} ${css.chat}`} data-phase={phase} data-collapsed={collapsed} style={open&&fullscreen?{left:floating.x,top:floating.y}:open?{flexBasis:`${ratio}%`}:undefined}>
    <div className={css.floatingHeader} hidden={!open||!fullscreen}>
@@ -55,7 +50,7 @@ export function SketchShell({ctx,props}:{ctx:Context;props:Omit<ConversationSlot
     <Button size="sm" variant="toolbar" aria-label={collapsed?'展开悬浮对话':'收起悬浮对话'} onClick={()=>setCollapsed(v=>!v)}>{collapsed?'展开':'收起'}</Button>
    </div>
    {props.renderSlot(HEADER,{})}
-   {props.renderFactorySlot('conversation.content',{variant:'main',phase,hero},{slots:{widthControls:ConversationWidthControls}})}
+   {props.renderFactorySlot('conversation.content',{variant:'main',phase,hero,onWorkspaceSelected:props.openWorkspace},{slots:{widthControls:ConversationWidthControls}})}
   </div>
   {open&&!session?.removed && <><div className={css.divider} role="separator" aria-label="调整聊天和画板宽度" aria-orientation="vertical" aria-valuemin={30} aria-valuemax={60} aria-valuenow={ratio} tabIndex={0}
    onKeyDown={e=>{if(e.key==='ArrowLeft')setRatio(v=>Math.max(30,v-2));if(e.key==='ArrowRight')setRatio(v=>Math.min(60,v+2));}}

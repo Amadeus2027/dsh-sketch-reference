@@ -7,8 +7,8 @@ export function apply(ctx){
  const calls=[];let imageSaves=0;const previous=ctx.llm.stream,saveImage=ctx.attachments.saveImage;
  ctx.attachments.saveImage=async function(input){imageSaves++;return saveImage.call(this,input);};
  ctx.effect(()=>()=>{ctx.attachments.saveImage=saveImage;});
- ctx.effect(()=>ctx.webServer.register({kind:'exact',path:'/sketch-reference-test-agent-stats',handler:(req,res)=>{
-  const rejection=ctx.connection.requestRejection(req);if(rejection){res.writeHead(rejection);res.end();return;}
+ ctx.effect(()=>ctx.webServer.register({kind:'exact',path:'/sketch-reference-test-agent-stats',auth:'required',handler:(req,res,peer)=>{
+  const rejection='requestRejection' in ctx.connection?ctx.connection.requestRejection(req):!peer||peer.signal.aborted?401:undefined;if(rejection){res.writeHead(rejection);res.end();return;}
   if(req.method==='POST'){ctx.get('sketchReference').events.close();res.writeHead(204);res.end();return;}
   res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});
   const id=new URL(req.url,'http://127.0.0.1').searchParams.get('sessionId'),session=id?ctx.get('sessions')?.get(id):null;

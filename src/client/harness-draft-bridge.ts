@@ -7,8 +7,10 @@ export function draftBridge(ctx:Context) {
  if(!service || !('createDrafts' in service) || typeof service.createDrafts!=='function' || !('releaseDraftAttachment' in service) || typeof service.releaseDraftAttachment!=='function')return null;
  const controller=service as ConversationController;
  return {
-  stage(sessionId:SessionId,bytes:ArrayBuffer,actions:InputActions,stillCurrent:()=>boolean):DraftAttachmentId {
-   const attachments=controller.createDrafts(sessionId,[new File([bytes],'sketch-reference.png',{type:'image/png'})]);
+  stage(sessionId:SessionId,bytes:ArrayBuffer,actions:InputActions,stillCurrent:()=>boolean,uploadImages=false):DraftAttachmentId {
+   // Current DSH stages uploads for ordinary sessions; legacy DSH ignores arg 3.
+   // A subagent continuation keeps its native inline-image path.
+   const attachments=controller.createDrafts(sessionId,[new File([bytes],'sketch-reference.png',{type:'image/png'})],uploadImages);
    const ids=attachments.map(a=>a.id);
    try {
     if(!stillCurrent() || !actions.addAttachments(ids))throw new Error('会话或输入状态已变化，请重试');

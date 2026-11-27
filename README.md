@@ -39,6 +39,8 @@ Windows DSH alpha.2 的真实 DeepSeek 对话读取 4 张草图及关联，生�
 
 ## 快速开始
 
+需要 DSH **0.2.2-rc.5／0.2.3-alpha.2**？请使用包含[本轮适配](docs/maintenance-current-dsh-20261126.md)的源码或对应 CI 包；下面的 v0.7.0 Release 下载尚不包含这些改动。
+
 预先安装 **DSH Web `0.2.1-alpha.1` 或 `0.2.1-alpha.2`**，并确保 pnpm 可用。无需另装 Excalidraw 或额外配置 AI 密钥。升级前等待草图保存、导出备份并退出正在运行的 DSH。
 
 通过官方插件管理器安装 **[v0.7.0](https://github.com/Amadeus2027/dsh-sketch-reference/releases/tag/v0.7.0)**：

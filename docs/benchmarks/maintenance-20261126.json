@@ -1,0 +1,146 @@
+{
+  "date": "2026-11-26",
+  "baseCommit": "a1eb038",
+  "baselinePackageSha256": "e8697a76116105ef31acd76d573a97039e20e33f1e1d9a0bf972eb4e1576ccb7",
+  "candidatePackageSha256": "a6822ed4df593d2bb23a126797c6e741b9b41f68243355c11c6d3b283a5f4a20",
+  "host": "DSH Web 0.2.1-alpha.2",
+  "node": "24.22.3",
+  "chromium": "156.0.8078.79",
+  "method": "Two fresh isolated profiles, same scripted provider metadata, one sequential test:performance per package. 250 shapes, 1600x1000. No parallel browsers/builds and no real model calls. Earlier exploratory samples excluded. GC not controlled; no statistical speedup or memory/leak claim.",
+  "reports": {
+    "perf-before": {
+      "label": "perf-before",
+      "date": "2026-11-26T23:35:55.308Z",
+      "viewport": {
+        "width": 1600,
+        "height": 1000
+      },
+      "sceneElements": 250,
+      "framesPerGesture": 50,
+      "realModelCalls": 0,
+      "saveRequestMs": [
+        27.26026599999932,
+        76.91644199999973
+      ],
+      "measurements": [
+        {
+          "gesture": "pan",
+          "elapsedMs": 979.0999999977648,
+          "frameGapP95Ms": 17.299999997019768,
+          "backups": 0,
+          "hashes": 0,
+          "longTasks": [],
+          "saveRPCs": 0
+        },
+        {
+          "gesture": "edit",
+          "elapsedMs": 981.5999999977648,
+          "frameGapP95Ms": 20.799999997019768,
+          "backups": 10,
+          "hashes": 0,
+          "longTasks": [],
+          "saveRPCs": 1
+        }
+      ],
+      "clientArtifactVerified": true,
+      "editorRequestsBeforeOpen": 0,
+      "rendererHeapBeforeOpen": 54280298,
+      "firstOpenMs": 463.3776739999994,
+      "editorRequestsAfterOpen": 12,
+      "canvas": {
+        "width": 786,
+        "height": 822,
+        "viewportHeight": 1000
+      },
+      "persistedFinalEditVerified": true,
+      "pngExportMs": [
+        64.80447300000014,
+        60.89695100000063,
+        60.81242899999961
+      ],
+      "pngRasterizations": 1,
+      "reopenMs": [
+        398.28396900000007,
+        203.72241500000018,
+        205.9595759999993,
+        260.8187450000005,
+        208.0076140000001
+      ],
+      "darkThemePropagated": true,
+      "sharedClientResponses": [
+        {
+          "bytes": 1110089
+        }
+      ],
+      "rendererHeapAfterReopens": 92636707,
+      "pluginClientBytes": 151877
+    },
+    "perf-after": {
+      "label": "perf-after",
+      "date": "2026-11-26T23:36:09.763Z",
+      "viewport": {
+        "width": 1600,
+        "height": 1000
+      },
+      "sceneElements": 250,
+      "framesPerGesture": 50,
+      "realModelCalls": 0,
+      "saveRequestMs": [
+        33.674065000000155,
+        22.389800999999352
+      ],
+      "measurements": [
+        {
+          "gesture": "pan",
+          "elapsedMs": 977.1000000014901,
+          "frameGapP95Ms": 16.899999998509884,
+          "backups": 0,
+          "hashes": 0,
+          "longTasks": [],
+          "saveRPCs": 0
+        },
+        {
+          "gesture": "edit",
+          "elapsedMs": 982.5999999977648,
+          "frameGapP95Ms": 21.899999998509884,
+          "backups": 10,
+          "hashes": 0,
+          "longTasks": [],
+          "saveRPCs": 1
+        }
+      ],
+      "clientArtifactVerified": true,
+      "editorRequestsBeforeOpen": 0,
+      "rendererHeapBeforeOpen": 54321199,
+      "firstOpenMs": 495.94564699999955,
+      "editorRequestsAfterOpen": 12,
+      "canvas": {
+        "width": 786,
+        "height": 822,
+        "viewportHeight": 1000
+      },
+      "persistedFinalEditVerified": true,
+      "pngExportMs": [
+        76.19020799999998,
+        61.56481899999926,
+        50.49234600000091
+      ],
+      "pngRasterizations": 1,
+      "reopenMs": [
+        345.050025999999,
+        218.05043999999907,
+        208.79615100000046,
+        232.80709399999978,
+        244.70550600000024
+      ],
+      "darkThemePropagated": true,
+      "sharedClientResponses": [
+        {
+          "bytes": 1110914
+        }
+      ],
+      "rendererHeapAfterReopens": 64411217,
+      "pluginClientBytes": 152702
+    }
+  }
+}

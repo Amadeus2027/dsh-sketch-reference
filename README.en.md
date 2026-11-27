@@ -39,6 +39,8 @@ More cases: [Web/UI and a five-page PPTX](docs/release-readiness-v0.6.0.md#b-真
 
 ## Quick start
 
+For DSH **0.2.2-rc.5 / 0.2.3-alpha.2**, use source or a CI package containing the [current compatibility changes](docs/maintenance-current-dsh-20261126.md). The v0.7.0 Release downloads below do not include them yet.
+
 Install **DSH Web `0.2.1-alpha.1` or `0.2.1-alpha.2`** first, with pnpm available. No separate Excalidraw installation or extra AI key configuration is needed. Before upgrading, wait for saves, export a backup and exit the running DSH host.
 
 Install **[v0.7.0](https://github.com/Amadeus2027/dsh-sketch-reference/releases/tag/v0.7.0)** through the official plugin manager:

@@ -27,3 +27,24 @@ it('bounds workspace cache entries and releases evicted images',async()=>{
  const load=vi.fn(async()=>drawing()),revoke=vi.fn(),cache=new GraphThumbnails(load,async()=>({url:'blob:'+load.mock.calls.length,bounds:[]}),revoke);
  for(let i=0;i<101;i++)await cache.get(String(i),revision);expect(revoke).toHaveBeenCalledTimes(1);await cache.get('0',revision);expect(load).toHaveBeenCalledTimes(102);cache.dispose();expect(revoke).toHaveBeenCalledTimes(102);
 });
+it('bounds rasterization to two and never renders an evicted queued revision',async()=>{
+ const complete:Array<()=>void>=[],load=vi.fn(async()=>drawing()),render=vi.fn(()=>new Promise<{url:string;bounds:number[]}>(resolve=>{complete.push(()=>resolve({url:'blob:queued',bounds:[]}));}));
+ const cache=new GraphThumbnails(load,render,()=>{}),ids=['a','b','c','d'];
+ const results=Promise.allSettled(ids.map(id=>cache.get(id,revision)));
+ await vi.waitFor(()=>expect(render).toHaveBeenCalledTimes(2));expect(load).toHaveBeenCalledTimes(4);
+ cache.retain(new Map(['a','b','d'].map(id=>[id,revision])));
+ complete[0]!();await vi.waitFor(()=>expect(render).toHaveBeenCalledTimes(3));complete[1]!();complete[2]!();
+ expect((await results).map(result=>result.status)).toEqual(['fulfilled','fulfilled','rejected','fulfilled']);expect(load).toHaveBeenCalledTimes(4);expect(render).toHaveBeenCalledTimes(3);cache.dispose();
+});
+it('releases failed slots and cancels queued work immediately on disposal',async()=>{
+ const render=vi.fn().mockRejectedValueOnce(Error('export failed')).mockResolvedValue({url:'blob:retry',bounds:[]}),load=vi.fn(async()=>drawing());
+ const cache=new GraphThumbnails(load,render,()=>{});
+ const values=await Promise.allSettled(['a','b','c','d'].map(id=>cache.get(id,revision)));
+ expect(values.map(value=>value.status)).toEqual(['rejected','fulfilled','fulfilled','fulfilled']);cache.dispose();
+ const finishes:Array<(value:Drawing)=>void>=[],slow=vi.fn(()=>new Promise<Drawing>(resolve=>{finishes.push(resolve);})),pending=new GraphThumbnails(slow,render,()=>{});
+ const tasks=Promise.allSettled(['a','b','c','d'].map(id=>pending.get(id,revision)));await vi.waitFor(()=>expect(slow).toHaveBeenCalledTimes(4));
+ pending.dispose();for(const finish of finishes)finish(drawing());
+ // Each in-flight load still belongs to its own abortable transport.
+ expect(slow).toHaveBeenCalledTimes(4);
+ expect((await tasks).every(result=>result.status==='rejected')).toBe(true);
+});
