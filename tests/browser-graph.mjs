@@ -51,6 +51,18 @@ try{
  assert.equal(revisionRequests,0,'Ordinary drawing must not fetch overview preview metadata');
  const graphChunks=()=>page.evaluate(()=>performance.getEntriesByType('resource').filter(e=>/\/graph-canvas-[^/]+\.js$/.test(e.name)).length);
  assert.equal(await graphChunks(),0,'The board must not load the graph renderer');
+ // Only a primary drag can create a link. Escape must discard a drag in progress.
+ await page.getByRole('button',{name:'关联工具',exact:true}).click();
+ await page.getByRole('button',{name:'创建关联',exact:true}).click();
+ const regionMode=page.getByRole('region',{name:'拖动框选关联区域'});
+ const area=await regionMode.boundingBox();
+ await page.mouse.move(area.x+80,area.y+90);await page.mouse.down({button:'right'});
+ await page.mouse.move(area.x+160,area.y+150,{steps:3});
+ assert.equal(await regionMode.locator('.graphRegionRect').count(),0,'Secondary drag must not begin a region');
+ await page.mouse.up({button:'right'});await page.mouse.down();await page.mouse.move(area.x+240,area.y+230,{steps:3});
+ await regionMode.locator('.graphRegionRect').waitFor();await page.keyboard.press('Escape');await page.mouse.up();
+ await regionMode.waitFor({state:'hidden'});assert.equal(graphRequests,0,'Cancelled gesture must not save a graph');
+
  await overview();assert.equal(await graphChunks(),1);
  await page.locator('.sketchGraphPreview img').waitFor();assert.equal(graphRows.size,0,'Opening overview must not migrate or overwrite the old drawing');
  for(let i=0;i<4;i++){await page.getByRole('button',{name:'＋ 新建草图'}).click();await saved();const name=page.getByLabel('草图名称',{exact:true});await name.fill(`页面 ${i+1}`);await name.press('Tab');await saved();}

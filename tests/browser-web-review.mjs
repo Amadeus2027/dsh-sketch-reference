@@ -29,6 +29,18 @@ try{
  };
  await select();await review.getByLabel('修改意见').fill('将搜索按钮移到右侧');
  const submit=review.getByRole('button',{name:'加入当前聊天'});await expect(submit).toBeEnabled();
+ // A failed or unfinished navigation must not overwrite the active page and its draft.
+ const missing=path.replace(/index\.html$/,'missing.html');
+ await pathname.fill(missing);await expect(submit).toBeDisabled();
+ await review.getByRole('button',{name:'打开网页'}).click();
+ await expect(review.getByRole('status').filter({hasText:'无法读取工作区文件'})).toBeVisible();
+ await expect(button).toHaveText('搜索');await review.getByRole('button',{name:'取消更改路径'}).click();
+ await expect(pathname).toHaveValue(path);await expect(submit).toBeEnabled();
+ await pathname.fill(missing);await pathname.press('Escape');await expect(pathname).toHaveValue(path);
+ await pathname.fill(missing);await review.getByRole('button',{name:'返回草图'}).click();
+ await (await editorFrame(page)).getByRole('button',{name:'网页批注',exact:true}).click();
+ await expect(pathname).toHaveValue(path);await expect(button).toHaveText('搜索');
+ await expect(review.getByLabel('修改意见')).toHaveValue('将搜索按钮移到右侧');await expect(submit).toBeEnabled();
  // CSS-only writes and HTML writes both reach the open review through DSH resources.
  await writeFile(join(dir,'site.css'),'#search{margin:40px;background:rgb(80,120,90);color:white;padding:16px;}');
  await expect(button).toHaveCSS('background-color','rgb(80, 120, 90)',{timeout:15000});await expect(submit).toBeDisabled();

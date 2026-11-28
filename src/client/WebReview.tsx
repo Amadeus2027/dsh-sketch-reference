@@ -9,7 +9,10 @@ import css,{mountStyles} from './WebReview.module.css';
 export function WebReview({owner,read,onBack,onInsert}:{owner:Owner;read:WebFiles;onBack:()=>void;onInsert:(text:string,signal:AbortSignal)=>Promise<void>}){
  const key='dsh-web-review:v1:'+ownerKey(owner);
  const [draft,setDraft]=useState(()=>restoreWebDraft(key));
+ // Persist only successfully opened paths. Typing or a failed read leaves the current draft intact.
+ const [pathInput,setPathInput]=useState(draft.path);
  const {page,busy,error,setError,read:load}=useWebPreview(owner,read,draft.path);
+ const editingPath=!!page&&pathInput!==page.path;
  const [marking,setMarking]=useState(false),[loaded,setLoaded]=useState(false);
  const note=useRef<HTMLInputElement>(null);
  const frame=useRef<HTMLIFrameElement>(null);
@@ -21,7 +24,11 @@ export function WebReview({owner,read,onBack,onInsert}:{owner:Owner;read:WebFile
   setLoaded(false);
   setMarking(false);
  },[page?.revision]);
- const open=()=>load(draft.path,next=>setDraft(old=>({...old,path:next.path})));
+ const open=()=>load(pathInput,next=>{
+  setPathInput(next.path);
+  setDraft(old=>old.path===next.path?old:{...old,path:next.path});
+ });
+ const cancelPath=()=>{if(page){setPathInput(page.path);setError('');}};
  const submit=()=>load(draft.path,(next,signal)=>onInsert(reviewInstruction(draft,next,frame.current),signal));
  useEffect(()=>{
   const win=frame.current?.contentWindow,doc=frame.current?.contentDocument;
@@ -43,9 +50,9 @@ export function WebReview({owner,read,onBack,onInsert}:{owner:Owner;read:WebFile
  };
  const mark=draft.mark;
  const current=!!page&&!!mark&&mark.path===page.path&&mark.revision===page.revision&&mark.width===view.width&&mark.height===view.height;
- const canSubmit=current&&!busy&&!!draft.note.trim()&&draft.path===page?.path;
+ const canSubmit=current&&!busy&&!editingPath&&!!draft.note.trim();
  const saved=current?{x:mark.x-view.x,y:mark.y-view.y,w:mark.w,h:mark.h}:null;
- const guidance=storageError?'本标签页暂时无法保存批注草稿':mark&&!current?'网页或视口已变化，请重新圈选':current?'已选区域 · 填写意见后加入聊天':marking?'点击元素，或拖动圈出区域':'选择「圈选区域」开始批注';
+ const guidance=storageError?'本标签页暂时无法保存批注草稿':editingPath?'打开新网页，或取消后继续批注':mark&&!current?'网页或视口已变化，请重新圈选':current?'已选区域 · 填写意见后加入聊天':marking?'点击元素，或拖动圈出区域':'选择「圈选区域」开始批注';
  return <section className={css.webReview} aria-label="网页批注">
   <header>
    <strong>网页批注</strong>
@@ -56,8 +63,10 @@ export function WebReview({owner,read,onBack,onInsert}:{owner:Owner;read:WebFile
    <button className={css.back} onClick={onBack}>返回草图</button>
   </header>
   <form className={css.location} onSubmit={e=>{e.preventDefault();void open();}}>
-   <input aria-label="工作区 HTML 路径" placeholder="例如 index.html 或 pages/home.html" autoFocus={!draft.path} value={draft.path} maxLength={512} disabled={busy} onChange={e=>setDraft({...draft,path:e.target.value})}/>
-   <button disabled={busy||!draft.path.trim()}>{busy?'读取中…':page?.path===draft.path?'刷新网页':'打开网页'}</button>
+   <input aria-label="工作区 HTML 路径" placeholder="例如 index.html 或 pages/home.html" autoFocus={!draft.path} value={pathInput} maxLength={512} disabled={busy}
+    onChange={e=>setPathInput(e.target.value)} onKeyDown={e=>{if(e.key==='Escape'&&editingPath){e.preventDefault();cancelPath();}}}/>
+   {editingPath&&<button type="button" aria-label="取消更改路径" disabled={busy} onClick={cancelPath}>取消</button>}
+   <button disabled={busy||!pathInput.trim()}>{busy?'读取中…':page?.path===pathInput?'刷新网页':'打开网页'}</button>
   </form>
   <div className={css.webViewport}>{page&&<iframe key={page.revision} ref={frame} sandbox="allow-same-origin" referrerPolicy="no-referrer" title="网页排版预览" srcDoc={page.html} onLoad={()=>{setLoaded(true);if(mark?.revision===page.revision)frame.current?.contentWindow?.scrollTo(mark.scrollX,mark.scrollY);}}/>}
    {!page&&<div className={css.empty} role="status">{busy?'正在载入网页…':error||'输入当前工作区的 HTML 文件路径'}</div>}

@@ -1,4 +1,4 @@
-import {useState,type PointerEvent} from 'react';
+import {useEffect,useState,type PointerEvent} from 'react';
 import {viewportCoordsToSceneCoords} from '@excalidraw/excalidraw';
 import type {ExcalidrawImperativeAPI} from '@excalidraw/excalidraw/types';
 import type {GraphAnchor,GraphContent,GraphEdge} from '../core/graph.ts';
@@ -12,14 +12,47 @@ export interface GraphEditorProps {
 }
 export function GraphEditorTools({graph,api,disabled,beforeAction,onReview}:{onReview:()=>Promise<unknown>;graph:GraphEditorProps;api:ExcalidrawImperativeAPI|null;disabled:boolean;beforeAction:()=>Promise<unknown>}){
  const [expanded,setExpanded]=useState(!!graph.rebind);
- const [type,setType]=useState<GraphEdge['type']>('navigation'),[target,setTarget]=useState('new'),[name,setName]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[region,setRegion]=useState(false),[start,setStart]=useState<{x:number;y:number}|null>(null),[end,setEnd]=useState<{x:number;y:number}|null>(null);
+ const [type,setType]=useState<GraphEdge['type']>('navigation'),[target,setTarget]=useState('new'),[name,setName]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[region,setRegion]=useState(false);
+ const [drag,setDrag]=useState<{id:number;startX:number;startY:number;x:number;y:number}|null>(null);
+ useEffect(()=>{
+  if(!region)return;
+  const cancel=(event:KeyboardEvent)=>{
+   if(event.key!=='Escape'||event.isComposing)return;
+   event.preventDefault();
+   event.stopPropagation();
+   setRegion(false);
+   setDrag(null);
+   setError('');
+  };
+  window.addEventListener('keydown',cancel,true);
+  return ()=>window.removeEventListener('keydown',cancel,true);
+ },[region]);
  const run=async(work:()=>Promise<unknown>)=>{setBusy(true);setError('');try{await beforeAction();await work();}catch(e){setError(e instanceof Error?e.message:'操作失败');}finally{setBusy(false);}};
  const create=(anchor:GraphAnchor)=>run(()=>graph.onLink(anchor,type,target,name.trim()||'新草图'));
- const selection=()=>{if(!api)return;if(region){setRegion(false);setStart(null);setEnd(null);return;}const ids=Object.entries(api.getAppState().selectedElementIds).filter(([,yes])=>yes).map(([id])=>id);if(!ids.length){setRegion(true);setStart(null);setEnd(null);return;}void create({kind:'elements',elementIds:ids});};
- const down=(e:PointerEvent<HTMLDivElement>)=>{e.currentTarget.setPointerCapture(e.pointerId);setStart({x:e.clientX,y:e.clientY});setEnd({x:e.clientX,y:e.clientY});};
+ const selection=()=>{
+  if(!api)return;
+  setError('');
+  setDrag(null);
+  if(region){setRegion(false);return;}
+  const ids=Object.entries(api.getAppState().selectedElementIds).filter(([,yes])=>yes).map(([id])=>id);
+  if(ids.length)void create({kind:'elements',elementIds:ids});
+  else setRegion(true);
+ };
+ const down=(e:PointerEvent<HTMLDivElement>)=>{
+  if(disabled||busy||drag||!e.isPrimary||e.button!==0)return;
+  e.currentTarget.setPointerCapture(e.pointerId);
+  setDrag({id:e.pointerId,startX:e.clientX,startY:e.clientY,x:e.clientX,y:e.clientY});
+ };
+ const release=(e:PointerEvent<HTMLDivElement>)=>{
+  if(drag?.id===e.pointerId)setDrag(null);
+ };
  const up=(e:PointerEvent<HTMLDivElement>)=>{
-  if(!start||!api)return;const a=viewportCoordsToSceneCoords({clientX:start.x,clientY:start.y},api.getAppState()),b=viewportCoordsToSceneCoords({clientX:e.clientX,clientY:e.clientY},api.getAppState());setStart(null);setEnd(null);
-  if(Math.abs(e.clientX-start.x)<8||Math.abs(e.clientY-start.y)<8){setError('请拖动框选一个区域');return;}
+  if(drag?.id!==e.pointerId||!api)return;
+  setDrag(null);
+  if(disabled||busy)return;
+  if(Math.abs(e.clientX-drag.startX)<8||Math.abs(e.clientY-drag.startY)<8){setError('请拖动框选一个区域');return;}
+  const a=viewportCoordsToSceneCoords({clientX:drag.startX,clientY:drag.startY},api.getAppState());
+  const b=viewportCoordsToSceneCoords({clientX:e.clientX,clientY:e.clientY},api.getAppState());
   setRegion(false);void create({kind:'region',region:{x:Math.min(a.x,b.x),y:Math.min(a.y,b.y),width:Math.abs(b.x-a.x),height:Math.abs(b.y-a.y)}});
  };
  const state=api?.getAppState();
@@ -35,9 +68,9 @@ export function GraphEditorTools({graph,api,disabled,beforeAction,onReview}:{onR
    <span className="graphSelectionHint">选中元素可直接关联；未选择时框选区域</span>
   </div>
   {error&&<p role="alert">{error}</p>}
-  {region&&state&&<div className="graphRegionPicker" style={{left:state.offsetLeft,top:state.offsetTop,width:state.width,height:state.height}} onPointerDown={down} onPointerMove={e=>{if(start)setEnd({x:e.clientX,y:e.clientY});}} onPointerUp={up} onPointerCancel={()=>{setStart(null);setEnd(null);}} role="region" aria-label="拖动框选关联区域">
-   <span>拖动框选区域 · 再次点击按钮取消</span>
-   {start&&end&&<div className="graphRegionRect" style={{left:Math.min(start.x,end.x)-state.offsetLeft,top:Math.min(start.y,end.y)-state.offsetTop,width:Math.abs(start.x-end.x),height:Math.abs(start.y-end.y)}}/>}
+  {region&&state&&<div className="graphRegionPicker" style={{left:state.offsetLeft,top:state.offsetTop,width:state.width,height:state.height}} onPointerDown={down} onPointerMove={e=>{if(drag?.id===e.pointerId)setDrag({...drag,x:e.clientX,y:e.clientY});}} onPointerUp={up} onPointerCancel={release} onLostPointerCapture={release} role="region" aria-label="拖动框选关联区域">
+   <span>拖动框选区域 · Esc 取消</span>
+   {drag&&<div className="graphRegionRect" style={{left:Math.min(drag.startX,drag.x)-state.offsetLeft,top:Math.min(drag.startY,drag.y)-state.offsetTop,width:Math.abs(drag.startX-drag.x),height:Math.abs(drag.startY-drag.y)}}/>}
   </div>}
  </section>;
 }
