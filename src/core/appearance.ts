@@ -2,7 +2,7 @@ import {z} from 'zod';
 import {APPEARANCE_LIMITS} from './limits.ts';
 export const appearanceTokens={
  background:'--dsw-alias-bg-base',surface:'--dsw-alias-bg-layer-1',text:'--dsw-alias-label-primary',muted:'--dsw-alias-label-secondary',
- border:'--dsw-alias-border-l3',accent:'--dsw-alias-brand-primary',blue:'--dsw-alias-link',hover:'--dsw-alias-interactive-bg-hover',primary:'--dsw-alias-button-primary-fill',primaryText:'--dsw-alias-label-primary-foreground',
+ border:'--dsw-alias-border-l3',accent:'--dsw-alias-link',blue:'--dsw-alias-link',hover:'--dsw-alias-interactive-bg-hover',primary:'--dsw-alias-button-info-fill',primaryText:'--dsw-alias-label-primary-foreground',
 } as const;
 const cssValue=z.string().min(1).refine(v=>!/[;{}]|url\s*\(/i.test(v)),colorValue=cssValue.max(APPEARANCE_LIMITS.colorChars);
 // alpha.2 appends its fallback font stack; the computed default is 296 chars.

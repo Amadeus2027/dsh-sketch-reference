@@ -7,6 +7,13 @@ import {anchorStatus, type GraphAnchor, type GraphContent, type GraphEdge, type 
 import type {GraphThumbnails} from './graph-thumbnails.ts';
 import '@xyflow/react/dist/style.css';
 
+const controlLabels = {
+ 'controls.ariaLabel': '工作流视图',
+ 'controls.zoomIn.ariaLabel': '放大',
+ 'controls.zoomOut.ariaLabel': '缩小',
+ 'controls.fitView.ariaLabel': '查看全图',
+};
+
 export type SketchFlowNode=Node<{node:GraphNode;cache:GraphThumbnails;revision:string|null|undefined;edges:GraphEdge[];locate:GraphAnchor|null},'sketch'>;
 
 function Thumbnail({data,id}:NodeProps<SketchFlowNode>){
@@ -87,7 +94,7 @@ export function GraphCanvas({theme, content, contentRef, thumbnails, revisions, 
   if(moved)layout({...current,nodes});
  };
  return <>
-   <ReactFlow onInit={onInit} colorMode={theme} nodes={flowNodes} edges={flowEdges} nodeTypes={nodeTypes} defaultViewport={content.viewport} onlyRenderVisibleElements nodesDraggable={!layoutLocked} nodesConnectable={!locked} elementsSelectable={!locked} deleteKeyCode={null}
+   <ReactFlow ariaLabelConfig={controlLabels} onInit={onInit} colorMode={theme} nodes={flowNodes} edges={flowEdges} nodeTypes={nodeTypes} defaultViewport={content.viewport} onlyRenderVisibleElements nodesDraggable={!layoutLocked} nodesConnectable={!locked} elementsSelectable={!locked} deleteKeyCode={null}
     onNodesChange={moveNodes}
     onNodeDragStop={checkpoint}
     onMove={(_event,viewport:Viewport)=>{const old=contentRef.current.viewport;if(!layoutLocked&&(viewport.x!==old.x||viewport.y!==old.y||viewport.zoom!==old.zoom))layout({...contentRef.current,viewport});}}

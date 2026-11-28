@@ -2,7 +2,7 @@
 .graphWorkspace{height:100%;display:flex;flex-direction:column;background:var(--sketch-background);color:var(--sketch-text)}
 .graphWorkspace button,.graphWorkspace input,.graphWorkspace select,.graphEditorTools button,.graphEditorTools input,.graphEditorTools select{font:inherit;border:.5px solid var(--sketch-border);border-radius:8px;padding:4px 10px;background:var(--sketch-background);color:var(--sketch-text);min-height:28px;font-size:12px}.graphWorkspace button,.graphEditorTools button{cursor:pointer}.graphWorkspace button:disabled,.graphEditorTools button:disabled{opacity:.5;cursor:default}.graphWorkspace button:hover:not(:disabled),.graphEditorTools button:hover:not(:disabled){background:var(--sketch-hover)}
 .graphWorkspace header,.graphToolbar,.graphToolRow,.graphBreadcrumb{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.graphWorkspace header{padding:6px 12px;min-height:44px;border-bottom:1px solid var(--sketch-border);justify-content:space-between}.graphWorkspace h1{font-size:14px;margin:0}.graphModes{display:flex;gap:4px}.graphModes button[aria-pressed=true]{background:var(--sketch-primary);color:var(--sketch-primaryText)}
+.graphWorkspace header{padding:6px 12px;min-height:44px;border-bottom:1px solid var(--sketch-border);justify-content:space-between}.graphWorkspace h1{font-size:14px;margin:0}
 .graphToolbar{padding:8px 12px}.graphToolbar>span{margin-left:auto;font-size:12px;color:var(--sketch-muted)}.graphImport{position:relative;padding:6px 10px;border:1px solid var(--sketch-border);border-radius:6px;overflow:hidden}.graphImport input{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}
 .graphBody{display:flex;flex:1;min-height:0}.graphCanvas{flex:1;min-width:0;position:relative}.graphLegend{position:absolute;bottom:12px;right:12px;background:var(--sketch-surface);padding:8px;border-radius:6px;font-size:12px;pointer-events:none}.graphSidebar{width:230px;flex:none;padding:16px;border-left:1px solid var(--sketch-border);overflow:auto;background:var(--sketch-surface)}.graphSidebar h2{font-size:15px;margin:0 0 16px}.graphSidebar label{display:grid;gap:6px;margin-bottom:14px}.graphSidebar input,.graphSidebar select{width:100%;min-width:0}.graphSidebar button{margin:0 6px 8px 0}.graphSidebar p{overflow-wrap:anywhere}
 .sketchGraphNode{width:300px;background:var(--sketch-surface);border:1px solid var(--sketch-border);border-radius:8px;box-shadow:0 2px 6px #0001}.react-flow__node.selected .sketchGraphNode{outline:2px solid var(--sketch-accent)}.sketchGraphNodeTitle{padding:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--sketch-border)}.sketchGraphNodeTitle strong{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sketchGraphNodeTitle span{font-size:11px;color:var(--sketch-muted)}.sketchGraphPreview{position:relative;margin:10px;width:280px;height:190px;display:grid;place-items:center}.sketchGraphPreview img{width:280px;height:190px;object-fit:contain;pointer-events:none}.sketchGraphPreview>span{font-size:12px;color:var(--sketch-muted)}.sketchGraphPreview .react-flow__handle{width:10px;height:10px;border:2px solid var(--sketch-surface)}.sketchGraphPreview .navigation{background:var(--sketch-blue)}.sketchGraphPreview .detail{background:var(--sketch-detail)}.sketchGraphPreview .missing{background:var(--sketch-error);outline:2px dashed var(--sketch-error)}.graphLocate{position:absolute!important;width:26px;height:26px;border:2px solid var(--sketch-detail);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
@@ -26,6 +26,13 @@
 .graphLegend span::before { content:""; width:14px; border-top:2px solid var(--sketch-blue) }
 .graphLegend span:last-child::before { border-top:2px dashed var(--sketch-detail) }
 .sketchGraphNodeTitle span { padding:1px 7px; border-radius:5px; background:var(--sketch-background) }
-.graphWorkspace .graphModes { align-items:center; gap:2px; padding:2px; border-radius:8px; background:var(--sketch-hover) }
-.graphModes button { border:0; background:transparent; border-radius:6px }
-.graphWorkspace .graphModes button[aria-pressed=true] { background:var(--sketch-background); color:var(--sketch-text); box-shadow:0 1px 3px #0002 }
+
+.graphCanvas .react-flow {
+ --xy-background-color: var(--sketch-surface);
+ --xy-controls-button-background-color: var(--sketch-background);
+ --xy-controls-button-background-color-hover: var(--sketch-hover);
+ --xy-controls-button-color: var(--sketch-text);
+ --xy-controls-button-border-color: var(--sketch-border);
+ --xy-edge-label-color: var(--sketch-text);
+ --xy-edge-label-background-color: var(--sketch-background);
+}

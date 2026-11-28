@@ -42,7 +42,7 @@ export function useWebPreview(owner: Owner, files: WebFiles, initialPath: string
  }, [owner, files]);
 
  useEffect(() => {
-  void read(firstPath.current);
+  if (firstPath.current) void read(firstPath.current);
   return () => {
    flight.current?.abort();
    flight.current = null;

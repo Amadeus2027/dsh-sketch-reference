@@ -19,7 +19,7 @@ function between(a: Point, b: Point): Region {
 export function WebRegionSelector({saved, disabled, onSelect}: {
  saved: Region | null;
  disabled: boolean;
- onSelect: (region: Region) => void;
+ onSelect: (region: Region, pointerType: string) => void;
 }) {
  const gesture = useRef<{id: number; start: Point} | null>(null);
  const [draft, setDraft] = useState<Region | null>(null);
@@ -40,7 +40,7 @@ export function WebRegionSelector({saved, disabled, onSelect}: {
    if (gesture.current?.id !== event.pointerId) return;
    const region = between(gesture.current.start,point(event));
    cancel();
-   if (!disabled) onSelect(region);
+   if (!disabled) onSelect(region,event.pointerType);
   }}
   onLostPointerCapture={cancel} onPointerCancel={cancel}>
   {shape && <ellipse cx={shape.x+shape.w/2} cy={shape.y+shape.h/2} rx={shape.w/2} ry={shape.h/2}/>}

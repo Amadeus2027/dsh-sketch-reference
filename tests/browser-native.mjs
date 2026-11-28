@@ -36,9 +36,14 @@ try{
   assert.equal(await frame.locator('.notice').filter({hasText:'elements require at least two points'}).count(),0);
  }
  await frame.evaluate(()=>window.__sketchEditor().updateScene({elements:[{id:'native-test',type:'rectangle',x:80,y:120,width:200,height:100,angle:0,strokeColor:'#1e1e1e',backgroundColor:'transparent',fillStyle:'solid',strokeWidth:1,strokeStyle:'solid',roughness:1,opacity:100,groupIds:[],frameId:null,roundness:null,seed:1,isDeleted:false,boundElements:null,updated:1,link:null,locked:false,version:1,versionNonce:1}]}));await page.waitForTimeout(1000);await frame.getByRole('status').filter({hasText:'已保存'}).waitFor();
+ const options=frame.getByRole('button',{name:'更多操作'}), menu=frame.getByRole('group',{name:'导出与模型选项'});
+ await options.click();await expect(menu).toBeVisible();await page.keyboard.press('Escape');await expect(menu).toBeHidden();
+ await options.click();await frame.getByLabel('这张图准备用来做什么？').click();await expect(menu).toBeHidden();
  const before=await load();
  for(const theme of ['dark','light']){
   const document=frame;await hostContext(page,'theme',theme);await frame.waitForFunction(theme=>window.__sketchEditor().getAppState().theme===theme,theme);
+  const token=await page.evaluate(()=>getComputedStyle(window.document.body).getPropertyValue('--dsw-alias-link').trim());
+  await expect.poll(()=>frame.locator('.excalidraw').evaluate(el=>getComputedStyle(el).getPropertyValue('--color-primary').trim())).toBe(token);
   assert.equal(frame,document);assert.equal((await load()).drawing.revision,before.drawing.revision);assert.equal(await page.locator('iframe[title="手绘参考板"]').count(),1);
   await mkdir('test-results',{recursive:true});await page.screenshot({path:`test-results/native-${theme}.png`});
  }

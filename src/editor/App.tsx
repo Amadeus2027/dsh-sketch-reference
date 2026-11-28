@@ -44,7 +44,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose,graph}:
  const appearance=useAppearance();
  const [initialView]=useState(()=>readView(owner)),lastView=useRef(initialView);
  const [exportScene]=useState(()=>createSceneExport(pngExport));
- const [adviceOpen,setAdviceOpen]=useState(false),[moreOpen,setMoreOpen]=useState(false),[exporting,setExporting]=useState(false);
+ const [adviceOpen,setAdviceOpen]=useState(false),[exporting,setExporting]=useState(false);
  const [messageInfo,setMessageInfo]=useState(false),[syncingComments,setSyncingComments]=useState(false),syncing=useRef(false);
  const closeAction=useRef<()=>void>(()=>{});
  useEffect(()=>{registerClose(()=>closeAction.current());return()=>registerClose(null);},[registerClose]);
@@ -173,7 +173,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose,graph}:
   }finally{if(mounted.current)setPreparing(false);}
  };
  const focusSelection=(clear=false)=>void run(async()=>{
-  if(!api.current||preparing)throw new Error('画板尚未就绪');setMoreOpen(false);setPreparing(true);
+  if(!api.current||preparing)throw new Error('画板尚未就绪');setPreparing(true);
   try{const ids=clear?[]:Object.entries(api.current.getAppState().selectedElementIds).filter(([,chosen])=>chosen).map(([id])=>id);
    if(!clear&&!ids.length)throw new Error('请先使用画板原生选择或框选工具选中图形');
    await settle();if(!mounted.current)return;if(!queue.revision)throw new Error('请先绘制并保存草图');
@@ -183,7 +183,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose,graph}:
   }finally{if(mounted.current)setPreparing(false);}
  });
  const prepareVisual=(scope:'all'|'focus')=>void run(async()=>{
-  if(!api.current||pending||preparing)throw new Error('请先结束当前操作');setMoreOpen(false);setPreparing(true);
+  if(!api.current||pending||preparing)throw new Error('请先结束当前操作');setPreparing(true);
   try{await settle();if(!mounted.current)return;if(!queue.revision)throw new Error('先画一点内容并保存');
    const current=await visual.refresh(),focus=current.selection;
    if(scope==='focus'&&(!focus||focus.stale||focus.revision!==queue.revision))throw new Error('请先选中图形并设置当前选区重点');
@@ -219,7 +219,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose,graph}:
  };
  const refreshComments=()=>void run(async()=>{
   if(syncing.current)return;
-  syncing.current=true;setSyncingComments(true);setMoreOpen(false);
+  syncing.current=true;setSyncingComments(true);
   try{
    const confirmed=source==='agent'?await agent.refresh():await refreshAnalysis();
    if(confirmed&&mounted.current){setMessageInfo(true);setMessage('批注已同步，未调用模型。');}
@@ -273,10 +273,10 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose,graph}:
   <header><div><h1>手绘参考板</h1><span className={`save ${queue.state}`} role="status" title={labels[queue.state]}>{labels[queue.state]}</span>{exporting&&<span role="status">正在导出…</span>}</div><button onClick={close}>返回聊天 ×</button></header>
   <div className="boardContext">
   <GraphEditorTools onReview={()=>openWebReview(owner)} graph={graph} api={editor} disabled={preparing||busy||!!pending||editUncertain||!!pendingComment.current||!!agent.pending} beforeAction={settle}/>
-  <section className="intent"><label className="srOnly" htmlFor="goal">这张图准备用来做什么？</label><input id="goal" maxLength={2000} value={goal} disabled={preparing||!!pending} placeholder="用途：例如识别物品、解释几何图形或讨论流程" onChange={e=>{const value=e.target.value;void run(async()=>{const scene=api.current?capture():queue.current().scene;setGoal(value);goalRef.current=value;queue.update({scene,goal:value});updateStale(scene,value);});}} />
+  <section className="intent"><label className="srOnly" htmlFor="goal">这张图准备用来做什么？</label><input id="goal" maxLength={2000} value={goal} disabled={preparing||!!pending} placeholder="草图用途（选填）" onChange={e=>{const value=e.target.value;void run(async()=>{const scene=api.current?capture():queue.current().scene;setGoal(value);goalRef.current=value;queue.update({scene,goal:value});updateStale(scene,value);});}} />
   </section>
   </div>
-  {owner.nodeId&&<div className="notice info">Agent 可按节点读取本草图；聊天批注、修改提案及直接发送参考图目前仅支持根草图。</div>}
+  {owner.nodeId&&<div className="notice info">Agent 可读取此草图。请在根草图中添加参考图或应用修改。</div>}
   {(batch||agent.batch||busy)&&<section className="advice" aria-label="AI 建议与批注">
    <div className="adviceTitle">
     <button className="adviceDisclosure" aria-controls="comment-details" aria-expanded={adviceOpen} aria-label={adviceOpen?'收起建议与批注':'展开建议与批注'} onClick={()=>{setAdviceOpen(v=>!v);setHovered(null);}}>建议与批注{displayBatch&&<span className="commentCount">{displayBatch.advice.suggestions.length}</span>}<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" style={{transform:adviceOpen?'rotate(180deg)':undefined}}><path d="m4 6 4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
@@ -310,8 +310,6 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose,graph}:
      <MainMenu.DefaultItems.Help/>
      <MainMenu.DefaultItems.ClearCanvas/>
      <MainMenu.Separator/>
-     <MainMenu.Group title="Excalidraw 链接"><MainMenu.DefaultItems.Socials/></MainMenu.Group>
-     <MainMenu.Separator/>
      <MainMenu.DefaultItems.ChangeCanvasBackground/>
     </MainMenu>
    </Excalidraw>
@@ -321,18 +319,28 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose,graph}:
   <footer>
    {visual.state?.available&&<span className="collaborationStatus" aria-label="协作状态">{visual.state.selection?`重点 ${visual.state.selection.elementIds.length} 个${visual.state.selection.revision!==queue.revision||queue.state!=='clean'?' · 已过期':''}`:''}{visual.state.all?`${visual.state.selection?' · ':''}视觉参考${!visual.state.all.stale&&visual.state.all.revision===queue.revision&&queue.state==='clean'?'可读':'待更新'}`:''}</span>}<div className="actions">
    <button disabled={!editor||!!pending||busy||preparing||queue.state==='conflict'||commentSaving} onClick={analyze}>{batch?'重新分析草图':'AI 分析草图'}</button>
-   <button className="primary" disabled={!!owner.nodeId||!editor||!!pending||preparing} title="根草图可加入原生输入框，由你确认发送" onClick={()=>void run(async()=>{setPreparing(true);try{const scene=capture();queue.update({scene,goal:goalRef.current});await settle();const png=await exportScene(scene);const result=await stageImage(owner,png,await digest(scene));setMessage(stale&&batch?'参考图已更新；输入框中若有旧建议，请重新获取后替换。'+result:result);}finally{if(mounted.current)setPreparing(false);}})}>作为参考发送</button>
-   <div className="more"><button aria-expanded={moreOpen} aria-label="更多操作" onClick={()=>setMoreOpen(v=>!v)}>···</button>{moreOpen&&<div className="moreMenu" role="group" aria-label="导出与模型选项">
-    <button disabled={commentSaving||agent.saving||syncingComments} title="重新读取已保存批注，不调用模型" onClick={refreshComments}>{syncingComments?'正在同步批注…':'同步批注'}</button>
-    {agent.available&&<><button disabled={!editor||!!pending||preparing} onClick={()=>focusSelection()}>选区作为重点</button><button disabled={!editor||!!pending||preparing} onClick={()=>focusSelection(true)}>清除选区重点</button></>}
-    {agent.available&&<button disabled={preparing} onClick={()=>void run(async()=>{setMoreOpen(false);await visual.refresh();await edits.refresh();setMessage('协作状态已刷新');})}>刷新协作状态</button>}
-    {visual.state?.available&&<><button disabled={!editor||!!pending||preparing} onClick={()=>prepareVisual('all')}>更新视觉参考</button><button disabled={!editor||!!pending||preparing||!visual.state.selection||visual.state.selection.stale} onClick={()=>prepareVisual('focus')}>更新重点视觉参考</button></>}
-    <button disabled={!editor||!!pending||preparing||exporting} onClick={()=>{setMoreOpen(false);void run(async()=>{setExporting(true);try{download(await exportScene(capture()),'sketch-reference.png');}finally{if(mounted.current)setExporting(false);}});}}>导出 PNG</button>
-    <button onClick={()=>{setMoreOpen(false);void run(async()=>{downloadScene(capture());});}}>草稿备份</button>
-    <label className="route">分析内容 <select aria-label="分析内容" disabled={busy||preparing} value={inputMode} onChange={e=>setInputMode(analysisModeSchema.parse(e.target.value))}><option value="hybrid">图片与结构（推荐）</option><option value="image">仅图片</option><option value="structure">仅结构（不发送图片）</option></select></label>
-    <label className="route">建议模型 <select aria-label="建议模型" disabled={busy||!routes.length} value={routeIndex} onChange={e=>setRouteIndex(Number(e.target.value))}>{!routes.length&&<option>尚未配置官方 DS</option>}{[...new Set(routes.map(r=>r.provider))].map(provider=><optgroup key={provider} label={routes.find(r=>r.provider===provider)!.providerName}>{routes.map((r,i)=>r.provider===provider&&<option key={r.model} value={i}>{r.name}</option>)}</optgroup>)}</select></label>
-    <small>AI 分析可选，会产生模型用量。纯结构适用于文字、形状和连线，不识别自由笔迹内容。参考图先加入聊天输入框，由你发送；批注不进入导出图。</small>
-   </div>}</div>
+   <button className="primary" disabled={!!owner.nodeId||!editor||!!pending||preparing} title={owner.nodeId?'请在根草图中添加参考图':'将 PNG 添加到当前聊天草稿'} onClick={()=>void run(async()=>{setPreparing(true);try{const scene=capture();queue.update({scene,goal:goalRef.current});await settle();const png=await exportScene(scene);const result=await stageImage(owner,png,await digest(scene));setMessageInfo(true);setMessage(stale&&batch?'参考图已更新；输入框中若有旧建议，请重新获取后替换。'+result:result);}finally{if(mounted.current)setPreparing(false);}})}>添加参考图</button>
+   <div className="more">
+    <button type="button" {...{popovertarget:'board-options'}} aria-label="更多操作" title="更多操作">···</button>
+    <div id="board-options" {...{popover:'auto'}} className="moreMenu" role="group" aria-label="导出与模型选项"
+     onClick={event=>{if((event.target as Element).closest('button'))event.currentTarget.hidePopover();}}>
+     <fieldset><legend>导出</legend>
+      <button disabled={!editor||!!pending||preparing||exporting} onClick={()=>{void run(async()=>{setExporting(true);try{download(await exportScene(capture()),'sketch-reference.png');}finally{if(mounted.current)setExporting(false);}});}}>导出 PNG</button>
+      <button onClick={()=>{void run(async()=>{downloadScene(capture());});}}>草稿备份</button>
+     </fieldset>
+     <fieldset><legend>协作</legend>
+      <button disabled={commentSaving||agent.saving||syncingComments} title="重新读取已保存批注，不调用模型" onClick={refreshComments}>{syncingComments?'正在同步批注…':'同步批注'}</button>
+      {agent.available&&<><button disabled={!editor||!!pending||preparing} onClick={()=>focusSelection()}>选区作为重点</button><button disabled={!editor||!!pending||preparing} onClick={()=>focusSelection(true)}>清除选区重点</button></>}
+      {agent.available&&<button disabled={preparing} onClick={()=>void run(async()=>{await visual.refresh();await edits.refresh();setMessage('协作状态已刷新');})}>刷新协作状态</button>}
+      {visual.state?.available&&<><button disabled={!editor||!!pending||preparing} onClick={()=>prepareVisual('all')}>更新视觉参考</button><button disabled={!editor||!!pending||preparing||!visual.state.selection||visual.state.selection.stale} onClick={()=>prepareVisual('focus')}>更新重点视觉参考</button></>}
+     </fieldset>
+     <fieldset><legend>AI 分析</legend>
+      <label className="route">分析内容 <select aria-label="分析内容" disabled={busy||preparing} value={inputMode} onChange={e=>setInputMode(analysisModeSchema.parse(e.target.value))}><option value="hybrid">图片与结构（推荐）</option><option value="image">仅图片</option><option value="structure">仅结构（不发送图片）</option></select></label>
+      <label className="route">建议模型 <select aria-label="建议模型" disabled={busy||!routes.length} value={routeIndex} onChange={e=>setRouteIndex(Number(e.target.value))}>{!routes.length&&<option>尚未配置官方 DS</option>}{[...new Set(routes.map(r=>r.provider))].map(provider=><optgroup key={provider} label={routes.find(r=>r.provider===provider)!.providerName}>{routes.map((r,i)=>r.provider===provider&&<option key={r.model} value={i}>{r.name}</option>)}</optgroup>)}</select></label>
+      <small>点击分析时使用模型。仅结构模式适合文字、形状和连线。</small>
+     </fieldset>
+    </div>
+   </div>
   </div></footer>
  </main>;
 }

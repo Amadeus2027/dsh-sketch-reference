@@ -143,7 +143,7 @@ try{
  assert.equal(modelEvents.filter(e=>e.type==='response').at(-1).status,504);
  // Failed analysis must leave the native reference workflow usable.
  const exported=page.waitForEvent('download');await frame.getByRole('button',{name:'更多操作',exact:true}).click();await frame.getByRole('button',{name:'导出 PNG',exact:true}).click();await exported;
- await frame.getByRole('button',{name:'作为参考发送',exact:true}).click();await frame.getByRole('alert').filter({hasText:'参考图已加入左侧输入框'}).waitFor();
+ await frame.getByRole('button',{name:'添加参考图',exact:true}).click();await frame.getByRole('status').filter({hasText:'参考图已加入聊天草稿'}).waitFor();
  assert((await input.innerText()).includes('保留原有任务。'));await page.getByRole('img',{name:'sketch-reference.png',exact:true}).first().waitFor();
  const streamCalls=(await modelStats()).calls.slice(streamBaseline);assert.equal(streamCalls.length,4);
  assert.deepEqual(streamCalls.map(c=>c.goal),['网页首页布局','格式错误测试','慢请求取消测试','慢请求超时测试']);

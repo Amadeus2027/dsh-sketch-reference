@@ -81,7 +81,7 @@ export function SketchFrame({ctx,props,onClose,appearance,subscribeClose,readWeb
      if(loaded.drawing?.sceneDigest!==message.digest)throw new Error('草图已变化，请重新加入参考图');
      const chosen=live.current.selection;
      const route=routeSchema.safeParse(chosen&&{provider:chosen.provider,model:chosen.model});
-      if(!route.success)throw new Error('请先在左侧选择支持图片的官方 DeepSeek 模型');
+      if(!route.success)throw new Error('请先在当前聊天选择支持图片的官方 DeepSeek 模型');
      const existing=staged.get(message.digest);
      if(existing && (live.current.ids??[]).some(id=>id===existing)){reply(true,'这张参考图已经在输入框中');return;}
      await rpc('model/check',message.owner,route.data,signal);
@@ -89,7 +89,7 @@ export function SketchFrame({ctx,props,onClose,appearance,subscribeClose,readWeb
      const bridge=draftBridge(ctx);
      if(!bridge)throw new Error('当前宿主未提供附件注册，请先下载 PNG 手工加入');
      const id=bridge.stage(props.sessionId,message.bytes,actions,()=>!signal.aborted && latest.current.sessionId===props.sessionId,live.current.uploadImages);
-     staged.set(message.digest,id);reply(true,'参考图已加入左侧输入框，请使用原有发送按钮');
+     staged.set(message.digest,id);reply(true,'参考图已加入聊天草稿，可继续补充要求。');
     })().catch(error=>reply(false,error instanceof Error?error.message:'操作失败')).finally(()=>{processing=false;});
    };
    port.start();
