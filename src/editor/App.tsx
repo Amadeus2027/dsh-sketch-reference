@@ -51,6 +51,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose,graph}:
  const [recovery]=useState(()=>recoverPending(owner));
  // A found backup is not consumed until selected and successfully persisted.
  const recoveredPending=useRef<typeof recovery.pending>(null);
+ const wroteLocalDraft=useRef(false);
  const [pending,setPending]=useState(recovery.pending),[backupUnavailable,setBackupUnavailable]=useState(!recovery.available);
  const [,render]=useState(0),[goal,setGoal]=useState(initial?.goal??''),[message,setMessage]=useState(''),[batch,setBatch]=useState(latestAdvice),[stale,setStale]=useState(()=>adviceIsStale(latestAdvice,initial?.contentDigest,initial?.goal??'')),[busy,setBusy]=useState(false),[preparing,setPreparing]=useState(false);
  const analysisComments=useMemo(()=>batch?withComments(batch):null,[batch]);
@@ -80,7 +81,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose,graph}:
   return saved;
  },()=>{
   if(mounted.current)render(v=>v+1);
- },(draft,revision)=>{try{writePending(owner,draft,revision);}catch{if(mounted.current)setBackupUnavailable(true);}}));
+ },(draft,revision)=>{try{writePending(owner,draft,revision);wroteLocalDraft.current=true;}catch{if(mounted.current)setBackupUnavailable(true);}}));
  const visual=useVisualReference(owner);
  // Warm only a settled saved version. No model call or native-chat attachment;
  // repeated versions reuse the existing export and immutable image record.
@@ -114,7 +115,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose,graph}:
  useEffect(()=>{
   try {
    if(!pending){
-    if(queue.state==='clean')clearPending(owner);
+    if(queue.state==='clean'&&wroteLocalDraft.current){clearPending(owner);wroteLocalDraft.current=false;}
     return;
    }
    const current=canonical(queue.current());
@@ -123,7 +124,6 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose,graph}:
    if(current===canonical(initialDraft)){
     try{consumePending(owner,pending);recoveredPending.current=null;}finally{setPending(null);}
    }
-   if(queue.state==='clean')clearPending(owner);
   }catch{setBackupUnavailable(true);}
  },[queue.state,owner,initial,pending]);
  const updateStale=(scene:Drawing['scene'],currentGoal:string)=>{
@@ -143,6 +143,7 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose,graph}:
   if(!pending)updates.accept(elements,appState as unknown as Record<string,unknown>);
  };
  const capture=()=>{
+  if(pending)return queue.current().scene;
   if(!api.current)throw new Error('画板尚未就绪');updates.accept(api.current.getSceneElements(),api.current.getAppState() as unknown as Record<string,unknown>);updates.flush();
   if(sceneError.current)throw new Error(sceneError.current);return queue.current().scene;
  };
@@ -257,6 +258,8 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose,graph}:
   }finally{if(mounted.current){setBusy(false);setPreparing(false);}active.current=null;}
  });
  const close=()=>void run(async()=>{
+  // The recovery prompt freezes editing. Leave its snapshot for the next open.
+  if(pending){await closeBoard();return;}
   if(preparing)throw new Error('请等待当前操作完成');if(editUncertain)throw new Error('修改结果尚未确认，请重试或载入服务器版本后关闭');if(pendingComment.current||agent.pending)throw new Error('批注状态尚未确认保存，请重试或刷新批注后关闭');
   setPreparing(true);
   try{try{await settle();}catch{throw new Error('请先重试保存或下载草稿备份，再关闭');}await prepareChatReference();await closeBoard();}
@@ -300,7 +303,12 @@ function Board({owner,initial,latestAdvice,routes,onReload,registerClose,graph}:
   {visual.error&&<div className="notice" role="status">{visual.error}</div>}
   {agent.disconnected&&<div className="notice" role="status">批注实时同步已断开，绘图和保存仍可使用。<button onClick={()=>void agent.refresh()}>刷新 Agent 批注</button></div>}
   {backupUnavailable&&<div className="notice" role="status">浏览器恢复存储不可用或空间不足，无法保证本地恢复副本；自动保存仍会尝试写入服务器。请及时下载草稿备份。</div>}
-  {pending&&<div className="notice">发现未保存的恢复副本。<button onClick={recover}>恢复本地草稿</button><button onClick={()=>{downloadScene(pending.draft.scene);}}>下载恢复副本</button><button onClick={()=>setPending(null)}>暂不恢复</button></div>}
+  {pending&&<div className="notice">发现未保存的恢复副本。
+   <button onClick={recover}>恢复本地草稿</button>
+   <button onClick={close}>稍后恢复并返回聊天</button>
+   <button onClick={()=>downloadScene(pending.draft.scene)}>下载恢复副本</button>
+   <button onClick={()=>{if(window.confirm('继续编辑已保存版本？新的编辑可能替换本标签页的恢复副本。'))setPending(null);}}>使用已保存版本</button>
+  </div>}
   {commentError&&<div className="notice" role="alert">批注状态未确认保存：{commentError.message}{!commentError.conflict&&<button disabled={commentSaving} onClick={()=>{if(pendingComment.current)void saveComment(pendingComment.current);}}>重试批注保存</button>}<button disabled={commentSaving||syncingComments} onClick={refreshComments}>刷新批注</button></div>}
   {(message||queue.error)&&<div className={`notice${messageInfo&&!queue.error?' info':''}`} role={messageInfo&&!queue.error?'status':'alert'}>{queue.error||message}{queue.state==='error'&&<button onClick={()=>void run(async()=>{await settle();})}>重试保存</button>}{queue.state==='conflict'&&<><button onClick={()=>void run(async()=>{downloadScene(capture());})}>下载我的草稿</button><button onClick={onReload}>载入服务器版本</button></>}</div>}
   <div ref={canvas} className="canvas" data-preparing={preparing||!!pending}>

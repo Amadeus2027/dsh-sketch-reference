@@ -1,5 +1,5 @@
 // Run against a dedicated local DSH Web profile, without real model calls.
-import {chromium} from '@playwright/test';
+import {chromium,expect} from '@playwright/test';
 import assert from 'node:assert/strict';
 import {mkdir,readFile} from 'node:fs/promises';
 import {prepareHost,hostContext} from './fixtures/browser-session.mjs';
@@ -57,6 +57,42 @@ try {
  assert(loaded.drawing.scene.elements.some(e=>e.type==='text'&&e.text==='首页 · 搜索'));
  await page.screenshot({path:'test-results/board.png'});
  await page.setViewportSize({width:900,height:900});await frame.getByRole('button',{name:'返回聊天 ×'}).click();await page.locator('iframe[title="手绘参考板"]').waitFor({state:'detached'});assert((await input.innerText()).includes('保留已有文字'));
+ if(!storageFailure){
+  // Keep a real failed autosave in this tab. Deferring recovery must not consume it.
+  const goal='等待下次恢复的草稿';
+  const open=()=>page.getByRole('button',{name:'打开手绘参考板'}).click();
+  const board=page.locator('iframe[title="手绘参考板"]');
+  // Intercept at fetch time so teardown keepalive retries see the same outage.
+  await context.addInitScript(()=>{
+   const fetch=window.fetch.bind(window);
+   window.fetch=(input,init)=>{
+    if(String(input).endsWith('/drawing/save')&&sessionStorage.getItem('test-block-sketch-save')){
+     const {requestId}=JSON.parse(init.body);
+     return Promise.resolve(Response.json({ok:false,requestId,error:{code:'TEST_OFFLINE',message:'测试：保存不可用'}},{status:503}));
+    }
+    return fetch(input,init);
+   };
+  });
+  await page.evaluate(()=>sessionStorage.setItem('test-block-sketch-save','1'));
+  await open();
+  await frame.getByLabel('这张图准备用来做什么？').fill(goal);
+  await frame.getByRole('button',{name:'重试保存'}).waitFor();
+  const backup=await page.evaluate(goal=>Object.entries(localStorage).find(([key,value])=>
+   key.startsWith('dsh-sketch:v1:')&&JSON.parse(value).goal===goal),goal);
+  assert(backup,'Failed autosave must have a local recovery copy');
+  await (await (await board.elementHandle()).contentFrame()).evaluate(()=>location.reload());
+  await frame.getByRole('button',{name:'稍后恢复并返回聊天'}).click();
+  await expect(board).toHaveCount(0);await expect(input).toContainText('保留已有文字');
+  assert.equal(await page.evaluate(key=>localStorage.getItem(key),backup[0]),backup[1]);
+  await open();await frame.getByRole('button',{name:'恢复本地草稿'}).waitFor();
+  page.once('dialog',dialog=>dialog.dismiss());await frame.getByRole('button',{name:'使用已保存版本'}).click();
+  await expect(frame.getByRole('button',{name:'恢复本地草稿'})).toBeVisible();
+  await page.evaluate(()=>sessionStorage.removeItem('test-block-sketch-save'));
+  await frame.getByRole('button',{name:'恢复本地草稿'}).click();
+  await expect.poll(()=>latestDrawing.goal).toBe(goal);
+  await expect.poll(()=>page.evaluate(key=>localStorage.getItem(key),backup[0])).toBeNull();
+  console.log('PASS: 503 autosave, defer and reopen the same tab, preserve chat and recovery snapshot, remove it after confirmed save.');
+ }
  const anonymous=await browser.newContext();const response=await anonymous.request.post(new URL('/sketch-reference-rpc/v1/drawing/get',url).href,{data:{}});assert.equal(response.status(),401);await anonymous.close();
  assert.deepEqual(errors,[]);assert.deepEqual(remoteFonts,[]);
  console.log('PASS: draw, decoded PNG and editable Excalidraw backup downloads, Chinese text/geometry retained, persisted scene, close/reopen, native attachments, existing input, duplicate prevention, narrow screen close, anonymous rejection, no CDN requests. No real DS calls.');
