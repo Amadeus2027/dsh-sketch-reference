@@ -24,7 +24,7 @@ try{
  await frame.evaluate(()=>{const base={x:120,y:160,width:180,height:100,angle:0,strokeColor:'#1e1e1e',backgroundColor:'transparent',fillStyle:'solid',strokeWidth:1,strokeStyle:'solid',roughness:1,opacity:100,groupIds:[],frameId:null,roundness:null,seed:1,isDeleted:false,boundElements:null,updated:1,link:null,locked:false,version:1,versionNonce:1};window.__sketchEditor().updateScene({elements:[{...base,id:'agent-rect',type:'rectangle'},{...base,id:'agent-free',type:'freedraw',x:400,y:160,width:90,height:100,points:[[0,0],[50,40],[90,100]],pressures:[],simulatePressure:true,lastCommittedPoint:null}]});});
  await frame.getByLabel('这张图准备用来做什么？').fill('讨论几何和自由手绘物品');await frame.getByRole('status').filter({hasText:'已保存'}).waitFor();const first=await load();
  await hostContext(page,'selectModel',{sessionId:first.owner.sessionId,provider:'deepseek-official',model:'deepseek-flash'});
- await frame.getByRole('button',{name:'作为参考发送',exact:true}).click();await frame.getByRole('alert').filter({hasText:'参考图已加入'}).waitFor();assert((await input.innerText()).includes('原生输入保留'));
+ await frame.getByRole('button',{name:'添加参考图',exact:true}).click();await frame.getByRole('status').filter({hasText:'参考图已加入'}).waitFor();assert((await input.innerText()).includes('原生输入保留'));
  await input.fill('SKETCH_AGENT_TEST ANNOTATE：解释并标注草图。');await input.press('Enter');
  await page.getByText('SKETCH_AGENT_DONE：模拟原生回答与批注已完成。',{exact:true}).waitFor();
  await frame.locator('.commentMarker').first().waitFor();await frame.getByRole('button',{name:'展开建议与批注'}).click();await frame.getByRole('button',{name:'① 几何关系'}).click();
@@ -59,7 +59,7 @@ try{
  await page.waitForFunction(async()=>{const value=await (await fetch('/sketch-reference-test-agent-stats')).json();return value.calls.findLast(c=>c.task.includes('CANCEL'))?.aborted===true;});
  assert.equal((await load()).drawing.revision,protectedDrawing.revision);
  await frame.getByRole('button',{name:'更多操作',exact:true}).click();await Promise.all([page.waitForEvent('download'),frame.getByRole('button',{name:'导出 PNG',exact:true}).click()]);
- await frame.getByRole('button',{name:'作为参考发送',exact:true}).click();await frame.getByRole('alert').filter({hasText:'参考图已加入'}).waitFor();
+ await frame.getByRole('button',{name:'添加参考图',exact:true}).click();await frame.getByRole('status').filter({hasText:'参考图已加入'}).waitFor();
  const anonymous=await browser.newContext();assert.equal((await anonymous.request.get(new URL('/sketch-reference-events/v1',url).href)).status(),401);await anonymous.close();
  const metrics=await call('agent/metrics',first.owner,null);assert(metrics.measurements.some(m=>m.tool==='sketch_read'));assert(metrics.measurements.some(m=>m.tool==='sketch_annotate'));assert.equal(metrics.inputTokens,null);
  report.measurements=metrics.measurements;report.calls=(await stats()).calls.slice(baseline);report.analysisRequests=analysisRequests;report.errors=errors;

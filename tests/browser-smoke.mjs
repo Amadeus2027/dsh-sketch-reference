@@ -46,9 +46,9 @@ try {
   await hostContext(page,'selectModel',{sessionId:latestDrawing.owner.sessionId,provider:'deepseek-official',model:'deepseek-flash'});
  }
  await page.locator('input[type=file]').setInputFiles({name:'existing.png',mimeType:'image/png',buffer:bytes});
- console.log('staging image');await frame.getByRole('button',{name:'作为参考发送',exact:true}).click();await frame.getByRole('alert').filter({hasText:'参考图已加入左侧输入框'}).waitFor();
+ console.log('staging image');await frame.getByRole('button',{name:'添加参考图',exact:true}).click();await frame.getByRole('status').filter({hasText:'参考图已加入聊天草稿'}).waitFor();
  assert((await input.innerText()).includes('保留已有文字'));await page.getByRole('img',{name:'existing.png',exact:true}).waitFor();await page.getByRole('img',{name:'sketch-reference.png',exact:true}).first().waitFor();
- await frame.getByRole('button',{name:'作为参考发送',exact:true}).click();await frame.getByRole('alert').filter({hasText:'这张参考图已经在输入框中'}).waitFor();
+ await frame.getByRole('button',{name:'添加参考图',exact:true}).click();await frame.getByRole('status').filter({hasText:'这张参考图已经在输入框中'}).waitFor();
  if(storageFailure)await frame.getByRole('status').filter({hasText:'浏览器恢复存储不可用'}).waitFor();
  await frame.getByRole('button',{name:'返回聊天 ×'}).click();await page.locator('iframe[title="手绘参考板"]').waitFor({state:'detached'});
  await page.getByRole('button',{name:'打开手绘参考板'}).click();frame=page.frameLocator('iframe[title="手绘参考板"]');assert.equal(await frame.getByLabel('这张图准备用来做什么？').inputValue(),'根据草图制作中文首页');

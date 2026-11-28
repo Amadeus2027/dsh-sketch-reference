@@ -51,7 +51,7 @@ dsh web
 ```
 
 1. Choose a workspace and session. Click **参考板** beside the composer, draw and add a purpose.
-2. Wait for **已保存** and ask in native chat: “Build a webpage from the current sketch.” **作为参考发送** optionally adds the PNG to the composer.
+2. Wait for **已保存** and ask in native chat: “Build a webpage from the current sketch.” **添加参考图** optionally adds the PNG to the composer.
 3. Continue discussing, annotating or requesting changes. Review canvas edits before approval; send chat messages yourself.
 
 **Other installation options remain available:**

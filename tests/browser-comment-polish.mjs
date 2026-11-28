@@ -130,7 +130,7 @@ try{
  await title(0).click();await commentAction(frame,'重新打开');await frame.locator('.commentMarker').first().waitFor();
  // Stage an actual PNG using the public bridge; subsequent comment inserts
  // must retain it and the user's text, and must not submit any model request.
- await frame.getByRole('button',{name:'作为参考发送',exact:true}).click();await frame.getByRole('alert').filter({hasText:'参考图已加入'}).waitFor();
+ await frame.getByRole('button',{name:'添加参考图',exact:true}).click();await frame.getByRole('status').filter({hasText:'参考图已加入'}).waitFor();
  const attachments=await page.getByRole('img',{name:'sketch-reference.png',exact:true}).count();assert(attachments>0);
  const nativeCalls=(await stats()).agent.calls.length;
  for(const action of ['追问','纠正','修改这里']){

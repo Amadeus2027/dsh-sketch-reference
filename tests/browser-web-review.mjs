@@ -40,7 +40,10 @@ try{
  await hostContext(page,'theme','dark');
  await expect.poll(()=>review.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
  await review.screenshot({path:join(out,'web-review-narrow-dark.png')});await hostContext(page,'theme','light');
- await submit.click();await expect(page.locator('iframe[title="手绘参考板"]')).toHaveCount(0);
+ // A click can target one element. Typing and Enter stage the feedback in chat.
+ const target=await button.boundingBox();await page.mouse.click(target.x+target.width/2,target.y+target.height/2);
+ await expect(review.getByLabel('修改意见')).toBeFocused();await review.getByLabel('修改意见').press('Enter');
+ await expect(page.locator('iframe[title="手绘参考板"]')).toHaveCount(0);
  const text=await input.innerText();for(const expected of ['已有任务文字',path,'search','查找商品','将搜索按钮移到右侧','SHA-256'])assert(text.includes(expected),expected);
  await page.setViewportSize({width:1500,height:900});await open();await expect(button).toHaveText('查找商品');await expect(review.getByLabel('修改意见')).toHaveValue('将搜索按钮移到右侧');
  await mkdir(out,{recursive:true});await page.screenshot({path:join(out,'web-review.png')});
@@ -48,7 +51,7 @@ try{
  const board=await editorFrame(page);await board.getByRole('button',{name:'返回聊天 ×'}).click();
  await expect(page.locator('iframe[title="手绘参考板"]')).toHaveCount(0);
  await hostContext(page,'create',workspace);await open();
- await expect(pathname).toHaveValue('index.html');
+ await expect(pathname).toHaveValue('');await expect(review.getByRole('button',{name:'打开网页'})).toBeDisabled();
  // Load the same file for this session before checking its independent feedback draft.
  await pathname.fill(path);await review.getByRole('button',{name:'打开网页'}).click();
  await expect(button).toHaveText('查找商品');await expect(review.getByLabel('修改意见')).toHaveValue('');
